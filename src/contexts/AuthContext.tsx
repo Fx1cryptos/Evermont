@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { AuthContextType, User } from '@/types'
-import { supabase } from '@/lib/supabase'
+import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
@@ -10,6 +10,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (!isSupabaseConfigured || !supabase) {
+      setLoading(false)
+      return
+    }
+
     const initializeAuth = async () => {
       try {
         const {
@@ -73,6 +78,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
     setError(null)
+    if (!supabase) {
+      setError('Supabase is not configured')
+      throw new Error('Supabase is not configured')
+    }
     try {
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
@@ -102,6 +111,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     setError(null)
+    if (!supabase) {
+      setError('Supabase is not configured')
+      throw new Error('Supabase is not configured')
+    }
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -118,6 +131,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     setError(null)
+    if (!supabase) {
+      setUser(null)
+      return
+    }
     try {
       const { error } = await supabase.auth.signOut()
       if (error) throw error
@@ -131,6 +148,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const resetPassword = async (email: string) => {
     setError(null)
+    if (!supabase) {
+      setError('Supabase is not configured')
+      throw new Error('Supabase is not configured')
+    }
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email)
       if (error) throw error
@@ -143,6 +164,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updatePassword = async (token: string, password: string) => {
     setError(null)
+    if (!supabase) {
+      setError('Supabase is not configured')
+      throw new Error('Supabase is not configured')
+    }
     try {
       const { error } = await supabase.auth.updateUser({
         password,
