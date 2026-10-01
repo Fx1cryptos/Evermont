@@ -1,6 +1,6 @@
 import { Notification, NotificationPreference, NotificationType } from '@/types'
 import { supabase } from '@/lib/supabase'
-import { v4 as uuidv4 } from 'uuid'
+
 
 const DEMO_NOTIFICATIONS: Notification[] = [
   {
@@ -48,7 +48,7 @@ const DEFAULT_PREFERENCES: NotificationPreference = {
 export const notificationService = {
   async getNotifications(userId: string, limit = 20, offset = 0): Promise<Notification[]> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabase!
         .from('notifications')
         .select('*')
         .eq('user_id', userId)
@@ -82,7 +82,7 @@ export const notificationService = {
 
   async getUnreadCount(userId: string): Promise<number> {
     try {
-      const { count, error } = await supabase
+      const { count, error } = await supabase!
         .from('notifications')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', userId)
@@ -102,7 +102,7 @@ export const notificationService = {
 
   async markAsRead(notificationId: string, userId: string): Promise<void> {
     try {
-      const { error } = await supabase
+      const { error } = await supabase!
         .from('notifications')
         .update({ read: true, read_at: new Date().toISOString() })
         .eq('id', notificationId)
@@ -119,7 +119,7 @@ export const notificationService = {
 
   async markAllAsRead(userId: string): Promise<void> {
     try {
-      const { error } = await supabase
+      const { error } = await supabase!
         .from('notifications')
         .update({ read: true, read_at: new Date().toISOString() })
         .eq('user_id', userId)
@@ -136,7 +136,7 @@ export const notificationService = {
 
   async deleteNotification(notificationId: string, userId: string): Promise<void> {
     try {
-      const { error } = await supabase
+      const { error } = await supabase!
         .from('notifications')
         .delete()
         .eq('id', notificationId)
@@ -153,7 +153,7 @@ export const notificationService = {
 
   async getPreferences(userId: string): Promise<NotificationPreference> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabase!
         .from('notification_preferences')
         .select('*')
         .eq('user_id', userId)
@@ -188,7 +188,7 @@ export const notificationService = {
     updates: Partial<NotificationPreference>
   ): Promise<NotificationPreference> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabase!
         .from('notification_preferences')
         .update({
           email_transactions: updates.emailTransactions,

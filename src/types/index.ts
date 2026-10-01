@@ -21,6 +21,7 @@ export interface AuthContextType {
   error: string | null
   signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
+  signInAsDemo: () => void
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
   updatePassword: (token: string, password: string) => Promise<void>
@@ -46,7 +47,18 @@ export interface Account {
   id: string
   userId: string
   accountNumber: string
-  accountType: 'checking' | 'savings' | 'money_market'
+  accountType:
+    | 'checking'
+    | 'savings'
+    | 'money_market'
+    | 'investment'
+    | 'retirement_401k'
+    | 'crypto'
+    | 'loan'
+    | 'personal_loan'
+    | 'auto_loan'
+    | 'home_loan'
+    | 'crypto_loan'
   balance: string
   currency: string
   status: 'active' | 'inactive' | 'frozen'
@@ -98,6 +110,43 @@ export interface NotificationPreference {
   pushSecurity: boolean
   smsTransactions: boolean
   updatedAt: string
+}
+
+export interface UpcomingPayment {
+  id: string
+  name: string
+  amount: string
+  dueDate: string
+  accountId: string
+  category: string
+}
+
+export interface SavingsGoal {
+  id: string
+  name: string
+  target: number
+  saved: number
+}
+
+export interface Holding {
+  symbol: string
+  name: string
+  quantity: string
+  value: number
+  changePct: number
+}
+
+export interface PerformancePoint {
+  label: string
+  value: number
+}
+
+export interface LoanDetail {
+  apr: string
+  originalAmount: number
+  monthlyPayment: string
+  nextPaymentDate: string
+  termMonths: number
 }
 
 export interface ValidationError {
