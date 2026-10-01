@@ -1,4 +1,4 @@
-import { Account, Transaction, User } from '@/types'
+import { Account, Transaction, User, UpcomingPayment, SavingsGoal, Holding, PerformancePoint, LoanDetail } from '@/types'
 
 /**
  * DEMO / SIMULATED DATA ONLY.
@@ -77,7 +77,7 @@ export const DEMO_ACCOUNTS: Account[] = [
     id: 'demo-loan',
     userId: DEMO_USER_ID,
     accountNumber: '****1570',
-    accountType: 'loan',
+    accountType: 'personal_loan',
     balance: '2500.00',
     currency: 'USD',
     status: 'active',
@@ -263,4 +263,175 @@ export const DEMO_TRANSACTIONS: Transaction[] = [
     createdAt: daysAgo(34, 16),
     completedAt: daysAgo(34, 16),
   },
+  {
+    id: 'demo-txn-18',
+    accountId: 'demo-auto-loan',
+    type: 'credit',
+    amount: '385.00',
+    description: 'Auto Loan Payment — Auto-debit',
+    status: 'completed',
+    createdAt: daysAgo(8, 10),
+    completedAt: daysAgo(8, 10),
+  },
+  {
+    id: 'demo-txn-19',
+    accountId: 'demo-home-loan',
+    type: 'credit',
+    amount: '1612.40',
+    description: 'Home Loan Payment — Auto-debit',
+    status: 'completed',
+    createdAt: daysAgo(6, 10),
+    completedAt: daysAgo(6, 10),
+  },
+]
+
+/** Extra loan accounts — added after the base DEMO_ACCOUNTS list. */
+DEMO_ACCOUNTS.push(
+  {
+    id: 'demo-auto-loan',
+    userId: DEMO_USER_ID,
+    accountNumber: '****2844',
+    accountType: 'auto_loan',
+    balance: '18450.00',
+    currency: 'USD',
+    status: 'active',
+    createdAt: new Date(Date.now() - 320 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'demo-home-loan',
+    userId: DEMO_USER_ID,
+    accountNumber: '****5102',
+    accountType: 'home_loan',
+    balance: '248600.00',
+    currency: 'USD',
+    status: 'active',
+    createdAt: new Date(Date.now() - 1500 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'demo-crypto-loan',
+    userId: DEMO_USER_ID,
+    accountNumber: '****8361',
+    accountType: 'crypto_loan',
+    balance: '5250.00',
+    currency: 'USD',
+    status: 'active',
+    createdAt: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+)
+
+/** Estimated home value backing the home loan — used for the net-worth figure on the dashboard. */
+export const DEMO_HOME_VALUE = 350000
+
+export const DEMO_LOAN_DETAILS: Record<string, LoanDetail> = {
+  'demo-loan': {
+    apr: '9.49%',
+    originalAmount: 6000,
+    monthlyPayment: '315.00',
+    nextPaymentDate: daysAgo(-7),
+    termMonths: 24,
+  },
+  'demo-auto-loan': {
+    apr: '5.99%',
+    originalAmount: 26000,
+    monthlyPayment: '385.00',
+    nextPaymentDate: daysAgo(-12),
+    termMonths: 60,
+  },
+  'demo-home-loan': {
+    apr: '6.12%',
+    originalAmount: 292000,
+    monthlyPayment: '1612.40',
+    nextPaymentDate: daysAgo(-6),
+    termMonths: 360,
+  },
+  'demo-crypto-loan': {
+    apr: '7.25%',
+    originalAmount: 6500,
+    monthlyPayment: '128.00',
+    nextPaymentDate: daysAgo(-3),
+    termMonths: 24,
+  },
+}
+
+export const DEMO_UPCOMING_PAYMENTS: UpcomingPayment[] = [
+  {
+    id: 'up-1',
+    name: 'Rent — Oakwood Apartments',
+    amount: '1850.00',
+    dueDate: daysAgo(-5),
+    accountId: 'demo-checking',
+    category: 'Housing',
+  },
+  {
+    id: 'up-2',
+    name: 'Auto Loan Payment',
+    amount: '385.00',
+    dueDate: daysAgo(-12),
+    accountId: 'demo-checking',
+    category: 'Auto',
+  },
+  {
+    id: 'up-3',
+    name: 'City Power & Light — Electric',
+    amount: '96.12',
+    dueDate: daysAgo(-10),
+    accountId: 'demo-checking',
+    category: 'Utilities',
+  },
+  {
+    id: 'up-4',
+    name: 'Netflix — Monthly Subscription',
+    amount: '15.49',
+    dueDate: daysAgo(-21),
+    accountId: 'demo-checking',
+    category: 'Subscriptions',
+  },
+  {
+    id: 'up-5',
+    name: 'Crypto-Backed Loan Payment',
+    amount: '128.00',
+    dueDate: daysAgo(-3),
+    accountId: 'demo-checking',
+    category: 'Loan Payment',
+  },
+]
+
+export const DEMO_SAVINGS_GOALS: SavingsGoal[] = [
+  { id: 'goal-1', name: 'Emergency Fund', target: 10000, saved: 5000 },
+  { id: 'goal-2', name: 'Car Down Payment', target: 8000, saved: 1850 },
+  { id: 'goal-3', name: 'Vacation', target: 3000, saved: 1450 },
+]
+
+export const DEMO_HOLDINGS: Record<string, Holding[]> = {
+  'demo-investments': [
+    { symbol: 'VOO', name: 'S&P 500 Index Fund', quantity: '12.00', value: 6000.0, changePct: 2.4 },
+    { symbol: 'VTI', name: 'Total Stock Market ETF', quantity: '18.42', value: 5106.0, changePct: 1.8 },
+    { symbol: 'QQQM', name: 'Nasdaq-100 Growth ETF', quantity: '9.85', value: 2074.0, changePct: -0.9 },
+    { symbol: 'BND', name: 'Total Bond Market ETF', quantity: '25.10', value: 1820.0, changePct: 0.3 },
+  ],
+  'demo-401k': [
+    { symbol: 'VTIVX', name: 'Target Retirement 2055 Fund', quantity: '182.20', value: 25000.0, changePct: 1.2 },
+  ],
+  'demo-crypto': [
+    { symbol: 'BTC', name: 'Bitcoin', quantity: '0.0218', value: 2350.0, changePct: 2.1 },
+    { symbol: 'ETH', name: 'Ethereum', quantity: '0.46', value: 1150.0, changePct: -1.4 },
+  ],
+}
+
+export const DEMO_PERFORMANCE: PerformancePoint[] = [
+  { label: 'Oct', value: 12850 },
+  { label: 'Nov', value: 13020 },
+  { label: 'Dec', value: 13410 },
+  { label: 'Jan', value: 13180 },
+  { label: 'Feb', value: 13690 },
+  { label: 'Mar', value: 13940 },
+  { label: 'Apr', value: 14110 },
+  { label: 'May', value: 13980 },
+  { label: 'Jun', value: 14260 },
+  { label: 'Jul', value: 14520 },
+  { label: 'Aug', value: 14780 },
+  { label: 'Sep', value: 15000 },
 ]

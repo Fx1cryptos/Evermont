@@ -1,7 +1,9 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { ShieldCheck } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
 import { useAuth } from '@/contexts/AuthContext'
+import Logo from '@/components/brand/Logo'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
@@ -43,9 +45,8 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-evermont-light flex flex-col items-center justify-center px-4">
-      <Link to={ROUTES.HOME} className="mb-8 text-center">
-        <span className="text-3xl font-bold text-evermont-blue">Evermont</span>
-        <span className="block text-evermont-gold text-sm font-medium">Credit Union</span>
+      <Link to={ROUTES.HOME} className="mb-8">
+        <Logo size="lg" />
       </Link>
 
       <Card className="w-full max-w-md">
@@ -88,6 +89,11 @@ const LoginPage: React.FC = () => {
             Forgot password?
           </Link>
         </div>
+
+        <p className="mt-5 flex items-center justify-center gap-1.5 text-[11px] text-evermont-muted">
+          <ShieldCheck className="h-3.5 w-3.5 text-green-600" />
+          Protected by 256-bit encryption. Never share your password.
+        </p>
 
         <div className="mt-6 pt-6 border-t border-evermont-border">
           <p className="text-center text-xs text-evermont-muted mb-3">

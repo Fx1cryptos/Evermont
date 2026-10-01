@@ -55,6 +55,10 @@ export interface Account {
     | 'retirement_401k'
     | 'crypto'
     | 'loan'
+    | 'personal_loan'
+    | 'auto_loan'
+    | 'home_loan'
+    | 'crypto_loan'
   balance: string
   currency: string
   status: 'active' | 'inactive' | 'frozen'
@@ -106,6 +110,43 @@ export interface NotificationPreference {
   pushSecurity: boolean
   smsTransactions: boolean
   updatedAt: string
+}
+
+export interface UpcomingPayment {
+  id: string
+  name: string
+  amount: string
+  dueDate: string
+  accountId: string
+  category: string
+}
+
+export interface SavingsGoal {
+  id: string
+  name: string
+  target: number
+  saved: number
+}
+
+export interface Holding {
+  symbol: string
+  name: string
+  quantity: string
+  value: number
+  changePct: number
+}
+
+export interface PerformancePoint {
+  label: string
+  value: number
+}
+
+export interface LoanDetail {
+  apr: string
+  originalAmount: number
+  monthlyPayment: string
+  nextPaymentDate: string
+  termMonths: number
 }
 
 export interface ValidationError {

@@ -7,9 +7,16 @@ export const accountTypeLabel = (accountType: string): string => {
     retirement_401k: '401(k)',
     crypto: 'Crypto',
     loan: 'Loan',
+    personal_loan: 'Personal Loan',
+    auto_loan: 'Auto Loan',
+    home_loan: 'Home Loan',
+    crypto_loan: 'Crypto-Backed Loan',
   }
   return labels[accountType] ?? accountType
 }
+
+export const isLoanType = (accountType: string): boolean =>
+  accountType.endsWith('_loan') || accountType === 'loan'
 
 export const formatCurrency = (amount: string | number, currency: string = 'USD'): string => {
   const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount

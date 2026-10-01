@@ -35,7 +35,7 @@ export const transactionService = {
       return result
     }
     try {
-      let query = supabase
+      let query = supabase!
         .from('transactions')
         .select('*')
         .eq('user_id', userId)
@@ -104,7 +104,7 @@ export const transactionService = {
       return DEMO_TRANSACTIONS.find((txn) => txn.id === transactionId) || null
     }
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabase!
         .from('transactions')
         .select('*')
         .eq('id', transactionId)
@@ -145,7 +145,7 @@ export const transactionService = {
     const now = new Date().toISOString()
 
     try {
-      const { data, error } = await supabase.from('transactions').insert([
+      const { error } = await supabase!.from('transactions').insert([
         {
           id,
           user_id: userId,

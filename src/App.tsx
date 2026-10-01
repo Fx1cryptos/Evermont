@@ -7,6 +7,7 @@ import LoginPage from '@/pages/LoginPage'
 import RegisterPage from '@/pages/RegisterPage'
 import DashboardPage from '@/pages/DashboardPage'
 import AccountsPage from '@/pages/AccountsPage'
+import AccountDetailPage from '@/pages/AccountDetailPage'
 import TransactionsPage from '@/pages/TransactionsPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 import ProtectedRoute from '@/components/ProtectedRoute'
@@ -42,6 +43,14 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <AccountsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ACCOUNT_DETAIL}
+          element={
+            <ProtectedRoute>
+              <AccountDetailPage />
             </ProtectedRoute>
           }
         />

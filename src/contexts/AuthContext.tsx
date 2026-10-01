@@ -36,10 +36,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const {
           data: { session },
-        } = await supabase.auth.getSession()
+        } = await supabase!.auth.getSession()
 
         if (session?.user) {
-          const { data: profile } = await supabase
+          const { data: profile } = await supabase!
             .from('profiles')
             .select('*')
             .eq('id', session.user.id)
@@ -67,9 +67,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase!.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
-        const { data: profile } = await supabase
+        const { data: profile } = await supabase!
           .from('profiles')
           .select('*')
           .eq('id', session.user.id)
@@ -100,7 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error('Supabase is not configured')
     }
     try {
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      const { data, error: signUpError } = await supabase!.auth.signUp({
         email,
         password,
       })
@@ -108,7 +108,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (signUpError) throw signUpError
 
       if (data.user) {
-        const { error: profileError } = await supabase.from('profiles').insert([
+        const { error: profileError } = await supabase!.from('profiles').insert([
           {
             id: data.user.id,
             email,
@@ -133,7 +133,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error('Supabase is not configured')
     }
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase!.auth.signInWithPassword({
         email,
         password,
       })
@@ -168,7 +168,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return
     }
     try {
-      const { error } = await supabase.auth.signOut()
+      const { error } = await supabase!.auth.signOut()
       if (error) throw error
       setUser(null)
     } catch (err) {
@@ -185,7 +185,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error('Supabase is not configured')
     }
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email)
+      const { error } = await supabase!.auth.resetPasswordForEmail(email)
       if (error) throw error
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Password reset failed'
@@ -194,14 +194,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
-  const updatePassword = async (token: string, password: string) => {
+  const updatePassword = async (_token: string, password: string) => {
     setError(null)
     if (!supabase) {
       setError('Supabase is not configured')
       throw new Error('Supabase is not configured')
     }
     try {
-      const { error } = await supabase.auth.updateUser({
+      const { error } = await supabase!.auth.updateUser({
         password,
       })
       if (error) throw error

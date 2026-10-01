@@ -7,7 +7,7 @@ export const accountService = {
     // Demo member data is simulated client-side; never query Supabase for it.
     if (userId === DEMO_USER_ID) return DEMO_ACCOUNTS
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabase!
         .from('accounts')
         .select('*')
         .eq('user_id', userId)
@@ -43,7 +43,7 @@ export const accountService = {
       return DEMO_ACCOUNTS.find((acc) => acc.id === accountId) || null
     }
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabase!
         .from('accounts')
         .select('*')
         .eq('id', accountId)

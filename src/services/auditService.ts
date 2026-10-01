@@ -14,7 +14,7 @@ export const auditService = {
     const now = new Date().toISOString()
 
     try {
-      const { data, error } = await supabase.from('audit_logs').insert([
+      const { error } = await supabase!.from('audit_logs').insert([
         {
           id,
           staff_id: staffId,
@@ -52,7 +52,7 @@ export const auditService = {
     offset = 0
   ): Promise<AuditLog[]> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabase!
         .from('audit_logs')
         .select('*')
         .order('timestamp', { ascending: false })
@@ -88,7 +88,7 @@ export const auditService = {
     limit = 50
   ): Promise<AuditLog[]> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabase!
         .from('audit_logs')
         .select('*')
         .eq('staff_id', staffId)
