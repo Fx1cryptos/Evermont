@@ -21,6 +21,7 @@ export interface AuthContextType {
   error: string | null
   signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
+  signInAsDemo: () => void
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
   updatePassword: (token: string, password: string) => Promise<void>
@@ -46,7 +47,14 @@ export interface Account {
   id: string
   userId: string
   accountNumber: string
-  accountType: 'checking' | 'savings' | 'money_market'
+  accountType:
+    | 'checking'
+    | 'savings'
+    | 'money_market'
+    | 'investment'
+    | 'retirement_401k'
+    | 'crypto'
+    | 'loan'
   balance: string
   currency: string
   status: 'active' | 'inactive' | 'frozen'

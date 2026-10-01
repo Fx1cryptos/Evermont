@@ -1,67 +1,11 @@
-import { Account, Transaction } from '@/types'
+import { Account } from '@/types'
 import { supabase } from '@/lib/supabase'
-
-// Demo data for accounts when Supabase is not configured
-const DEMO_ACCOUNTS: Account[] = [
-  {
-    id: '1',
-    userId: 'demo-user',
-    accountNumber: '****2891',
-    accountType: 'checking',
-    balance: '5250.00',
-    currency: 'USD',
-    status: 'active',
-    createdAt: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    userId: 'demo-user',
-    accountNumber: '****7429',
-    accountType: 'savings',
-    balance: '12500.00',
-    currency: 'USD',
-    status: 'active',
-    createdAt: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-]
-
-const DEMO_TRANSACTIONS: Transaction[] = [
-  {
-    id: '1',
-    accountId: '1',
-    type: 'debit',
-    amount: '45.99',
-    description: 'Grocery Store - Whole Foods',
-    status: 'completed',
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    completedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '2',
-    accountId: '1',
-    type: 'credit',
-    amount: '2500.00',
-    description: 'Direct Deposit - Salary',
-    status: 'completed',
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    completedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '3',
-    accountId: '1',
-    type: 'debit',
-    amount: '1200.00',
-    description: 'Rent Payment - Monthly',
-    status: 'completed',
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    completedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-]
+import { DEMO_ACCOUNTS, DEMO_USER_ID } from '@/data/demoMember'
 
 export const accountService = {
   async getAccounts(userId: string): Promise<Account[]> {
+    // Demo member data is simulated client-side; never query Supabase for it.
+    if (userId === DEMO_USER_ID) return DEMO_ACCOUNTS
     try {
       const { data, error } = await supabase
         .from('accounts')
@@ -94,6 +38,10 @@ export const accountService = {
   },
 
   async getAccountById(accountId: string, userId: string): Promise<Account | null> {
+    // Demo member data is simulated client-side; never query Supabase for it.
+    if (userId === DEMO_USER_ID) {
+      return DEMO_ACCOUNTS.find((acc) => acc.id === accountId) || null
+    }
     try {
       const { data, error } = await supabase
         .from('accounts')

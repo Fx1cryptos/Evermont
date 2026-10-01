@@ -1,6 +1,6 @@
 import { AuditLog } from '@/types/admin'
 import { supabase } from '@/lib/supabase'
-import { v4 as uuidv4 } from 'crypto'
+
 
 export const auditService = {
   async createAuditLog(
@@ -10,7 +10,7 @@ export const auditService = {
     resourceId: string,
     details: Record<string, unknown>
   ): Promise<AuditLog> {
-    const id = uuidv4()
+    const id = crypto.randomUUID()
     const now = new Date().toISOString()
 
     try {

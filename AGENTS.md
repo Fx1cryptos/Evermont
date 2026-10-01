@@ -40,6 +40,17 @@ Real credentials are delivered via `/run/base44/app.env` (loaded last, always wi
 - `src/components/ProtectedRoute.tsx` — Auth guard for dashboard
 - `src/contexts/AuthContext.tsx` — Fixed to handle null Supabase client gracefully
 
+## Demo member mode
+
+- `src/data/demoMember.ts` is the single source of demo data (Robert Moore,
+  Dutch229moore@gmail.com) — 6 accounts (checking/savings/investments/401(k)/crypto/loan)
+  and 17 sample transactions. All clearly marked DEMO/SIMULATED.
+- "Sign In as Demo Member" on the login page sets a localStorage flag
+  (`evermont_demo_session`) restored by AuthContext on boot; sign-out clears it.
+- Services (`accountService`, `transactionService`) short-circuit and return
+  demo data when `userId === 'demo-user'`, never querying Supabase — the real
+  Supabase project has no tables/RLS yet and returns empty results.
+
 ## Tech stack
 
 - React 18, TypeScript, Vite 5

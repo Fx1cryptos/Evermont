@@ -1,40 +1,6 @@
 import { Transaction } from '@/types'
 import { supabase } from '@/lib/supabase'
-import { v4 as uuidv4 } from 'uuid'
-
-// Demo transactions (same as in accountService)
-const DEMO_TRANSACTIONS: Transaction[] = [
-  {
-    id: '1',
-    accountId: '1',
-    type: 'debit',
-    amount: '45.99',
-    description: 'Grocery Store - Whole Foods',
-    status: 'completed',
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    completedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '2',
-    accountId: '1',
-    type: 'credit',
-    amount: '2500.00',
-    description: 'Direct Deposit - Salary',
-    status: 'completed',
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    completedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '3',
-    accountId: '1',
-    type: 'debit',
-    amount: '1200.00',
-    description: 'Rent Payment - Monthly',
-    status: 'completed',
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    completedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-]
+import { DEMO_TRANSACTIONS, DEMO_USER_ID } from '@/data/demoMember'
 
 export interface TransactionFilters {
   accountId?: string
@@ -51,6 +17,23 @@ export const transactionService = {
     userId: string,
     filters: TransactionFilters = {}
   ): Promise<Transaction[]> {
+    // Demo member data is simulated client-side; never query Supabase for it.
+    if (userId === DEMO_USER_ID) {
+      let result = DEMO_TRANSACTIONS
+      if (filters.accountId) {
+        result = result.filter((txn) => txn.accountId === filters.accountId)
+      }
+      if (filters.type) {
+        result = result.filter((txn) => txn.type === filters.type)
+      }
+      if (filters.status) {
+        result = result.filter((txn) => txn.status === filters.status)
+      }
+      if (filters.limit !== undefined) {
+        result = result.slice(filters.offset ?? 0, (filters.offset ?? 0) + filters.limit)
+      }
+      return result
+    }
     try {
       let query = supabase
         .from('transactions')
@@ -116,6 +99,10 @@ export const transactionService = {
   },
 
   async getTransactionById(transactionId: string, userId: string): Promise<Transaction | null> {
+    // Demo member data is simulated client-side; never query Supabase for it.
+    if (userId === DEMO_USER_ID) {
+      return DEMO_TRANSACTIONS.find((txn) => txn.id === transactionId) || null
+    }
     try {
       const { data, error } = await supabase
         .from('transactions')
@@ -154,7 +141,7 @@ export const transactionService = {
     amount: string,
     description: string
   ): Promise<Transaction> {
-    const id = uuidv4()
+    const id = crypto.randomUUID()
     const now = new Date().toISOString()
 
     try {

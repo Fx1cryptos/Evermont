@@ -1,8 +1,19 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { AuthContextType, User } from '@/types'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
+import { DEMO_USER, DEMO_USER_ID } from '@/data/demoMember'
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
+
+const DEMO_SESSION_KEY = 'evermont_demo_session'
+
+const isDemoSession = () => {
+  try {
+    return localStorage.getItem(DEMO_SESSION_KEY) === DEMO_USER_ID
+  } catch {
+    return false
+  }
+}
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)
@@ -10,6 +21,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (isDemoSession()) {
+      setUser(DEMO_USER)
+      setLoading(false)
+      return
+    }
+
     if (!isSupabaseConfigured || !supabase) {
       setLoading(false)
       return
@@ -129,8 +146,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
+  const signInAsDemo = () => {
+    setError(null)
+    try {
+      localStorage.setItem(DEMO_SESSION_KEY, DEMO_USER_ID)
+    } catch {
+      // storage unavailable — demo session just won't persist across reloads
+    }
+    setUser(DEMO_USER)
+  }
+
   const signOut = async () => {
     setError(null)
+    try {
+      localStorage.removeItem(DEMO_SESSION_KEY)
+    } catch {
+      // ignore storage errors
+    }
     if (!supabase) {
       setUser(null)
       return
@@ -188,6 +220,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         error,
         signUp,
         signIn,
+        signInAsDemo,
         signOut,
         resetPassword,
         updatePassword,

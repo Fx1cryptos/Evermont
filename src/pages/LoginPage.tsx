@@ -9,7 +9,7 @@ import { validateEmail, validatePassword } from '@/utils/validation'
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate()
-  const { signIn, error } = useAuth()
+  const { signIn, signInAsDemo, error } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
@@ -34,6 +34,11 @@ const LoginPage: React.FC = () => {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const handleDemoSignIn = () => {
+    signInAsDemo()
+    navigate(ROUTES.DASHBOARD)
   }
 
   return (
@@ -82,6 +87,15 @@ const LoginPage: React.FC = () => {
           <Link to={ROUTES.FORGOT_PASSWORD} className="text-evermont-muted hover:underline">
             Forgot password?
           </Link>
+        </div>
+
+        <div className="mt-6 pt-6 border-t border-evermont-border">
+          <p className="text-center text-xs text-evermont-muted mb-3">
+            Just testing? Sign in as the demo member (simulated data only).
+          </p>
+          <Button variant="secondary" className="w-full" onClick={handleDemoSignIn}>
+            Sign In as Demo Member
+          </Button>
         </div>
       </Card>
     </div>
