@@ -1,5 +1,5 @@
 import React from 'react'
-import { AlertCircle, Bell, LogOut, Menu, User, X } from 'lucide-react'
+import { Bell, LogOut, Menu, X } from 'lucide-react'
 
 interface AdminLayoutProps {
   children: React.ReactNode
