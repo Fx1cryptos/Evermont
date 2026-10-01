@@ -1,0 +1,16 @@
+export const ADMIN_ROUTES = {
+  DASHBOARD: '/admin',
+  MEMBERS: '/admin/members',
+  MEMBER_DETAIL: (id: string) => `/admin/members/${id}`,
+  ACCOUNTS: '/admin/accounts',
+  ACCOUNT_DETAIL: (id: string) => `/admin/accounts/${id}`,
+  TRANSACTIONS: '/admin/transactions',
+  TRANSACTION_DETAIL: (id: string) => `/admin/transactions/${id}`,
+  SUPPORT: '/admin/support',
+  SUPPORT_DETAIL: (id: string) => `/admin/support/${id}`,
+  LINKED_ACCOUNTS: '/admin/linked-accounts',
+  NOTIFICATIONS: '/admin/notifications',
+  AUDIT_LOGS: '/admin/audit-logs',
+  SECURITY: '/admin/security',
+  SETTINGS: '/admin/settings',
+} as const
