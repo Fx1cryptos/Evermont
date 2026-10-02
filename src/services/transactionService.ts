@@ -1,6 +1,5 @@
 import { Transaction } from '@/types'
 import { supabase } from '@/lib/supabase'
-import { v4 as uuidv4 } from 'uuid'
 
 // Demo transactions (same as in accountService)
 const DEMO_TRANSACTIONS: Transaction[] = [
@@ -52,6 +51,13 @@ export const transactionService = {
     filters: TransactionFilters = {}
   ): Promise<Transaction[]> {
     try {
+      if (!supabase) {
+        return DEMO_TRANSACTIONS.slice(
+          filters.offset || 0,
+          (filters.offset || 0) + (filters.limit || 10)
+        )
+      }
+
       let query = supabase
         .from('transactions')
         .select('*')
@@ -117,6 +123,10 @@ export const transactionService = {
 
   async getTransactionById(transactionId: string, userId: string): Promise<Transaction | null> {
     try {
+      if (!supabase) {
+        return DEMO_TRANSACTIONS.find((txn) => txn.id === transactionId) || null
+      }
+
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
@@ -154,11 +164,24 @@ export const transactionService = {
     amount: string,
     description: string
   ): Promise<Transaction> {
-    const id = uuidv4()
+    const id = crypto.randomUUID()
     const now = new Date().toISOString()
 
     try {
-      const { data, error } = await supabase.from('transactions').insert([
+      if (!supabase) {
+        return {
+          id,
+          accountId: sourceAccountId,
+          type: 'debit',
+          amount,
+          description: `Transfer to ${recipientName}: ${description}`,
+          status: 'completed',
+          createdAt: now,
+          completedAt: now,
+        }
+      }
+
+      const { error } = await supabase.from('transactions').insert([
         {
           id,
           user_id: userId,
