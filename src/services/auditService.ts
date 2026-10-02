@@ -1,6 +1,5 @@
 import { AuditLog } from '@/types/admin'
 import { supabase } from '@/lib/supabase'
-import { v4 as uuidv4 } from 'crypto'
 
 export const auditService = {
   async createAuditLog(
@@ -10,10 +9,23 @@ export const auditService = {
     resourceId: string,
     details: Record<string, unknown>
   ): Promise<AuditLog> {
-    const id = uuidv4()
+    const id = crypto.randomUUID()
     const now = new Date().toISOString()
 
     try {
+      if (!supabase) {
+        return {
+          id,
+          staffId,
+          action,
+          resourceType,
+          resourceId,
+          details,
+          status: 'success',
+          timestamp: now,
+        }
+      }
+
       const { data, error } = await supabase.from('audit_logs').insert([
         {
           id,
@@ -47,11 +59,12 @@ export const auditService = {
     }
   },
 
-  async getAuditLogs(
-    limit = 50,
-    offset = 0
-  ): Promise<AuditLog[]> {
+  async getAuditLogs(limit = 50, offset = 0): Promise<AuditLog[]> {
     try {
+      if (!supabase) {
+        return []
+      }
+
       const { data, error } = await supabase
         .from('audit_logs')
         .select('*')
@@ -83,11 +96,12 @@ export const auditService = {
     }
   },
 
-  async getAuditLogsByStaff(
-    staffId: string,
-    limit = 50
-  ): Promise<AuditLog[]> {
+  async getAuditLogsByStaff(staffId: string, limit = 50): Promise<AuditLog[]> {
     try {
+      if (!supabase) {
+        return []
+      }
+
       const { data, error } = await supabase
         .from('audit_logs')
         .select('*')
