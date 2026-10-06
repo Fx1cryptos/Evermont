@@ -1,3 +1,23 @@
+export const accountTypeLabel = (accountType: string): string => {
+  const labels: Record<string, string> = {
+    checking: 'Checking',
+    savings: 'Savings',
+    money_market: 'Money Market',
+    investment: 'Investments',
+    retirement_401k: '401(k)',
+    crypto: 'Crypto',
+    loan: 'Loan',
+    personal_loan: 'Personal Loan',
+    auto_loan: 'Auto Loan',
+    home_loan: 'Home Loan',
+    crypto_loan: 'Crypto-Backed Loan',
+  }
+  return labels[accountType] ?? accountType
+}
+
+export const isLoanType = (accountType: string): boolean =>
+  accountType.endsWith('_loan') || accountType === 'loan'
+
 export const formatCurrency = (amount: string | number, currency: string = 'USD'): string => {
   const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount
   return new Intl.NumberFormat('en-US', {

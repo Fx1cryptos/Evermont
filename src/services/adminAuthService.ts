@@ -1,4 +1,4 @@
-import { AdminRole, AdminUser } from '@/types/admin'
+import { AdminRole } from '@/types/admin'
 
 const ROLE_PERMISSIONS: Record<AdminRole, string[]> = {
   SUPER_ADMIN: ['*'],

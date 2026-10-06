@@ -1,5 +1,6 @@
 import { Transaction } from '@/types'
 import { supabase } from '@/lib/supabase'
+import { DEMO_TRANSACTIONS, DEMO_USER_ID } from '@/data/demoMember'
 
 // Demo transactions (same as in accountService)
 const DEMO_TRANSACTIONS: Transaction[] = [
@@ -50,7 +51,25 @@ export const transactionService = {
     userId: string,
     filters: TransactionFilters = {}
   ): Promise<Transaction[]> {
+    // Demo member data is simulated client-side; never query Supabase for it.
+    if (userId === DEMO_USER_ID) {
+      let result = DEMO_TRANSACTIONS
+      if (filters.accountId) {
+        result = result.filter((txn) => txn.accountId === filters.accountId)
+      }
+      if (filters.type) {
+        result = result.filter((txn) => txn.type === filters.type)
+      }
+      if (filters.status) {
+        result = result.filter((txn) => txn.status === filters.status)
+      }
+      if (filters.limit !== undefined) {
+        result = result.slice(filters.offset ?? 0, (filters.offset ?? 0) + filters.limit)
+      }
+      return result
+    }
     try {
+      let query = supabase!
       if (!supabase) {
         return DEMO_TRANSACTIONS.slice(
           filters.offset || 0,
@@ -122,7 +141,12 @@ export const transactionService = {
   },
 
   async getTransactionById(transactionId: string, userId: string): Promise<Transaction | null> {
+    // Demo member data is simulated client-side; never query Supabase for it.
+    if (userId === DEMO_USER_ID) {
+      return DEMO_TRANSACTIONS.find((txn) => txn.id === transactionId) || null
+    }
     try {
+      const { data, error } = await supabase!
       if (!supabase) {
         return DEMO_TRANSACTIONS.find((txn) => txn.id === transactionId) || null
       }

@@ -1,6 +1,6 @@
 import { Profile, ValidationError } from '@/types'
 import { supabase } from '@/lib/supabase'
-import { validateEmail, validateName, validatePhone, validateZipCode, combineErrors } from '@/utils/validation'
+import { validateEmail, validateName, validatePhone, validateZipCode } from '@/utils/validation'
 
 const DEMO_PROFILE: Profile = {
   id: 'demo-user',
@@ -20,7 +20,7 @@ const DEMO_PROFILE: Profile = {
 export const profileService = {
   async getProfile(userId: string): Promise<Profile | null> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabase!
         .from('profiles')
         .select('*')
         .eq('id', userId)
@@ -87,7 +87,7 @@ export const profileService = {
     }
 
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabase!
         .from('profiles')
         .update({
           first_name: updates.firstName,

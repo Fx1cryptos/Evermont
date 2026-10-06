@@ -1,6 +1,7 @@
 import { AuditLog } from '@/types/admin'
 import { supabase } from '@/lib/supabase'
 
+
 export const auditService = {
   async createAuditLog(
     staffId: string,
@@ -13,6 +14,7 @@ export const auditService = {
     const now = new Date().toISOString()
 
     try {
+      const { error } = await supabase!.from('audit_logs').insert([
       if (!supabase) {
         return {
           id,
@@ -61,6 +63,7 @@ export const auditService = {
 
   async getAuditLogs(limit = 50, offset = 0): Promise<AuditLog[]> {
     try {
+      const { data, error } = await supabase!
       if (!supabase) {
         return []
       }
@@ -98,6 +101,7 @@ export const auditService = {
 
   async getAuditLogsByStaff(staffId: string, limit = 50): Promise<AuditLog[]> {
     try {
+      const { data, error } = await supabase!
       if (!supabase) {
         return []
       }
