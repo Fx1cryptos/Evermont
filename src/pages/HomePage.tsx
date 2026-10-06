@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowRight,
-  BarChart3,
   Car,
   Check,
   ChevronRight,
@@ -20,7 +19,7 @@ import {
   X,
 } from 'lucide-react'
 
-const logoUrl = 'https://gateway.pinata.cloud/ipfs/bafkreicrwvjqxdzit62i5e2yvk24atabo2ob3ayyxluwzb2pmyrrzq6z2i'
+const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_6322-Fvq3xmsjYnN3STSbbZwGgSbLWX7M4H.jpeg'
 
 const products = [
   { name: 'Checking Account', description: 'A simpler way to manage everyday money.', benefit: 'No monthly maintenance fees', icon: WalletCards, tone: 'blue' },
@@ -69,9 +68,9 @@ export const HomePage: React.FC = () => {
               <div className="mt-11 flex items-center gap-3 text-sm text-slate-500"><div className="flex -space-x-2"><div className="flex size-8 items-center justify-center rounded-full border-2 border-white bg-[#0504AA] text-[10px] font-bold text-white">JM</div><div className="flex size-8 items-center justify-center rounded-full border-2 border-white bg-[#C9A227] text-[10px] font-bold text-white">RS</div><div className="flex size-8 items-center justify-center rounded-full border-2 border-white bg-slate-400 text-[10px] font-bold text-white">AK</div></div><span>Trusted by members across our community</span></div>
             </div>
             <div className="relative mx-auto w-full max-w-[520px]">
-              <div className="absolute -right-8 -top-8 size-32 rounded-full bg-[#C9A227]/15 blur-2xl" /><div className="absolute -bottom-10 -left-8 size-48 rounded-full bg-[#0504AA]/10 blur-3xl" />
-              <div className="relative rounded-[2rem] bg-[#0504AA] p-3 shadow-2xl shadow-blue-950/20"><div className="rounded-[1.5rem] border border-white/15 bg-gradient-to-br from-[#1514bd] to-[#03036e] p-7 text-white sm:p-9"><div className="flex items-start justify-between"><div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">Evermont member account</p><p className="mt-8 text-sm text-blue-100">Available balance</p><p className="mt-1 text-4xl font-semibold tracking-tight">$24,680<span className="text-2xl">.42</span></p></div><div className="rounded-xl border border-white/20 bg-white/10 p-3"><ShieldCheck className="size-6 text-[#f1d56f]" /></div></div><div className="mt-16 flex items-end justify-between"><div><p className="text-xs text-blue-200">•••• 4821</p><p className="mt-2 text-xs text-blue-200">MEMBER SINCE 2019</p></div><div className="text-right"><p className="text-xs text-blue-200">This month</p><p className="mt-1 font-semibold text-[#f1d56f]">+$1,240.00</p></div></div></div></div>
-              <div className="relative ml-auto mt-[-30px] w-[87%] rounded-2xl border border-slate-200 bg-white p-5 shadow-xl"><div className="flex items-center justify-between"><div><p className="text-xs font-medium text-slate-500">Financial wellness</p><p className="mt-1 text-lg font-semibold">On track for your goals</p></div><div className="flex size-11 items-center justify-center rounded-full bg-[#eaf0ff] text-[#0504AA]"><BarChart3 className="size-5" /></div></div><div className="mt-4 h-2 rounded-full bg-slate-100"><div className="h-2 w-[78%] rounded-full bg-[#C9A227]" /></div><p className="mt-2 text-xs text-slate-500">78% of your annual savings goal</p></div>
+              <div className="absolute -right-8 -top-8 size-32 rounded-full bg-[#C9A227]/20 blur-2xl" /><div className="absolute -bottom-10 -left-8 size-48 rounded-full bg-[#0504AA]/10 blur-3xl" />
+              <div className="relative overflow-hidden rounded-[2rem] bg-[#0504AA] p-3 shadow-2xl shadow-blue-950/20"><div className="flex min-h-[390px] flex-col items-center justify-center rounded-[1.5rem] border border-white/15 bg-gradient-to-br from-[#1514bd] to-[#03036e] p-7 text-center text-white sm:p-9"><img src={logoUrl} alt="Evermont Credit Union official logo" className="w-full max-w-[330px] rounded-xl object-contain" /><p className="mt-6 text-xs font-semibold uppercase tracking-[0.2em] text-[#f1d56f]">Secured private wealth banking</p><p className="mt-3 max-w-xs text-sm leading-6 text-blue-100">Built on trust, powered by community, and designed for your future.</p></div></div>
+              <div className="relative ml-auto mt-[-30px] w-[87%] rounded-2xl border border-slate-200 bg-white p-5 shadow-xl"><div className="flex items-center gap-4"><div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#eaf0ff] text-[#0504AA]"><ShieldCheck className="size-5" /></div><div><p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Member-first protection</p><p className="mt-1 text-lg font-semibold">Confidence in every step</p></div></div></div>
             </div>
           </div>
         </section>
