@@ -42,7 +42,8 @@ export const HomePage: React.FC = () => {
       <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
           <a href="#top" className="flex items-center gap-3" aria-label="Evermont home">
-            <img src={logoUrl} alt="Evermont Credit Union" className="h-11 w-11 object-contain" />
+            <img src={logoUrl} alt="Evermont Credit Union" className="h-11 w-11 object-contain" onError={(event) => { event.currentTarget.style.display = 'none' }} />
+            <span className="text-lg font-bold tracking-[-0.04em] text-[#101533]">Evermont</span>
             <span className="hidden border-l border-slate-200 pl-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 sm:block">Credit Union</span>
           </a>
           <nav className="hidden items-center gap-7 text-sm font-medium text-slate-600 lg:flex" aria-label="Primary navigation">
