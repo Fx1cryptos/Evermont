@@ -1,0 +1,128 @@
+import React, { useState } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
+import { Eye, EyeOff } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { ROUTES } from '@/constants/routes'
+
+export const Login: React.FC = () => {
+  const navigate = useNavigate()
+  const { signIn, error: authError } = useAuth()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setError(null)
+
+    if (!email.trim() || !password.trim()) {
+      setError('Please enter both email and password')
+      return
+    }
+
+    try {
+      setLoading(true)
+      await signIn(email, password)
+      navigate(ROUTES.DASHBOARD)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Login failed'
+      setError(message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center px-4">
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-lg shadow-md border border-evermont-border p-8">
+          {/* Logo/Branding */}
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-lg bg-evermont-blue text-white flex items-center justify-center font-bold text-2xl mx-auto mb-4">
+              E
+            </div>
+            <h1 className="text-2xl font-bold text-evermont-blue">EVERMONT</h1>
+            <p className="text-sm text-gray-600 mt-1">Credit Union</p>
+          </div>
+
+          {/* Form Title */}
+          <h2 className="text-xl font-semibold text-gray-900 text-center mb-6">Sign In</h2>
+
+          {/* Errors */}
+          {(error || authError) && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
+              {error || authError}
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <Input
+              type="email"
+              placeholder="Email address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
+              label="Email"
+              required
+            />
+
+            <div className="relative">
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
+                label="Password"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-10 text-gray-600 hover:text-gray-900"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              className="w-full"
+              loading={loading}
+              disabled={loading}
+            >
+              {loading ? 'Signing in...' : 'Sign In'}
+            </Button>
+          </form>
+
+          {/* Links */}
+          <div className="mt-6 space-y-3 text-center text-sm">
+            <Link
+              to={ROUTES.FORGOT_PASSWORD}
+              className="block text-evermont-blue hover:underline"
+            >
+              Forgot your password?
+            </Link>
+            <div className="text-gray-600">
+              Don't have an account?{' '}
+              <Link
+                to={ROUTES.REGISTER}
+                className="text-evermont-blue hover:underline font-medium"
+              >
+                Sign Up
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

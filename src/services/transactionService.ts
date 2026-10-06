@@ -2,6 +2,40 @@ import { Transaction } from '@/types'
 import { supabase } from '@/lib/supabase'
 import { DEMO_TRANSACTIONS, DEMO_USER_ID } from '@/data/demoMember'
 
+// Demo transactions (same as in accountService)
+const DEMO_TRANSACTIONS: Transaction[] = [
+  {
+    id: '1',
+    accountId: '1',
+    type: 'debit',
+    amount: '45.99',
+    description: 'Grocery Store - Whole Foods',
+    status: 'completed',
+    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    completedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: '2',
+    accountId: '1',
+    type: 'credit',
+    amount: '2500.00',
+    description: 'Direct Deposit - Salary',
+    status: 'completed',
+    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    completedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: '3',
+    accountId: '1',
+    type: 'debit',
+    amount: '1200.00',
+    description: 'Rent Payment - Monthly',
+    status: 'completed',
+    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    completedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+]
+
 export interface TransactionFilters {
   accountId?: string
   type?: 'debit' | 'credit'
@@ -36,6 +70,14 @@ export const transactionService = {
     }
     try {
       let query = supabase!
+      if (!supabase) {
+        return DEMO_TRANSACTIONS.slice(
+          filters.offset || 0,
+          (filters.offset || 0) + (filters.limit || 10)
+        )
+      }
+
+      let query = supabase
         .from('transactions')
         .select('*')
         .eq('user_id', userId)
@@ -105,6 +147,11 @@ export const transactionService = {
     }
     try {
       const { data, error } = await supabase!
+      if (!supabase) {
+        return DEMO_TRANSACTIONS.find((txn) => txn.id === transactionId) || null
+      }
+
+      const { data, error } = await supabase
         .from('transactions')
         .select('*')
         .eq('id', transactionId)
@@ -145,7 +192,20 @@ export const transactionService = {
     const now = new Date().toISOString()
 
     try {
-      const { error } = await supabase!.from('transactions').insert([
+      if (!supabase) {
+        return {
+          id,
+          accountId: sourceAccountId,
+          type: 'debit',
+          amount,
+          description: `Transfer to ${recipientName}: ${description}`,
+          status: 'completed',
+          createdAt: now,
+          completedAt: now,
+        }
+      }
+
+      const { error } = await supabase.from('transactions').insert([
         {
           id,
           user_id: userId,

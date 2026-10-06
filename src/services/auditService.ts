@@ -15,6 +15,20 @@ export const auditService = {
 
     try {
       const { error } = await supabase!.from('audit_logs').insert([
+      if (!supabase) {
+        return {
+          id,
+          staffId,
+          action,
+          resourceType,
+          resourceId,
+          details,
+          status: 'success',
+          timestamp: now,
+        }
+      }
+
+      const { data, error } = await supabase.from('audit_logs').insert([
         {
           id,
           staff_id: staffId,
@@ -47,12 +61,14 @@ export const auditService = {
     }
   },
 
-  async getAuditLogs(
-    limit = 50,
-    offset = 0
-  ): Promise<AuditLog[]> {
+  async getAuditLogs(limit = 50, offset = 0): Promise<AuditLog[]> {
     try {
       const { data, error } = await supabase!
+      if (!supabase) {
+        return []
+      }
+
+      const { data, error } = await supabase
         .from('audit_logs')
         .select('*')
         .order('timestamp', { ascending: false })
@@ -83,12 +99,14 @@ export const auditService = {
     }
   },
 
-  async getAuditLogsByStaff(
-    staffId: string,
-    limit = 50
-  ): Promise<AuditLog[]> {
+  async getAuditLogsByStaff(staffId: string, limit = 50): Promise<AuditLog[]> {
     try {
       const { data, error } = await supabase!
+      if (!supabase) {
+        return []
+      }
+
+      const { data, error } = await supabase
         .from('audit_logs')
         .select('*')
         .eq('staff_id', staffId)
