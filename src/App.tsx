@@ -4,6 +4,8 @@ import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage'
 import { MemberDetailPage } from '@/pages/admin/MemberDetailPage'
 import { AccountHistoryPage } from '@/pages/admin/AccountHistoryPage'
 import { Login } from '@/pages/auth/Login'
+import { Register } from '@/pages/auth/Register'
+import { MemberDashboardPage } from '@/pages/MemberDashboardPage'
 import { HomePage } from '@/pages/HomePage'
 import { ROUTES } from '@/constants/routes'
 
@@ -13,6 +15,8 @@ export const App: React.FC = () => {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path={ROUTES.LOGIN} element={<Login />} />
+        <Route path={ROUTES.REGISTER} element={<Register />} />
+        <Route path={ROUTES.DASHBOARD} element={<MemberDashboardPage />} />
         <Route path="/admin" element={<AdminDashboardPage />} />
         <Route path="/admin/members/:id" element={<MemberDetailPage />} />
         <Route path="/admin/accounts/:id" element={<AccountHistoryPage />} />

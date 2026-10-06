@@ -19,7 +19,7 @@ export interface AuthContextType {
   user: User | null
   loading: boolean
   error: string | null
-  signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<void>
+  signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<{ user: unknown; session: unknown }>
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
