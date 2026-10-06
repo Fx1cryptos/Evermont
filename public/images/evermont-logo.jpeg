@@ -1,0 +1,127 @@
+Continue working on the existing Evermont Credit Union project. Do not rebuild or replace the existing application.
+
+HOMEPAGE REBRAND
+
+Redesign the public homepage to look like a professional Secured Private Wealth Bank / Credit Union.
+
+Remove the public homepage “Evermont Member Account” balance card, fake balance, member since date, and financial wellness dashboard. These belong inside the authenticated member dashboard, not the public homepage.
+
+Create a professional hero section:
+
+EVERMONT CREDIT UNION
+Secured Private Wealth Banking
+Your money. Your community. Your future.
+
+Add clear buttons:
+
+* Become a Member
+* Member Login
+* Explore Accounts
+
+Use Evermont branding:
+
+* Royal Blue: #0504AA
+* White: #FFFFFF
+* Gold: #C9A227
+
+Make the homepage feel secure, premium, trustworthy, modern, and established.
+
+BANKING PRODUCTS
+
+Display these prominently on the homepage:
+
+Everyday Banking
+
+* Checking Account
+* Savings Account
+* Credit Card
+
+Borrowing
+
+* Personal Loan
+* Auto Loan
+* Crypto Loan
+
+Retirement
+
+* 401(k)
+
+Use the existing Pinata/IPFS configuration and display the correct CID asset for each product. Do not show raw CIDs as the visual.
+
+Make every product card clickable and use these routes where they already exist:
+
+Use the following CIDs for the corresponding product categories:
+
+Checking Account
+
+CID:
+bafkreidchfnomj35rvey7yabgyvckshfm4s56onupq2g5nuhsf5cbuzbwy
+
+Savings Account
+
+CID:
+bafybeidiwp4dtjw2662f5vqwollfbtfj7dfmuk746kwsxiy2fkaryb7kva
+
+Credit Card
+
+CID:
+bafkreibw4situowzxkn7xeaupaxltjbqwffw44hrstgp6er27lyx2fyymq
+
+401(k)
+
+CID:
+bafkreiarkceaf2lkozxg4donpczcgxv7nwxtukvrvh2j4d7dzajfqmn4qm
+
+Crypto Loan
+
+CID:
+bafkreiahf6sasjnaxbwvpiylqd3k3dyeos32dwlpb6qyir6u3v4cmvybpm
+
+Personal Loan
+
+CID:
+bafybeifr5exhupokbda4vilfwuuqkhkogxtq4lzbt7huciou6t3jkd2eja
+
+Auto Loan
+
+CID:
+bafybeifk33kwar6p5myte4d3a6gwovyiutnip75t2onj2kbxtmdsjv7bxe
+
+1. PINATA/IPFS DISPLAY
+
+For each product category, resolve the CID through the existing Pinata/IPFS gateway configuration used by the project.
+
+Do not display the raw CID as the main visual element.
+
+Reuse existing routes instead of creating duplicates.
+
+PINATA ASSETS
+
+Use the exact CIDs already provided in the existing project for each corresponding product. Do not replace them with stock images or unrelated placeholders.
+
+Official Evermont logo CID:
+bafkreicrwvjqxdzit62i5e2yvk24atabo2ob3ayyxluwzb2pmyrrzq6z2i
+
+Keep the official logo unchanged.
+
+AI CUSTOMER CARE
+
+Add a professional AI Customer Care feature available from the homepage and member area.
+
+Create a floating “Evermont AI Customer Care” button/chat interface where visitors and members can ask questions about Evermont products, accounts, loans, security, and general support.
+
+Connect customer support/contact requests to:
+
+evermontcreditunion@gmail.com
+
+Include an option such as “Contact a Human Support Agent” that sends the customer’s message and contact details to the Evermont support email.
+
+Do not allow the AI to claim that it completed real banking transactions, changed balances, approved loans, or performed account actions unless those functions are actually connected to the backend.
+
+IMPORTANT
+
+Keep the existing Supabase authentication, member dashboard, Admin Dashboard, and existing functionality intact.
+
+Do not create fake financial activity.
+
+Ensure the homepage and product sections are responsive, professional, accessible, and free of console/build errors.
