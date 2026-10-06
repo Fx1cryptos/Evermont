@@ -16,9 +16,14 @@ body {
   @apply bg-evermont-light text-gray-900 font-sans;
 }
 
-/* Smooth transitions */
-* {
-  @apply transition-colors duration-200;
+html {
+  scroll-behavior: smooth;
+}
+
+/* Keep motion purposeful while respecting user preferences. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
 
 /* Focus states for accessibility */
