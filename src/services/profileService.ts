@@ -1,6 +1,6 @@
 import { Profile, ValidationError } from '@/types'
 import { supabase } from '@/lib/supabase'
-import { validateEmail, validateName, validatePhone, validateZipCode, combineErrors } from '@/utils/validation'
+import { validateEmail, validateName, validatePhone, validateZipCode } from '@/utils/validation'
 
 const DEMO_PROFILE: Profile = {
   id: 'demo-user',

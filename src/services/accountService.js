@@ -24,38 +24,6 @@ const DEMO_ACCOUNTS = [
         updatedAt: new Date().toISOString(),
     },
 ];
-const DEMO_TRANSACTIONS = [
-    {
-        id: '1',
-        accountId: '1',
-        type: 'debit',
-        amount: '45.99',
-        description: 'Grocery Store - Whole Foods',
-        status: 'completed',
-        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        completedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-        id: '2',
-        accountId: '1',
-        type: 'credit',
-        amount: '2500.00',
-        description: 'Direct Deposit - Salary',
-        status: 'completed',
-        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        completedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-        id: '3',
-        accountId: '1',
-        type: 'debit',
-        amount: '1200.00',
-        description: 'Rent Payment - Monthly',
-        status: 'completed',
-        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-        completedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-];
 export const accountService = {
     async getAccounts(userId) {
         try {

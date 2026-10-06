@@ -26,7 +26,7 @@ export const auditService = {
         }
       }
 
-      const { data, error } = await supabase.from('audit_logs').insert([
+      const { error } = await supabase.from('audit_logs').insert([
         {
           id,
           staff_id: staffId,

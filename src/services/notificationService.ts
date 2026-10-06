@@ -1,7 +1,5 @@
 import { Notification, NotificationPreference, NotificationType } from '@/types'
 import { supabase } from '@/lib/supabase'
-import { v4 as uuidv4 } from 'uuid'
-
 const DEMO_NOTIFICATIONS: Notification[] = [
   {
     id: '1',

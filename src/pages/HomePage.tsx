@@ -4,7 +4,6 @@ import {
   ArrowRight,
   Car,
   Check,
-  ChevronRight,
   CreditCard,
   ExternalLink,
   Gem,
