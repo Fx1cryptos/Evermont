@@ -70,7 +70,6 @@ export const HomePage: React.FC = () => {
             <div className="relative mx-auto w-full max-w-[520px]">
               <div className="absolute -right-8 -top-8 size-32 rounded-full bg-[#C9A227]/20 blur-2xl" /><div className="absolute -bottom-10 -left-8 size-48 rounded-full bg-[#0504AA]/10 blur-3xl" />
               <div className="relative overflow-hidden rounded-[2rem] bg-[#0504AA] p-3 shadow-2xl shadow-blue-950/20"><div className="flex min-h-[390px] flex-col items-center justify-center rounded-[1.5rem] border border-white/15 bg-gradient-to-br from-[#1514bd] to-[#03036e] p-7 text-center text-white sm:p-9"><img src={logoUrl} alt="Evermont Credit Union official logo" className="w-full max-w-[330px] rounded-xl object-contain" /><p className="mt-6 text-xs font-semibold uppercase tracking-[0.2em] text-[#f1d56f]">Secured private wealth banking</p><p className="mt-3 max-w-xs text-sm leading-6 text-blue-100">Built on trust, powered by community, and designed for your future.</p></div></div>
-              <div className="relative ml-auto mt-[-30px] w-[87%] rounded-2xl border border-slate-200 bg-white p-5 shadow-xl"><div className="flex items-center gap-4"><div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#eaf0ff] text-[#0504AA]"><ShieldCheck className="size-5" /></div><div><p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Member-first protection</p><p className="mt-1 text-lg font-semibold">Confidence in every step</p></div></div></div>
             </div>
           </div>
         </section>
