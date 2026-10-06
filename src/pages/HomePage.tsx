@@ -19,7 +19,8 @@ import {
   X,
 } from 'lucide-react'
 
-const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_6322-Fvq3xmsjYnN3STSbbZwGgSbLWX7M4H.jpeg'
+const logoUrl = 'https://gateway.pinata.cloud/ipfs/bafkreicrwvjqxdzit62i5e2yvk24atabo2ob3ayyxluwzb2pmyrrzq6z2i'
+const logoFallbackUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_6322-Fvq3xmsjYnN3STSbbZwGgSbLWX7M4H.jpeg'
 
 const products = [
   { name: 'Checking Account', description: 'A simpler way to manage everyday money.', benefit: 'No monthly maintenance fees', icon: WalletCards, tone: 'blue' },
@@ -41,7 +42,7 @@ export const HomePage: React.FC = () => {
       <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
           <a href="#top" className="flex items-center gap-3" aria-label="Evermont home">
-            <img src={logoUrl} alt="Evermont Credit Union" className="h-11 w-11 object-contain" onError={(event) => { event.currentTarget.style.display = 'none' }} />
+            <img src={logoUrl} alt="Evermont Credit Union" className="h-11 w-11 object-contain" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = logoFallbackUrl }} />
             <span className="text-lg font-bold tracking-[-0.04em] text-[#101533]">Evermont</span>
             <span className="hidden border-l border-slate-200 pl-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 sm:block">Credit Union</span>
           </a>
@@ -59,17 +60,13 @@ export const HomePage: React.FC = () => {
 
       <main id="top">
         <section className="relative overflow-hidden bg-white">
-          <div className="mx-auto grid max-w-7xl items-center gap-14 px-5 py-20 lg:grid-cols-[1.03fr_.97fr] lg:px-8 lg:py-28">
+          <div className="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-28">
             <div className="relative z-10">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#C9A227]/30 bg-[#fffaf0] px-3 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-[#8d6e0c]"><Sparkles className="size-3.5" /> Banking, with belonging</div>
               <h1 className="max-w-2xl text-5xl font-semibold leading-[1.05] tracking-[-0.045em] text-[#101533] sm:text-6xl lg:text-[72px]">Your money.<br /><span className="text-[#0504AA]">Your community.</span><br />Your future.</h1>
               <p className="mt-7 max-w-xl text-lg leading-8 text-slate-600">Modern banking built around real life. Save with confidence, borrow with clarity, and plan for what comes next with a team that is invested in your success.</p>
               <div className="mt-9 flex flex-wrap items-center gap-4"><a href="#open-account" className="inline-flex items-center gap-2 rounded-full bg-[#0504AA] px-6 py-3.5 text-sm font-semibold text-white shadow-xl shadow-blue-900/20 transition hover:-translate-y-0.5 hover:bg-[#0807c8]">Open an Account <ArrowRight className="size-4" /></a><Link to="/login" className="rounded-full border border-slate-300 bg-white px-6 py-3.5 text-sm font-semibold text-[#0504AA] transition hover:border-[#0504AA]">Sign In</Link></div>
               <div className="mt-11 flex items-center gap-3 text-sm text-slate-500"><div className="flex -space-x-2"><div className="flex size-8 items-center justify-center rounded-full border-2 border-white bg-[#0504AA] text-[10px] font-bold text-white">JM</div><div className="flex size-8 items-center justify-center rounded-full border-2 border-white bg-[#C9A227] text-[10px] font-bold text-white">RS</div><div className="flex size-8 items-center justify-center rounded-full border-2 border-white bg-slate-400 text-[10px] font-bold text-white">AK</div></div><span>Trusted by members across our community</span></div>
-            </div>
-            <div className="relative mx-auto w-full max-w-[520px]">
-              <div className="absolute -right-8 -top-8 size-32 rounded-full bg-[#C9A227]/20 blur-2xl" /><div className="absolute -bottom-10 -left-8 size-48 rounded-full bg-[#0504AA]/10 blur-3xl" />
-              <div className="relative overflow-hidden rounded-[2rem] bg-[#0504AA] p-3 shadow-2xl shadow-blue-950/20"><div className="flex min-h-[390px] flex-col items-center justify-center rounded-[1.5rem] border border-white/15 bg-gradient-to-br from-[#1514bd] to-[#03036e] p-7 text-center text-white sm:p-9"><img src={logoUrl} alt="Evermont Credit Union official logo" className="w-full max-w-[330px] rounded-xl object-contain" /><p className="mt-6 text-xs font-semibold uppercase tracking-[0.2em] text-[#f1d56f]">Secured private wealth banking</p><p className="mt-3 max-w-xs text-sm leading-6 text-blue-100">Built on trust, powered by community, and designed for your future.</p></div></div>
             </div>
           </div>
         </section>
@@ -83,7 +80,7 @@ export const HomePage: React.FC = () => {
         <section id="open-account" className="bg-[#eef1ff]"><div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-7 px-5 py-16 sm:flex-row sm:items-center lg:px-8"><div><p className="text-sm font-bold uppercase tracking-[0.18em] text-[#0504AA]">Start where you are</p><h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Your future has room to grow.</h2></div><a href="#top" className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[#0504AA] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-900/15 transition hover:bg-[#0807c8]">Open an Account <ArrowRight className="size-4" /></a></div></section>
       </main>
 
-      <footer id="contact" className="bg-white"><div className="mx-auto max-w-7xl px-5 py-12 lg:px-8"><div className="flex flex-col justify-between gap-10 border-b border-slate-200 pb-10 md:flex-row"><div><img src={logoUrl} alt="Evermont Credit Union" className="h-12 w-12 object-contain" /><p className="mt-4 max-w-xs text-sm leading-6 text-slate-500">Your money. Your community. Your future.</p></div><div className="grid grid-cols-2 gap-x-14 gap-y-4 text-sm text-slate-500 sm:grid-cols-3"><a href="#products" className="hover:text-[#0504AA]">Products</a><a href="#loans" className="hover:text-[#0504AA]">Loans</a><a href="#security" className="hover:text-[#0504AA]">Security</a><a href="#about" className="hover:text-[#0504AA]">About</a><a href="#contact" className="hover:text-[#0504AA]">Contact</a><a href="#contact" className="hover:text-[#0504AA]">Support</a></div></div><div className="flex flex-col justify-between gap-3 pt-6 text-xs text-slate-400 sm:flex-row"><span>© 2026 Evermont Credit Union. All rights reserved.</span><div className="flex gap-5"><a href="#privacy" className="hover:text-[#0504AA]">Privacy</a><a href="#terms" className="hover:text-[#0504AA]">Terms</a><a href="#security" className="hover:text-[#0504AA]">Security</a></div></div></div></footer>
+      <footer id="contact" className="bg-white"><div className="mx-auto max-w-7xl px-5 py-12 lg:px-8"><div className="flex flex-col justify-between gap-10 border-b border-slate-200 pb-10 md:flex-row"><div><img src={logoUrl} alt="Evermont Credit Union" className="h-12 w-12 object-contain" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = logoFallbackUrl }} /><p className="mt-4 max-w-xs text-sm leading-6 text-slate-500">Your money. Your community. Your future.</p></div><div className="grid grid-cols-2 gap-x-14 gap-y-4 text-sm text-slate-500 sm:grid-cols-3"><a href="#products" className="hover:text-[#0504AA]">Products</a><a href="#loans" className="hover:text-[#0504AA]">Loans</a><a href="#security" className="hover:text-[#0504AA]">Security</a><a href="#about" className="hover:text-[#0504AA]">About</a><a href="#contact" className="hover:text-[#0504AA]">Contact</a><a href="#contact" className="hover:text-[#0504AA]">Support</a></div></div><div className="flex flex-col justify-between gap-3 pt-6 text-xs text-slate-400 sm:flex-row"><span>© 2026 Evermont Credit Union. All rights reserved.</span><div className="flex gap-5"><a href="#privacy" className="hover:text-[#0504AA]">Privacy</a><a href="#terms" className="hover:text-[#0504AA]">Terms</a><a href="#security" className="hover:text-[#0504AA]">Security</a></div></div></div></footer>
     </div>
   )
 }
