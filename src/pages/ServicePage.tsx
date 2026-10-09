@@ -86,7 +86,7 @@ export const SERVICE_ROUTES = {
 
 export type ServiceKey = keyof typeof serviceContent
 
-export const serviceHref = (service: ServiceKey) => `${SERVICE_ROUTES[service]}`
+export const serviceHref = (service: ServiceKey) => SERVICE_ROUTES[service as keyof typeof SERVICE_ROUTES]
 
 export const servicePageLabel = (service: ServiceKey) => serviceContent[service].eyebrow
 
