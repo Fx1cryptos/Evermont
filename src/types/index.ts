@@ -60,6 +60,8 @@ export interface Transaction {
   type: 'debit' | 'credit'
   amount: string
   description: string
+  category?: string
+  balanceAfter?: string
   status: 'pending' | 'completed' | 'failed'
   createdAt: string
   completedAt: string | null
