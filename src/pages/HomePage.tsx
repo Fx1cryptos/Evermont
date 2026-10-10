@@ -19,8 +19,9 @@ import {
   X,
 } from 'lucide-react'
 
-const logoUrl = 'https://gateway.pinata.cloud/ipfs/bafkreicrwvjqxdzit62i5e2yvk24atabo2ob3ayyxluwzb2pmyrrzq6z2i'
-const logoFallbackUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_6322-Fvq3xmsjYnN3STSbbZwGgSbLWX7M4H.jpeg'
+const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_6322-tg87iWvXcAFbQxeY6odhRyl9qwRpt9.jpeg'
+const heroImageUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_6331-0fXcpssXQpdYLsKLCpywnyJf3yBqzb.jpeg'
+const logoFallbackUrl = logoUrl
 
 const pinataGateway = 'https://gateway.pinata.cloud/ipfs/'
 
@@ -62,13 +63,16 @@ export const HomePage: React.FC = () => {
 
       <main id="top">
         <section className="relative overflow-hidden bg-white">
-          <div className="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-28">
+          <div className="mx-auto grid max-w-7xl items-center gap-12 px-5 py-16 lg:grid-cols-[0.9fr_1.1fr] lg:px-8 lg:py-24">
             <div className="relative z-10">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#C9A227]/30 bg-[#fffaf0] px-3 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-[#8d6e0c]"><Sparkles className="size-3.5" /> Banking, with belonging</div>
               <h1 className="max-w-2xl text-5xl font-semibold leading-[1.05] tracking-[-0.045em] text-[#101533] sm:text-6xl lg:text-[72px]">Your money.<br /><span className="text-[#0504AA]">Your community.</span><br />Your future.</h1>
               <p className="mt-7 max-w-xl text-lg leading-8 text-slate-600">Modern banking built around real life. Save with confidence, borrow with clarity, and plan for what comes next with a team that is invested in your success.</p>
               <div className="mt-9 flex flex-wrap items-center gap-4"><Link to="/register" className="inline-flex items-center gap-2 rounded-full bg-[#0504AA] px-6 py-3.5 text-sm font-semibold text-white shadow-xl shadow-blue-900/20 transition hover:-translate-y-0.5 hover:bg-[#0807c8]">Open an Account <ArrowRight className="size-4" /></Link><Link to="/login" className="rounded-full border border-slate-300 bg-white px-6 py-3.5 text-sm font-semibold text-[#0504AA] transition hover:border-[#0504AA]">Sign In</Link></div>
               <div className="mt-11 flex items-center gap-3 text-sm text-slate-500"><div className="flex -space-x-2"><div className="flex size-8 items-center justify-center rounded-full border-2 border-white bg-[#0504AA] text-[10px] font-bold text-white">JM</div><div className="flex size-8 items-center justify-center rounded-full border-2 border-white bg-[#C9A227] text-[10px] font-bold text-white">RS</div><div className="flex size-8 items-center justify-center rounded-full border-2 border-white bg-slate-400 text-[10px] font-bold text-white">AK</div></div><span>Trusted by members across our community</span></div>
+            </div>
+            <div className="relative overflow-hidden rounded-[2rem] border border-[#C9A227]/60 bg-[#0504AA] p-2 shadow-2xl shadow-blue-950/20">
+              <img src={heroImageUrl} alt="Evermont Private Bank wealth management and family office services" className="h-auto w-full rounded-[1.5rem] object-cover" />
             </div>
           </div>
         </section>
