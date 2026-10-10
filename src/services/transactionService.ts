@@ -1,40 +1,6 @@
 import { Transaction } from '@/types'
 import { supabase } from '@/lib/supabase'
 
-// Demo transactions (same as in accountService)
-const DEMO_TRANSACTIONS: Transaction[] = [
-  {
-    id: '1',
-    accountId: '1',
-    type: 'debit',
-    amount: '45.99',
-    description: 'Grocery Store - Whole Foods',
-    status: 'completed',
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    completedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '2',
-    accountId: '1',
-    type: 'credit',
-    amount: '2500.00',
-    description: 'Direct Deposit - Salary',
-    status: 'completed',
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    completedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '3',
-    accountId: '1',
-    type: 'debit',
-    amount: '1200.00',
-    description: 'Rent Payment - Monthly',
-    status: 'completed',
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    completedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-]
-
 export interface TransactionFilters {
   accountId?: string
   type?: 'debit' | 'credit'
@@ -45,116 +11,104 @@ export interface TransactionFilters {
   offset?: number
 }
 
+const mapLedgerEntry = (entry: {
+  id: string
+  account_id: string
+  entry_type: string
+  amount: string | number
+  description: string
+  category?: string
+  status: string
+  balance_after?: string | number | null
+  created_at: string
+}): Transaction => ({
+  id: entry.id,
+  accountId: entry.account_id,
+  type:
+    entry.entry_type === 'withdrawal' || entry.entry_type === 'fee'
+      ? 'debit'
+      : 'credit',
+  amount: String(entry.amount),
+  description: entry.description,
+  category: entry.category,
+  balanceAfter: entry.balance_after == null ? undefined : String(entry.balance_after),
+  status: entry.status === 'reversed' ? 'failed' : entry.status === 'pending' ? 'pending' : entry.status === 'failed' ? 'failed' : 'completed',
+  createdAt: entry.created_at,
+  completedAt: entry.status === 'completed' ? entry.created_at : null,
+})
+
 export const transactionService = {
   async getTransactions(
     userId: string,
     filters: TransactionFilters = {}
   ): Promise<Transaction[]> {
-    try {
-      if (!supabase) {
-        return DEMO_TRANSACTIONS.slice(
-          filters.offset || 0,
-          (filters.offset || 0) + (filters.limit || 10)
-        )
-      }
+    let query = supabase
+      .from('ledger_entries')
+      .select('*')
+      .eq('member_id', userId)
+      .order('created_at', { ascending: false })
 
-      let query = supabase
-        .from('transactions')
-        .select('*')
-        .eq('user_id', userId)
-
-      if (filters.accountId) {
-        query = query.eq('account_id', filters.accountId)
-      }
-
-      if (filters.type) {
-        query = query.eq('type', filters.type)
-      }
-
-      if (filters.status) {
-        query = query.eq('status', filters.status)
-      }
-
-      if (filters.startDate) {
-        query = query.gte('created_at', filters.startDate.toISOString())
-      }
-
-      if (filters.endDate) {
-        query = query.lte('created_at', filters.endDate.toISOString())
-      }
-
-      query = query.order('created_at', { ascending: false })
-
-      if (filters.limit) {
-        query = query.limit(filters.limit)
-      }
-
-      if (filters.offset) {
-        query = query.range(filters.offset, filters.offset + (filters.limit || 10) - 1)
-      }
-
-      const { data, error } = await query
-
-      if (error) {
-        console.warn('Failed to fetch transactions from Supabase:', error)
-        return DEMO_TRANSACTIONS.slice(
-          filters.offset || 0,
-          (filters.offset || 0) + (filters.limit || 10)
-        )
-      }
-
-      return (
-        data?.map((txn) => ({
-          id: txn.id,
-          accountId: txn.account_id,
-          type: txn.type,
-          amount: txn.amount,
-          description: txn.description,
-          status: txn.status,
-          createdAt: txn.created_at,
-          completedAt: txn.completed_at,
-        })) || []
-      )
-    } catch (error) {
-      console.error('Error fetching transactions:', error)
-      return DEMO_TRANSACTIONS
+    if (filters.accountId) {
+      query = query.eq('account_id', filters.accountId)
     }
+
+    if (filters.type) {
+      const entryTypes =
+        filters.type === 'debit'
+          ? ['withdrawal', 'fee']
+          : ['deposit', 'transfer', 'interest', 'opening_balance']
+
+      query = query.in('entry_type', entryTypes)
+    }
+
+    if (filters.status) {
+      query = query.eq('status', filters.status)
+    }
+
+    if (filters.startDate) {
+      query = query.gte('created_at', filters.startDate.toISOString())
+    }
+
+    if (filters.endDate) {
+      query = query.lte('created_at', filters.endDate.toISOString())
+    }
+
+    if (filters.limit) {
+      const offset = filters.offset || 0
+      query = query.range(offset, offset + filters.limit - 1)
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+      console.error('Failed to fetch ledger entries:', error)
+      throw new Error('Unable to load transaction history.')
+    }
+
+    return (data || []).map(mapLedgerEntry)
   },
 
-  async getTransactionById(transactionId: string, userId: string): Promise<Transaction | null> {
-    try {
-      if (!supabase) {
-        return DEMO_TRANSACTIONS.find((txn) => txn.id === transactionId) || null
+  async getTransactionById(
+    transactionId: string,
+    userId: string
+  ): Promise<Transaction | null> {
+    const { data, error } = await supabase
+      .from('ledger_entries')
+      .select('*')
+      .eq('id', transactionId)
+      .eq('member_id', userId)
+      .single()
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return null
       }
 
-      const { data, error } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('id', transactionId)
-        .eq('user_id', userId)
-        .single()
-
-      if (error) {
-        console.warn('Failed to fetch transaction:', error)
-        return DEMO_TRANSACTIONS.find((txn) => txn.id === transactionId) || null
-      }
-
-      return data
-        ? {
-            id: data.id,
-            accountId: data.account_id,
-            type: data.type,
-            amount: data.amount,
-            description: data.description,
-            status: data.status,
-            createdAt: data.created_at,
-            completedAt: data.completed_at,
-          }
-        : null
-    } catch (error) {
-      console.error('Error fetching transaction:', error)
-      return DEMO_TRANSACTIONS.find((txn) => txn.id === transactionId) || null
+      console.error('Failed to fetch transaction:', error)
+      throw new Error('Unable to load transaction.')
     }
+
+    return data ? mapLedgerEntry(data) : null
   },
 
   async createTransfer(
@@ -164,54 +118,39 @@ export const transactionService = {
     amount: string,
     description: string
   ): Promise<Transaction> {
-    const id = crypto.randomUUID()
-    const now = new Date().toISOString()
+    const numericAmount = Number(amount)
 
-    try {
-      if (!supabase) {
-        return {
-          id,
-          accountId: sourceAccountId,
-          type: 'debit',
-          amount,
-          description: `Transfer to ${recipientName}: ${description}`,
-          status: 'completed',
-          createdAt: now,
-          completedAt: now,
-        }
-      }
+    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+      throw new Error('Transfer amount must be greater than zero.')
+    }
 
-      const { error } = await supabase.from('transactions').insert([
-        {
-          id,
-          user_id: userId,
-          account_id: sourceAccountId,
-          type: 'debit',
-          amount,
-          description: `Transfer to ${recipientName}: ${description}`,
-          status: 'completed',
-          created_at: now,
-          completed_at: now,
-        },
-      ])
+    const referenceId = `TRF-${crypto.randomUUID()}`
 
-      if (error) {
-        console.warn('Failed to create transfer in Supabase:', error)
-      }
+    const { error } = await supabase.rpc('create_ledger_entry', {
+      p_account_id: sourceAccountId,
+      p_member_id: userId,
+      p_reference_id: referenceId,
+      p_entry_type: 'withdrawal',
+      p_amount: numericAmount,
+      p_description: `Transfer to ${recipientName}: ${description}`,
+      p_category: 'transfer',
+      p_status: 'completed',
+    })
 
-      return {
-        id,
-        accountId: sourceAccountId,
-        type: 'debit',
-        amount,
-        description: `Transfer to ${recipientName}: ${description}`,
-        status: 'completed',
-        createdAt: now,
-        completedAt: now,
-      }
-    } catch (error) {
-      console.error('Error creating transfer:', error)
-      throw new Error('Failed to create transfer')
+    if (error) {
+      console.error('Failed to create transfer:', error)
+      throw new Error('Transfer could not be completed.')
+    }
+
+    return {
+      id: referenceId,
+      accountId: sourceAccountId,
+      type: 'debit',
+      amount: numericAmount.toFixed(2),
+      description: `Transfer to ${recipientName}: ${description}`,
+      status: 'completed',
+      createdAt: new Date().toISOString(),
+      completedAt: new Date().toISOString(),
     }
   },
 }

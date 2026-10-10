@@ -216,6 +216,11 @@ begin
     raise exception 'account not found';
   end if;
 
+  if p_entry_type in ('withdrawal', 'fee')
+     and p_amount > v_current_balance then
+    raise exception 'insufficient funds';
+  end if;
+
   if p_entry_type in ('withdrawal', 'fee') then
     v_next_balance := v_current_balance - p_amount;
     v_debit := p_amount;
