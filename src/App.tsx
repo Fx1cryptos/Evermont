@@ -7,6 +7,7 @@ import { AccountHistoryPage } from '@/pages/admin/AccountHistoryPage'
 import { Login } from '@/pages/auth/Login'
 import { Register } from '@/pages/auth/Register'
 import { MemberDashboardPage } from '@/pages/MemberDashboardPage'
+import { TransactionsPage } from '@/pages/TransactionsPage'
 import { ServicePage } from '@/pages/ServicePage'
 import { ROUTES } from '@/constants/routes'
 
@@ -26,6 +27,7 @@ export const App: React.FC = () => {
         <Route path={ROUTES.LOGIN} element={<Login />} />
         <Route path={ROUTES.REGISTER} element={<Register />} />
         <Route path={ROUTES.DASHBOARD} element={<MemberDashboardPage />} />
+        <Route path={ROUTES.TRANSACTIONS} element={<TransactionsPage />} />
         <Route path="/services/:service" element={<ServicePage />} />
         <Route path="/admin" element={<AdminDashboardPage />} />
         <Route path="/admin/members/:id" element={<MemberDetailPage />} />
