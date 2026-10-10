@@ -56,13 +56,15 @@ export const Register: React.FC = () => {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md rounded-lg border border-evermont-border bg-white p-8 shadow-md">
-        <div className="mb-7 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-lg bg-evermont-blue text-2xl font-bold text-white">E</div>
-          <h1 className="text-2xl font-bold text-evermont-blue">EVERMONT</h1>
-          <p className="mt-1 text-sm text-gray-600">Credit Union</p>
-        </div>
+    <main className="min-h-screen bg-[#f7f8fc] px-4 py-8 text-[#101533] sm:py-12">
+      <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-md items-center">
+        <div className="w-full rounded-[2rem] border border-slate-200 bg-white p-7 shadow-xl shadow-[#0504AA]/10 sm:p-9">
+          <div className="mb-7 text-center">
+            <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_6322-tg87iWvXcAFbQxeY6odhRyl9qwRpt9.jpeg" alt="Evermont Credit Union" className="mx-auto h-24 w-24 rounded-2xl object-cover shadow-lg ring-4 ring-[#0504AA]/10" />
+            <p className="mt-5 text-xs font-bold uppercase tracking-[0.22em] text-[#C9A227]">Evermont Private Wealth</p>
+            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-[#0504AA]">Become a member</h1>
+            <p className="mt-2 text-sm text-slate-500">A secure foundation for your financial future</p>
+          </div>
         <h2 className="mb-6 text-center text-xl font-semibold text-gray-900">Create your member account</h2>
         {error && <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
         {message && <div role="status" className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">{message}</div>}
@@ -85,9 +87,10 @@ export const Register: React.FC = () => {
           href="https://evermont.builder.cloud"
           className="mt-4 block w-full rounded-md border border-[#0504AA] px-4 py-3 text-center text-sm font-semibold text-[#0504AA] transition-colors hover:bg-[#0504AA] hover:text-white"
         >
-          Visit the public site
+          Visit the Homepage
         </a>
         <p className="mt-6 text-center text-sm text-gray-600">Already a member? <Link to={ROUTES.LOGIN} className="font-medium text-evermont-blue hover:underline">Sign in</Link></p>
+        </div>
       </div>
     </main>
   )

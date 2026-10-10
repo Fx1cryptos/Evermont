@@ -37,16 +37,14 @@ export const Login: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-md border border-evermont-border p-8">
-          {/* Logo/Branding */}
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-lg bg-evermont-blue text-white flex items-center justify-center font-bold text-2xl mx-auto mb-4">
-              E
-            </div>
-            <h1 className="text-2xl font-bold text-evermont-blue">EVERMONT</h1>
-            <p className="text-sm text-gray-600 mt-1">Credit Union</p>
+    <div className="min-h-screen bg-[#f7f8fc] px-4 py-8 text-[#101533] sm:py-12">
+      <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-md items-center">
+        <div className="w-full rounded-[2rem] border border-slate-200 bg-white p-7 shadow-xl shadow-[#0504AA]/10 sm:p-9">
+          <div className="mb-8 text-center">
+            <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_6322-tg87iWvXcAFbQxeY6odhRyl9qwRpt9.jpeg" alt="Evermont Credit Union" className="mx-auto h-24 w-24 rounded-2xl object-cover shadow-lg ring-4 ring-[#0504AA]/10" />
+            <p className="mt-5 text-xs font-bold uppercase tracking-[0.22em] text-[#C9A227]">Evermont Private Wealth</p>
+            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-[#0504AA]">Member sign in</h1>
+            <p className="mt-2 text-sm text-slate-500">Secure access to your Evermont member portal</p>
           </div>
 
           {/* Form Title */}
@@ -107,7 +105,7 @@ export const Login: React.FC = () => {
             href="https://evermont.builder.cloud"
             className="mt-4 block w-full rounded-md border border-[#0504AA] px-4 py-3 text-center text-sm font-semibold text-[#0504AA] transition-colors hover:bg-[#0504AA] hover:text-white"
           >
-            Visit the public site
+            Visit the Homepage
           </a>
 
           {/* Links */}
