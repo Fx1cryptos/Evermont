@@ -11,7 +11,17 @@ export interface TransactionFilters {
   offset?: number
 }
 
-const mapLedgerEntry = (entry: any): Transaction => ({
+const mapLedgerEntry = (entry: {
+  id: string
+  account_id: string
+  entry_type: string
+  amount: string | number
+  description: string
+  category?: string
+  status: string
+  balance_after?: string | number | null
+  created_at: string
+}): Transaction => ({
   id: entry.id,
   accountId: entry.account_id,
   type:
@@ -20,7 +30,9 @@ const mapLedgerEntry = (entry: any): Transaction => ({
       : 'credit',
   amount: String(entry.amount),
   description: entry.description,
-  status: entry.status === 'reversed' ? 'failed' : entry.status,
+  category: entry.category,
+  balanceAfter: entry.balance_after == null ? undefined : String(entry.balance_after),
+  status: entry.status === 'reversed' ? 'failed' : entry.status === 'pending' ? 'pending' : entry.status === 'failed' ? 'failed' : 'completed',
   createdAt: entry.created_at,
   completedAt: entry.status === 'completed' ? entry.created_at : null,
 })
@@ -129,7 +141,6 @@ export const transactionService = {
       console.error('Failed to create transfer:', error)
       throw new Error('Transfer could not be completed.')
     }
-
 
     return {
       id: referenceId,
