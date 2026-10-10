@@ -103,6 +103,13 @@ export const Login: React.FC = () => {
             </Button>
           </form>
 
+          <a
+            href="https://evermont.builder.cloud"
+            className="mt-4 block w-full rounded-md border border-[#0504AA] px-4 py-3 text-center text-sm font-semibold text-[#0504AA] transition-colors hover:bg-[#0504AA] hover:text-white"
+          >
+            Visit the public site
+          </a>
+
           {/* Links */}
           <div className="mt-6 space-y-3 text-center text-sm">
             <Link
