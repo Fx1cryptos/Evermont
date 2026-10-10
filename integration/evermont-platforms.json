@@ -1,0 +1,91 @@
+{
+“project”: {
+“name”: “Evermont Credit Union”,
+“positioning”: “Secured Private Wealth Bank”,
+“tagline”: “Your money. Your community. Your future.”,
+“brand”: {
+“primaryColor”: “#0504AA”,
+“secondaryColor”: “#FFFFFF”,
+“accentColor”: “#C9A227”
+}
+},
+“integrationStatus”: “intended_architecture_not_verified_deployment”,
+“platforms”: {
+“builder”: {
+“name”: “Evermont Builder”,
+“url”: “https://evermont.builder.cloud”,
+“role”: “public_front_door”,
+“responsibilities”: [
+“public_homepage”,
+“brand_information”,
+“financial_product_catalog”,
+“public_contact_information”,
+“navigation_to_functional_portal”
+],
+“integrationStatus”: “existing_site_requires_navigation_verification”
+},
+“v0”: {
+“name”: “Evermont v0/Vercel”,
+“url”: “https://v0-evermont.vercel.app”,
+“role”: “primary_functional_portal”,
+“responsibilities”: [
+“member_registration”,
+“member_login”,
+“member_dashboard”,
+“member_profile”,
+“checking_and_savings_interfaces”,
+“transaction_history”,
+“financial_service_pages”,
+“member_support”,
+“authorized_administration”
+],
+“developmentBranch”: “v0/pin-supabase-project”,
+“latestReportedNavigationCommit”: “780c2ba”,
+“integrationStatus”: “existing_routes_and_deployment_require_verification”
+},
+“bolt”: {
+“name”: “Evermont Bolt”,
+“url”: “https://evermont-credit-unio-2tld.bolt.host”,
+“role”: “existing_project_for_future_evaluation”,
+“responsibilities”: [
+“preserve_existing_application”,
+“audit_existing_features”,
+“review_backend_compatibility”,
+“identify_reusable_functionality”
+],
+“integrationStatus”: “keep_separate_until_reviewed_and_approved”
+}
+},
+“backend”: {
+“provider”: “Supabase”,
+“intendedProjectUrl”: “https://gdodqiwjcezdznzroupw.supabase.co”,
+“intendedProjectReference”: “gdodqiwjcezdznzroupw”,
+“status”: “intended_target_only”,
+“verificationRequired”: [
+“actual_project_connection”,
+“database_schema_compatibility”,
+“authentication_configuration”,
+“row_level_security”,
+“member_data_isolation”,
+“administrator_authorization”
+]
+},
+“navigationRules”: {
+“publicEntryPoint”: “builder”,
+“primaryFunctionalPortal”: “v0”,
+“boltIntegration”: “deferred_pending_review”,
+“useHttps”: true,
+“verifyRoutesBeforeLinking”: true,
+“assumeSharedAuthentication”: false,
+“allowCredentialsInUrlParameters”: false
+},
+“developmentRules”: {
+“preserveExistingCode”: true,
+“inspectBeforeEditing”: true,
+“useFeatureBranches”: true,
+“requireApprovalBeforeDatabaseChanges”: true,
+“requireApprovalBeforeProductionDeployment”: true,
+“requireApprovalBeforeMergingToMain”: true,
+“reportUntestedFeatures”: true
+}
+}

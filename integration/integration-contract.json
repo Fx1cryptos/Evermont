@@ -1,0 +1,150 @@
+{
+“contractVersion”: “1.0.0”,
+“project”: “Evermont Credit Union”,
+“purpose”: “Define the intended integration behavior of the three existing Evermont websites.”,
+“status”: “proposed_contract_pending_implementation_and_testing”,
+“platforms”: {
+“builder”: {
+“url”: “https://evermont.builder.cloud”,
+“role”: “public_front_door”
+},
+“v0”: {
+“url”: “https://v0-evermont.vercel.app”,
+“role”: “primary_functional_portal”
+},
+“bolt”: {
+“url”: “https://evermont-credit-unio-2tld.bolt.host”,
+“role”: “existing_project_for_future_evaluation”
+}
+},
+“navigation”: [
+{
+“id”: “builder-open-account”,
+“sourcePlatform”: “builder”,
+“element”: “Open an Account”,
+“destinationPlatform”: “v0”,
+“destinationPath”: “/register”,
+“requiresRouteVerification”: true,
+“expectedBehavior”: “Open the registration page on the v0 portal.”
+},
+{
+“id”: “builder-member-login”,
+“sourcePlatform”: “builder”,
+“element”: “Member Login”,
+“destinationPlatform”: “v0”,
+“destinationPath”: “/login”,
+“requiresRouteVerification”: true,
+“expectedBehavior”: “Open the verified member login page on the v0 portal.”
+},
+{
+“id”: “builder-financial-product”,
+“sourcePlatform”: “builder”,
+“element”: “Financial product card”,
+“destinationPlatform”: “v0”,
+“destinationPathPattern”: “/services/:service”,
+“requiresRouteVerification”: true,
+“expectedBehavior”: “Open the service page matching the product’s actual configured slug.”
+},
+{
+“id”: “v0-return-to-public-site”,
+“sourcePlatform”: “v0”,
+“element”: “Public website or brand link”,
+“destinationPlatform”: “builder”,
+“destinationPath”: “/”,
+“requiresRouteVerification”: true,
+“expectedBehavior”: “Return to the public Evermont website.”
+},
+{
+“id”: “bolt-preservation”,
+“sourcePlatform”: “bolt”,
+“element”: “Existing application”,
+“destinationPlatform”: “bolt”,
+“destinationPath”: “/”,
+“requiresRouteVerification”: true,
+“expectedBehavior”: “Preserve the existing project and evaluate it before planning integration.”
+}
+],
+“backend”: {
+“provider”: “Supabase”,
+“intendedProjectUrl”: “https://gdodqiwjcezdznzroupw.supabase.co”,
+“intendedProjectReference”: “gdodqiwjcezdznzroupw”,
+“connectionVerified”: false,
+“schemaCompatibilityVerified”: false,
+“authenticationCompatibilityVerified”: false,
+“securityReviewCompleted”: false,
+“requirements”: [
+“Inspect the actual backend configuration of each application.”,
+“Verify database schema compatibility before switching projects.”,
+“Review row-level security and member data isolation.”,
+“Do not assume all applications already share this backend.”
+]
+},
+“security”: {
+“assumeSharedAuthentication”: false,
+“allowPasswordsInUrls”: false,
+“allowSessionTokensInUrls”: false,
+“allowSecretsInRepository”: false,
+“requireBackendAuthorization”: true,
+“requireMemberDataIsolation”: true,
+“requireApprovalForDatabaseChanges”: true,
+“requireApprovalForProductionDeployment”: true
+},
+“developmentWorkflow”: {
+“inspectBeforeEditing”: true,
+“preserveExistingProjects”: true,
+“preferSmallScopedChanges”: true,
+“useFeatureBranches”: true,
+“mergeToMainWithoutApproval”: false,
+“deployWithoutApproval”: false,
+“reportUntestedFeatures”: true
+},
+“acceptanceTests”: [
+{
+“id”: “test-builder-open-account”,
+“description”: “Confirm Open an Account navigates to the verified v0 registration route.”
+},
+{
+“id”: “test-builder-login”,
+“description”: “Confirm Member Login navigates to the verified v0 login route.”
+},
+{
+“id”: “test-product-card-routing”,
+“description”: “Confirm each product card opens the correct existing service slug.”
+},
+{
+“id”: “test-direct-route-loading”,
+“description”: “Confirm service routes load when opened directly.”
+},
+{
+“id”: “test-route-refresh”,
+“description”: “Confirm refreshing a nested v0 route does not produce a routing error.”
+},
+{
+“id”: “test-authentication-boundaries”,
+“description”: “Confirm protected pages enforce authentication and do not assume cross-domain SSO.”
+},
+{
+“id”: “test-backend-configuration”,
+“description”: “Verify the actual Supabase project and schema compatibility.”
+},
+{
+“id”: “test-bolt-preservation”,
+“description”: “Confirm the existing Bolt project remains intact during integration work.”
+}
+],
+“reporting”: {
+“allowedTestStatuses”: [
+“PASS”,
+“FAIL”,
+“NOT TESTED”
+],
+“requiredReportFields”: [
+“testedWebsite”,
+“sourceElement”,
+“destinationUrl”,
+“testStatus”,
+“evidence”,
+“recommendedNextAction”
+]
+}
+}
