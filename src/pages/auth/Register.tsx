@@ -81,6 +81,12 @@ export const Register: React.FC = () => {
           <Input type="password" label="Confirm password" value={form.confirmPassword} onChange={update('confirmPassword')} disabled={loading} required />
           <Button type="submit" variant="primary" size="lg" className="w-full" loading={loading} disabled={loading}>{loading ? 'Creating account...' : 'Create account'}</Button>
         </form>
+        <a
+          href="https://evermont.builder.cloud"
+          className="mt-4 block w-full rounded-md border border-[#0504AA] px-4 py-3 text-center text-sm font-semibold text-[#0504AA] transition-colors hover:bg-[#0504AA] hover:text-white"
+        >
+          Visit the public site
+        </a>
         <p className="mt-6 text-center text-sm text-gray-600">Already a member? <Link to={ROUTES.LOGIN} className="font-medium text-evermont-blue hover:underline">Sign in</Link></p>
       </div>
     </main>
