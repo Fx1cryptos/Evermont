@@ -1,43 +1,9 @@
 import { supabase } from '@/lib/supabase';
-// Demo transactions (same as in accountService)
-const DEMO_TRANSACTIONS = [
-    {
-        id: '1',
-        accountId: '1',
-        type: 'debit',
-        amount: '45.99',
-        description: 'Grocery Store - Whole Foods',
-        status: 'completed',
-        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        completedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-        id: '2',
-        accountId: '1',
-        type: 'credit',
-        amount: '2500.00',
-        description: 'Direct Deposit - Salary',
-        status: 'completed',
-        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        completedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-        id: '3',
-        accountId: '1',
-        type: 'debit',
-        amount: '1200.00',
-        description: 'Rent Payment - Monthly',
-        status: 'completed',
-        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-        completedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-];
 export const transactionService = {
     async getTransactions(userId, filters = {}) {
         try {
-            if (!supabase) {
-                return DEMO_TRANSACTIONS.slice(filters.offset || 0, (filters.offset || 0) + (filters.limit || 10));
-            }
+            if (!supabase)
+                return [];
             let query = supabase
                 .from('transactions')
                 .select('*')
@@ -65,10 +31,8 @@ export const transactionService = {
                 query = query.range(filters.offset, filters.offset + (filters.limit || 10) - 1);
             }
             const { data, error } = await query;
-            if (error) {
-                console.warn('Failed to fetch transactions from Supabase:', error);
-                return DEMO_TRANSACTIONS.slice(filters.offset || 0, (filters.offset || 0) + (filters.limit || 10));
-            }
+            if (error)
+                throw error;
             return (data?.map((txn) => ({
                 id: txn.id,
                 accountId: txn.account_id,
@@ -82,24 +46,21 @@ export const transactionService = {
         }
         catch (error) {
             console.error('Error fetching transactions:', error);
-            return DEMO_TRANSACTIONS;
+            throw error;
         }
     },
     async getTransactionById(transactionId, userId) {
         try {
-            if (!supabase) {
-                return DEMO_TRANSACTIONS.find((txn) => txn.id === transactionId) || null;
-            }
+            if (!supabase)
+                return null;
             const { data, error } = await supabase
                 .from('transactions')
                 .select('*')
                 .eq('id', transactionId)
                 .eq('user_id', userId)
                 .single();
-            if (error) {
-                console.warn('Failed to fetch transaction:', error);
-                return DEMO_TRANSACTIONS.find((txn) => txn.id === transactionId) || null;
-            }
+            if (error)
+                throw error;
             return data
                 ? {
                     id: data.id,
@@ -115,7 +76,7 @@ export const transactionService = {
         }
         catch (error) {
             console.error('Error fetching transaction:', error);
-            return DEMO_TRANSACTIONS.find((txn) => txn.id === transactionId) || null;
+            throw error;
         }
     },
     async createTransfer(userId, sourceAccountId, recipientName, amount, description) {

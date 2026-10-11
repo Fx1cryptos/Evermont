@@ -18,6 +18,12 @@ const PortalEntry: React.FC = () => {
   return <Navigate to={user ? ROUTES.DASHBOARD : ROUTES.LOGIN} replace />
 }
 
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, loading } = useAuth()
+  if (loading) return <main className="flex min-h-screen items-center justify-center text-sm text-slate-600">Loading member portal...</main>
+  return user ? <>{children}</> : <Navigate to={ROUTES.LOGIN} replace />
+}
+
 export const App: React.FC = () => {
   return (
     <BrowserRouter>
@@ -27,9 +33,9 @@ export const App: React.FC = () => {
         <Route path="/signup" element={<Register />} />
         <Route path={ROUTES.LOGIN} element={<Login />} />
         <Route path={ROUTES.REGISTER} element={<Register />} />
-        <Route path={ROUTES.DASHBOARD} element={<MemberDashboardPage />} />
-        <Route path={ROUTES.TRANSACTIONS} element={<TransactionsPage />} />
-        <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
+        <Route path={ROUTES.DASHBOARD} element={<ProtectedRoute><MemberDashboardPage /></ProtectedRoute>} />
+        <Route path={ROUTES.TRANSACTIONS} element={<ProtectedRoute><TransactionsPage /></ProtectedRoute>} />
+        <Route path={ROUTES.PROFILE} element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         <Route path="/services/:service" element={<ServicePage />} />
         <Route path="/admin" element={<AdminDashboardPage />} />
         <Route path="/admin/members/:id" element={<MemberDetailPage />} />
