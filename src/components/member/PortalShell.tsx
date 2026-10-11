@@ -1,0 +1,17 @@
+import React, { useState } from 'react'
+import { Briefcase, LayoutDashboard, LogOut, Menu, Receipt, UserRound, X } from 'lucide-react'
+import { Link, NavLink } from 'react-router-dom'
+import { ROUTES } from '@/constants/routes'
+import { useAuth } from '@/contexts/AuthContext'
+
+const logo = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_6322-tg87iWvXcAFbQxeY6odhRyl9qwRpt9.jpeg'
+const nav = [{ label: 'Overview', to: ROUTES.DASHBOARD, icon: LayoutDashboard }, { label: 'Transactions', to: ROUTES.TRANSACTIONS, icon: Receipt }, { label: 'Profile', to: ROUTES.PROFILE, icon: UserRound }]
+
+export const PortalShell: React.FC<React.PropsWithChildren<{ title: string; eyebrow?: string }>> = ({ title, eyebrow = 'Member portal', children }) => {
+  const { signOut } = useAuth()
+  const [open, setOpen] = useState(false)
+  return <div className="min-h-screen bg-[#f7f8fc] text-[#101533]">
+    <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur"><div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between px-5 lg:px-8"><Link to={ROUTES.DASHBOARD} className="flex items-center gap-3"><img src={logo} alt="Evermont Credit Union" className="size-10 rounded-xl object-cover" /><span><strong className="block text-sm tracking-tight text-[#0504AA]">EVERMONT</strong><small className="block text-[10px] font-semibold uppercase tracking-[.18em] text-[#C9A227]">Credit Union</small></span></Link><button onClick={() => setOpen(!open)} className="rounded-lg p-2 lg:hidden" aria-label="Toggle navigation">{open ? <X /> : <Menu />}</button><nav className="hidden items-center gap-2 lg:flex">{nav.map(({ label, to, icon: Icon }) => <NavLink key={to} to={to} className={({ isActive }) => `flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold ${isActive ? 'bg-[#0504AA] text-white' : 'text-slate-600 hover:bg-slate-100'}`}><Icon className="size-4" />{label}</NavLink>)}<a href="https://evermont.builder.cloud" className="ml-3 rounded-lg border border-[#0504AA] px-4 py-2 text-sm font-semibold text-[#0504AA] hover:bg-[#0504AA] hover:text-white">Visit Evermont</a><a href="https://evermont-credit-unio-2tld.bolt.host" target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100"><Briefcase className="size-4" />Business &amp; Operations</a><button onClick={() => void signOut()} className="ml-2 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-slate-500 hover:bg-slate-100"><LogOut className="size-4" />Sign out</button></nav></div>{open && <nav className="border-t border-slate-200 p-4 lg:hidden">{nav.map(({ label, to }) => <NavLink key={to} onClick={() => setOpen(false)} to={to} className="block rounded-lg px-3 py-3 font-semibold text-slate-700">{label}</NavLink>)}<a href="https://evermont.builder.cloud" className="block rounded-lg px-3 py-3 font-semibold text-[#0504AA]">Visit Evermont</a><a href="https://evermont-credit-unio-2tld.bolt.host" target="_blank" rel="noreferrer" className="block rounded-lg px-3 py-3 font-semibold text-slate-700">Business &amp; Operations</a></nav>}</header>
+    <main className="mx-auto max-w-[1440px] px-5 py-8 lg:px-8"><p className="text-xs font-bold uppercase tracking-[.2em] text-[#C9A227]">{eyebrow}</p><h1 className="mt-2 text-3xl font-semibold tracking-tight lg:text-4xl">{title}</h1>{children}</main>
+  </div>
+}
