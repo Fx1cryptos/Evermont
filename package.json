@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Evermont Credit Union - Modern digital banking platform prototype",
   "private": true,
+  "packageManager": "pnpm@10.34.3",
   "type": "module",
   "scripts": {
     "dev": "vite",
