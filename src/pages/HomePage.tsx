@@ -21,6 +21,7 @@ import {
 
 const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_6322-tg87iWvXcAFbQxeY6odhRyl9qwRpt9.jpeg'
 const heroImageUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_6331-0fXcpssXQpdYLsKLCpywnyJf3yBqzb.jpeg'
+const featuredImageUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_6684-TAR49mu8oRotUkw9u5onAAE9VpJLKL.jpeg'
 const logoFallbackUrl = logoUrl
 
 const pinataGateway = 'https://gateway.pinata.cloud/ipfs/'
@@ -74,6 +75,13 @@ export const HomePage: React.FC = () => {
             <div className="relative overflow-hidden rounded-[2rem] border border-[#C9A227]/60 bg-[#0504AA] p-2 shadow-2xl shadow-blue-950/20">
               <img src={heroImageUrl} alt="Evermont Private Bank wealth management and family office services" className="h-auto w-full rounded-[1.5rem] object-cover" />
             </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="featured-campaign" className="mx-auto max-w-7xl px-5 py-10 lg:px-8 lg:py-14">
+          <div className="overflow-hidden rounded-3xl border border-[#C9A227]/50 bg-[#0504AA] shadow-xl shadow-blue-950/10">
+            <img src={featuredImageUrl} alt="Evermont private wealth services and family office guidance" className="h-auto w-full object-cover" />
+            <h2 id="featured-campaign" className="sr-only">Evermont private wealth services</h2>
           </div>
         </section>
 
