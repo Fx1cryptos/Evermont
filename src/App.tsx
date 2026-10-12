@@ -9,6 +9,8 @@ import { Register } from '@/pages/auth/Register'
 import { MemberDashboardPage } from '@/pages/MemberDashboardPage'
 import { TransactionsPage } from '@/pages/TransactionsPage'
 import { ProfilePage } from '@/pages/ProfilePage'
+import { AccountsPage } from '@/pages/AccountsPage'
+import { SettingsPage } from '@/pages/SettingsPage'
 import { ServicePage } from '@/pages/ServicePage'
 import { ROUTES } from '@/constants/routes'
 
@@ -34,6 +36,8 @@ export const App: React.FC = () => {
         <Route path={ROUTES.LOGIN} element={<Login />} />
         <Route path={ROUTES.REGISTER} element={<Register />} />
         <Route path={ROUTES.DASHBOARD} element={<ProtectedRoute><MemberDashboardPage /></ProtectedRoute>} />
+        <Route path={ROUTES.ACCOUNTS} element={<ProtectedRoute><AccountsPage /></ProtectedRoute>} />
+        <Route path={ROUTES.SETTINGS} element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         <Route path={ROUTES.TRANSACTIONS} element={<ProtectedRoute><TransactionsPage /></ProtectedRoute>} />
         <Route path={ROUTES.PROFILE} element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         <Route path="/services/:service" element={<ServicePage />} />

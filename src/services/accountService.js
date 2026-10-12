@@ -1,29 +1,4 @@
 import { supabase } from '@/lib/supabase';
-// Demo data for accounts when Supabase is not configured
-const DEMO_ACCOUNTS = [
-    {
-        id: '1',
-        userId: 'demo-user',
-        accountNumber: '****2891',
-        accountType: 'checking',
-        balance: '5250.00',
-        currency: 'USD',
-        status: 'active',
-        createdAt: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date().toISOString(),
-    },
-    {
-        id: '2',
-        userId: 'demo-user',
-        accountNumber: '****7429',
-        accountType: 'savings',
-        balance: '12500.00',
-        currency: 'USD',
-        status: 'active',
-        createdAt: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date().toISOString(),
-    },
-];
 export const accountService = {
     async getAccounts(userId) {
         try {
@@ -32,10 +7,8 @@ export const accountService = {
                 .select('*')
                 .eq('user_id', userId)
                 .order('created_at', { ascending: false });
-            if (error) {
-                console.warn('Failed to fetch accounts from Supabase:', error);
-                return DEMO_ACCOUNTS;
-            }
+            if (error)
+                throw error;
             return (data?.map((acc) => ({
                 id: acc.id,
                 userId: acc.user_id,
@@ -46,11 +19,11 @@ export const accountService = {
                 status: acc.status,
                 createdAt: acc.created_at,
                 updatedAt: acc.updated_at,
-            })) || DEMO_ACCOUNTS);
+            })) || []);
         }
         catch (error) {
             console.error('Error fetching accounts:', error);
-            return DEMO_ACCOUNTS;
+            throw error;
         }
     },
     async getAccountById(accountId, userId) {
@@ -63,7 +36,7 @@ export const accountService = {
                 .single();
             if (error) {
                 console.warn('Failed to fetch account:', error);
-                return DEMO_ACCOUNTS.find((acc) => acc.id === accountId) || null;
+                return null;
             }
             return data
                 ? {
@@ -81,7 +54,7 @@ export const accountService = {
         }
         catch (error) {
             console.error('Error fetching account:', error);
-            return DEMO_ACCOUNTS.find((acc) => acc.id === accountId) || null;
+            return null;
         }
     },
 };
