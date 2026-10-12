@@ -2,21 +2,6 @@ import { Profile, ValidationError } from '@/types'
 import { supabase } from '@/lib/supabase'
 import { validateEmail, validateName, validatePhone, validateZipCode } from '@/utils/validation'
 
-const DEMO_PROFILE: Profile = {
-  id: 'demo-user',
-  email: 'demo@evermont.com',
-  firstName: 'Demo',
-  lastName: 'Member',
-  phone: '(555) 123-4567',
-  street: '123 Financial Ave',
-  city: 'New York',
-  state: 'NY',
-  zipCode: '10001',
-  country: 'United States',
-  createdAt: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
-  updatedAt: new Date().toISOString(),
-}
-
 export const profileService = {
   async getProfile(userId: string): Promise<Profile | null> {
     try {
@@ -28,7 +13,7 @@ export const profileService = {
 
       if (error) {
         console.warn('Failed to fetch profile from Supabase:', error)
-        return userId === 'demo-user' ? DEMO_PROFILE : null
+        return null
       }
 
       return data
@@ -50,7 +35,7 @@ export const profileService = {
         : null
     } catch (error) {
       console.error('Error fetching profile:', error)
-      return userId === 'demo-user' ? DEMO_PROFILE : null
+      return null
     }
   },
 
