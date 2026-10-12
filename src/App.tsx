@@ -8,6 +8,7 @@ import { Login } from '@/pages/auth/Login'
 import { Register } from '@/pages/auth/Register'
 import { MemberDashboardPage } from '@/pages/MemberDashboardPage'
 import { TransactionsPage } from '@/pages/TransactionsPage'
+import { FinancialInsightsPage } from '@/pages/FinancialInsightsPage'
 import { ProfilePage } from '@/pages/ProfilePage'
 import { AccountsPage } from '@/pages/AccountsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
@@ -39,6 +40,7 @@ export const App: React.FC = () => {
         <Route path={ROUTES.ACCOUNTS} element={<ProtectedRoute><AccountsPage /></ProtectedRoute>} />
         <Route path={ROUTES.SETTINGS} element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         <Route path={ROUTES.TRANSACTIONS} element={<ProtectedRoute><TransactionsPage /></ProtectedRoute>} />
+        <Route path={ROUTES.INSIGHTS} element={<ProtectedRoute><FinancialInsightsPage /></ProtectedRoute>} />
         <Route path={ROUTES.PROFILE} element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         <Route path="/services/:service" element={<ServicePage />} />
         <Route path="/admin" element={<AdminDashboardPage />} />
