@@ -38,6 +38,7 @@ export const AuthProvider = ({ children }) => {
         initializeAuth();
         const { data: { subscription }, } = supabase.auth.onAuthStateChange(async (_event, session) => {
             if (session?.user) {
+                setUser(null);
                 const { data: profile } = await supabase
                     .from('profiles')
                     .select('*')

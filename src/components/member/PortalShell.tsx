@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
-import { Briefcase, ChevronRight, LayoutDashboard, LogOut, Menu, Receipt, Settings, ShieldCheck, UserRound, WalletCards, X } from 'lucide-react'
-import { Link, NavLink } from 'react-router-dom'
+import { BarChart3, Briefcase, ChevronRight, LayoutDashboard, LogOut, Menu, Receipt, Settings, ShieldCheck, UserRound, WalletCards, X } from 'lucide-react'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -9,13 +9,24 @@ const navigation = [
   { label: 'Dashboard', to: ROUTES.DASHBOARD, icon: LayoutDashboard },
   { label: 'Accounts', to: ROUTES.ACCOUNTS, icon: WalletCards },
   { label: 'Transactions', to: ROUTES.TRANSACTIONS, icon: Receipt },
+  { label: 'Insights', to: ROUTES.INSIGHTS, icon: BarChart3 },
   { label: 'Profile', to: ROUTES.PROFILE, icon: UserRound },
   { label: 'Settings', to: ROUTES.SETTINGS, icon: Settings },
 ]
 
 export const PortalShell: React.FC<React.PropsWithChildren<{ title: string; eyebrow?: string }>> = ({ title, eyebrow = 'Member portal', children }) => {
   const { signOut } = useAuth()
+  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+      setOpen(false)
+      navigate(ROUTES.LOGIN, { replace: true })
+    } catch {
+      // AuthContext retains the error for the existing auth UI.
+    }
+  }
   return <div className="min-h-screen bg-[#f7f8fc] text-[#101533]">
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex min-h-20 max-w-[1440px] items-center justify-between gap-5 px-5 lg:px-8">
@@ -24,10 +35,10 @@ export const PortalShell: React.FC<React.PropsWithChildren<{ title: string; eyeb
           <span><strong className="block text-sm tracking-tight text-[#0504AA]">EVERMONT</strong><small className="block text-[10px] font-semibold uppercase tracking-[.18em] text-[#C9A227]">Credit Union</small></span>
         </Link>
         <nav className="hidden items-center gap-1 xl:flex" aria-label="Member navigation">{navigation.map(({ label, to, icon: Icon }) => <NavLink key={to} to={to} className={({ isActive }) => `flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${isActive ? 'bg-[#0504AA] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}><Icon className="size-4" />{label}</NavLink>)}</nav>
-        <div className="hidden items-center gap-2 lg:flex"><a href="https://evermont.builder.cloud" className="rounded-xl border border-[#0504AA] px-4 py-2.5 text-sm font-semibold text-[#0504AA] transition hover:bg-[#0504AA] hover:text-white">Visit Evermont</a><a href="https://evermont-credit-unio-2tld.bolt.host" target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100"><Briefcase className="size-4" />Business &amp; Operations</a><button onClick={() => void signOut()} className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-500 hover:bg-slate-100"><LogOut className="size-4" />Sign out</button></div>
+        <div className="hidden items-center gap-2 lg:flex"><a href="https://evermont.builder.cloud" target="_blank" rel="noreferrer" className="rounded-xl border border-[#0504AA] px-4 py-2.5 text-sm font-semibold text-[#0504AA] transition hover:bg-[#0504AA] hover:text-white">Visit Evermont</a><a href="https://evermont-credit-unio-2tld.bolt.host" target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100"><Briefcase className="size-4" />Business &amp; Operations</a><button onClick={() => void handleSignOut()} className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-500 hover:bg-slate-100"><LogOut className="size-4" />Sign out</button></div>
         <button onClick={() => setOpen(!open)} className="rounded-xl border border-slate-200 p-2.5 xl:hidden" aria-label={open ? 'Close navigation' : 'Open navigation'} aria-expanded={open}>{open ? <X className="size-5" /> : <Menu className="size-5" />}</button>
       </div>
-      {open && <nav className="border-t border-slate-200 bg-white p-4 xl:hidden" aria-label="Mobile member navigation"><div className="grid gap-1">{navigation.map(({ label, to, icon: Icon }) => <NavLink key={to} onClick={() => setOpen(false)} to={to} className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-3 font-semibold ${isActive ? 'bg-[#0504AA] text-white' : 'text-slate-700 hover:bg-slate-100'}`}><Icon className="size-4" />{label}</NavLink>)}</div><div className="mt-3 grid gap-2 border-t border-slate-100 pt-3"><a href="https://evermont.builder.cloud" className="rounded-xl border border-[#0504AA] px-3 py-3 text-center font-semibold text-[#0504AA]">Visit Evermont</a><a href="https://evermont-credit-unio-2tld.bolt.host" target="_blank" rel="noreferrer" className="rounded-xl bg-slate-50 px-3 py-3 text-center font-semibold text-slate-700">Business &amp; Operations</a><button onClick={() => void signOut()} className="flex items-center justify-center gap-2 rounded-xl px-3 py-3 font-semibold text-slate-500"><LogOut className="size-4" />Sign out</button></div></nav>}
+      {open && <nav className="border-t border-slate-200 bg-white p-4 xl:hidden" aria-label="Mobile member navigation"><div className="grid gap-1">{navigation.map(({ label, to, icon: Icon }) => <NavLink key={to} onClick={() => setOpen(false)} to={to} className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-3 font-semibold ${isActive ? 'bg-[#0504AA] text-white' : 'text-slate-700 hover:bg-slate-100'}`}><Icon className="size-4" />{label}</NavLink>)}</div><div className="mt-3 grid gap-2 border-t border-slate-100 pt-3"><a href="https://evermont.builder.cloud" target="_blank" rel="noreferrer" className="rounded-xl border border-[#0504AA] px-3 py-3 text-center font-semibold text-[#0504AA]">Visit Evermont</a><a href="https://evermont-credit-unio-2tld.bolt.host" target="_blank" rel="noreferrer" className="rounded-xl bg-slate-50 px-3 py-3 text-center font-semibold text-slate-700">Business &amp; Operations</a><button onClick={() => void handleSignOut()} className="flex items-center justify-center gap-2 rounded-xl px-3 py-3 font-semibold text-slate-500"><LogOut className="size-4" />Sign out</button></div></nav>}
     </header>
     <main className="mx-auto max-w-[1440px] px-5 py-8 lg:px-8"><p className="text-xs font-bold uppercase tracking-[.2em] text-[#C9A227]">{eyebrow}</p><h1 className="mt-2 text-3xl font-semibold tracking-tight lg:text-4xl">{title}</h1>{children}</main>
   </div>
