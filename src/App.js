@@ -1,5 +1,6 @@
 import { jsx as _jsx, Fragment as _Fragment, jsxs as _jsxs } from "react/jsx-runtime";
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
 import { MemberDetailPage } from '@/pages/admin/MemberDetailPage';
@@ -24,5 +25,5 @@ const ProtectedRoute = ({ children }) => {
     return user ? _jsx(_Fragment, { children: children }) : _jsx(Navigate, { to: ROUTES.LOGIN, replace: true });
 };
 export const App = () => {
-    return (_jsx(BrowserRouter, { children: _jsxs(Routes, { children: [_jsx(Route, { path: "/", element: _jsx(PortalEntry, {}) }), _jsx(Route, { path: "/sign-in", element: _jsx(Login, {}) }), _jsx(Route, { path: "/signup", element: _jsx(Register, {}) }), _jsx(Route, { path: ROUTES.LOGIN, element: _jsx(Login, {}) }), _jsx(Route, { path: ROUTES.REGISTER, element: _jsx(Register, {}) }), _jsx(Route, { path: ROUTES.DASHBOARD, element: _jsx(ProtectedRoute, { children: _jsx(MemberDashboardPage, {}) }) }), _jsx(Route, { path: ROUTES.TRANSACTIONS, element: _jsx(ProtectedRoute, { children: _jsx(TransactionsPage, {}) }) }), _jsx(Route, { path: ROUTES.PROFILE, element: _jsx(ProtectedRoute, { children: _jsx(ProfilePage, {}) }) }), _jsx(Route, { path: "/services/:service", element: _jsx(ServicePage, {}) }), _jsx(Route, { path: "/admin", element: _jsx(AdminDashboardPage, {}) }), _jsx(Route, { path: "/admin/members/:id", element: _jsx(MemberDetailPage, {}) }), _jsx(Route, { path: "/admin/accounts/:id", element: _jsx(AccountHistoryPage, {}) })] }) }));
+    return (_jsxs(BrowserRouter, { children: [_jsxs(Routes, { children: [_jsx(Route, { path: "/", element: _jsx(PortalEntry, {}) }), _jsx(Route, { path: "/sign-in", element: _jsx(Login, {}) }), _jsx(Route, { path: "/signup", element: _jsx(Register, {}) }), _jsx(Route, { path: ROUTES.LOGIN, element: _jsx(Login, {}) }), _jsx(Route, { path: ROUTES.REGISTER, element: _jsx(Register, {}) }), _jsx(Route, { path: ROUTES.DASHBOARD, element: _jsx(ProtectedRoute, { children: _jsx(MemberDashboardPage, {}) }) }), _jsx(Route, { path: ROUTES.TRANSACTIONS, element: _jsx(ProtectedRoute, { children: _jsx(TransactionsPage, {}) }) }), _jsx(Route, { path: ROUTES.PROFILE, element: _jsx(ProtectedRoute, { children: _jsx(ProfilePage, {}) }) }), _jsx(Route, { path: "/services/:service", element: _jsx(ServicePage, {}) }), _jsx(Route, { path: "/admin", element: _jsx(AdminDashboardPage, {}) }), _jsx(Route, { path: "/admin/members/:id", element: _jsx(MemberDetailPage, {}) }), _jsx(Route, { path: "/admin/accounts/:id", element: _jsx(AccountHistoryPage, {}) })] }), _jsx(SpeedInsights, {})] }));
 };
