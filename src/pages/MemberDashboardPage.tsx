@@ -195,6 +195,41 @@ export const MemberDashboardPage: React.FC = () => {
           </>
         )}
       </section>
+
+      <footer className="border-t border-evermont-border bg-white">
+        <div className="mx-auto flex max-w-5xl flex-col gap-4 px-5 py-6 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-evermont-blue">Connect with Evermont</p>
+            <p className="mt-1 text-xs text-evermont-muted">Follow official Evermont Credit Union updates.</p>
+          </div>
+          <nav aria-label="Evermont social media" className="flex items-center gap-2">
+            <a
+              href="https://www.instagram.com/evermontcreditunion"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Evermont Credit Union on Instagram"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-evermont-border text-evermont-blue transition-colors hover:border-evermont-gold hover:text-evermont-gold"
+            >
+              <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-current" strokeWidth="1.8">
+                <rect x="3" y="3" width="18" height="18" rx="5" />
+                <circle cx="12" cy="12" r="4.25" />
+                <circle cx="17.4" cy="6.7" r="1" className="fill-current stroke-none" />
+              </svg>
+            </a>
+            <a
+              href="https://www.facebook.com/share/1GupMnFfkt/"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Evermont Credit Union on Facebook"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-evermont-border text-evermont-blue transition-colors hover:border-evermont-gold hover:text-evermont-gold"
+            >
+              <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 fill-current">
+                <path d="M13.7 21v-8h2.7l.4-3h-3.1V8.1c0-.9.3-1.5 1.6-1.5h1.7V4a22 22 0 0 0-2.4-.1c-2.4 0-4 1.5-4 4.1V10H8v3h2.6v8h3.1Z" />
+              </svg>
+            </a>
+          </nav>
+        </div>
+      </footer>
     </main>
   )
 }
