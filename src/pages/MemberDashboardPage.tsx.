@@ -1,0 +1,27 @@
+// imports
+import { useActivationGate, GateResult } from '@/hooks/useActivationGate'
+import ActivationRequiredModal from '@/components/member/ActivationRequiredModal'
+
+// inside the component, after `user` and `total` exist
+const { check, checking } = useActivationGate(user?.id, total)
+const [gate, setGate] = useState<GateResult | null>(null)
+const [comingSoon, setComingSoon] = useState<string | null>(null)
+
+const onGated = (feature: 'Transfer' | 'Withdraw') => async () => {
+  const r = await check()
+  if (!r.activated) { setGate(r); return }
+  setComingSoon(`${feature} is not available in this prototype yet.`) // no money moves
+}
+
+// in the balance card, next to "View accounts / View activity"
+<button disabled={checking} onClick={onGated('Transfer')}
+  className="rounded-xl px-4 py-2 font-semibold text-white disabled:opacity-60"
+  style={{ background: EVERMONT_COLORS.blue }}>Transfer</button>
+<button disabled={checking} onClick={onGated('Withdraw')}
+  className="rounded-xl border px-4 py-2 font-semibold"
+  style={{ borderColor: EVERMONT_COLORS.gold, color: EVERMONT_COLORS.blue }}>Withdraw</button>
+{comingSoon && <p className="text-sm text-slate-600">{comingSoon}</p>}
+
+// at the end of the JSX
+<ActivationRequiredModal open={!!gate} fee={gate?.fee ?? null}
+  ratePercent={gate?.ratePercent ?? null} onClose={() => setGate(null)} />
