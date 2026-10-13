@@ -7,7 +7,9 @@ const mapLedgerEntry = (entry) => ({
         : 'credit',
     amount: String(entry.amount),
     description: entry.description,
-    status: entry.status === 'reversed' ? 'failed' : entry.status,
+    category: entry.category,
+    balanceAfter: entry.balance_after == null ? undefined : String(entry.balance_after),
+    status: entry.status === 'reversed' ? 'failed' : entry.status === 'pending' ? 'pending' : entry.status === 'failed' ? 'failed' : 'completed',
     createdAt: entry.created_at,
     completedAt: entry.status === 'completed' ? entry.created_at : null,
 });

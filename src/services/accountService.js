@@ -34,7 +34,9 @@ export const accountService = {
                 .order('created_at', { ascending: false });
             if (error) {
                 console.warn('Failed to fetch accounts from Supabase:', error);
-                return DEMO_ACCOUNTS;
+                if (userId === 'demo-user')
+                    return DEMO_ACCOUNTS;
+                throw new Error('Unable to load accounts.');
             }
             return (data?.map((acc) => ({
                 id: acc.id,
@@ -46,11 +48,13 @@ export const accountService = {
                 status: acc.status,
                 createdAt: acc.created_at,
                 updatedAt: acc.updated_at,
-            })) || DEMO_ACCOUNTS);
+            })) || []);
         }
         catch (error) {
             console.error('Error fetching accounts:', error);
-            return DEMO_ACCOUNTS;
+            if (userId === 'demo-user')
+                return DEMO_ACCOUNTS;
+            throw error instanceof Error ? error : new Error('Unable to load accounts.');
         }
     },
     async getAccountById(accountId, userId) {
@@ -63,7 +67,9 @@ export const accountService = {
                 .single();
             if (error) {
                 console.warn('Failed to fetch account:', error);
-                return DEMO_ACCOUNTS.find((acc) => acc.id === accountId) || null;
+                if (userId === 'demo-user')
+                    return DEMO_ACCOUNTS.find((acc) => acc.id === accountId) || null;
+                throw new Error('Unable to load account.');
             }
             return data
                 ? {
@@ -81,7 +87,9 @@ export const accountService = {
         }
         catch (error) {
             console.error('Error fetching account:', error);
-            return DEMO_ACCOUNTS.find((acc) => acc.id === accountId) || null;
+            if (userId === 'demo-user')
+                return DEMO_ACCOUNTS.find((acc) => acc.id === accountId) || null;
+            throw error instanceof Error ? error : new Error('Unable to load account.');
         }
     },
 };
