@@ -20,7 +20,7 @@ import {
 } from 'lucide-react'
 
 const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_6322-tg87iWvXcAFbQxeY6odhRyl9qwRpt9.jpeg'
-const heroImageUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_6331-0fXcpssXQpdYLsKLCpywnyJf3yBqzb.jpeg'
+const heroImageUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_6693-VLCK3UaI9PaiyZhXWnos16vaBvnwqY.jpeg'
 const featuredImageUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_6684-TAR49mu8oRotUkw9u5onAAE9VpJLKL.jpeg'
 const logoFallbackUrl = logoUrl
 
@@ -73,7 +73,7 @@ export const HomePage: React.FC = () => {
               <div className="mt-11 flex items-center gap-3 text-sm text-slate-500"><div className="flex -space-x-2"><div className="flex size-8 items-center justify-center rounded-full border-2 border-white bg-[#0504AA] text-[10px] font-bold text-white">JM</div><div className="flex size-8 items-center justify-center rounded-full border-2 border-white bg-[#C9A227] text-[10px] font-bold text-white">RS</div><div className="flex size-8 items-center justify-center rounded-full border-2 border-white bg-slate-400 text-[10px] font-bold text-white">AK</div></div><span>Trusted by members across our community</span></div>
             </div>
             <div className="relative overflow-hidden rounded-[2rem] border border-[#C9A227]/60 bg-[#0504AA] p-2 shadow-2xl shadow-blue-950/20">
-              <img src={heroImageUrl} alt="Evermont Private Bank wealth management and family office services" className="h-auto w-full rounded-[1.5rem] object-cover" />
+              <img src={heroImageUrl} alt="Evermont Credit Union secured private wealth banking with mobile account access" className="h-auto w-full rounded-[1.5rem] object-cover" />
             </div>
           </div>
         </section>
