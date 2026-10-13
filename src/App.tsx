@@ -1,5 +1,6 @@
 import React from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { Analytics } from '@vercel/analytics/react'
 import { useAuth } from '@/contexts/AuthContext'
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage'
 import { MemberDetailPage } from '@/pages/admin/MemberDetailPage'
@@ -47,6 +48,7 @@ export const App: React.FC = () => {
         <Route path="/admin/members/:id" element={<MemberDetailPage />} />
         <Route path="/admin/accounts/:id" element={<AccountHistoryPage />} />
       </Routes>
+      <Analytics />
     </BrowserRouter>
   )
 }
