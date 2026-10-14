@@ -65,7 +65,7 @@ export const HomePage: React.FC = () => {
           </div>
           <button className="rounded-lg p-2 text-[#0504AA] sm:hidden" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}>{menuOpen ? <X /> : <Menu />}</button>
         </div>
-        {menuOpen && <nav className="flex flex-col gap-1 border-t border-slate-100 bg-white px-5 py-4 sm:hidden" aria-label="Mobile navigation">{navItems.map(([label, id]) => <a key={id} href={`#${id}`} onClick={() => setMenuOpen(false)} className="rounded-lg px-3 py-3 text-sm font-semibold text-slate-700 hover:bg-blue-50">{label}</a>)}<Link to="/login" className="mt-2 rounded-lg bg-[#0504AA] px-3 py-3 text-center text-sm font-semibold text-white">Sign In</Link><Link to="/register" className="rounded-lg border border-[#0504AA] px-3 py-3 text-center text-sm font-semibold text-[#0504AA]">Open an Account</Link></nav>}
+        {menuOpen && <nav className="flex flex-col gap-1 border-t border-slate-100 bg-white px-5 py-4 sm:hidden" aria-label="Mobile navigation">{navItems.map(([label, id]) => <a key={id} href={`#${id}`} onClick={() => setMenuOpen(false)} className="rounded-lg px-3 py-3 text-sm font-semibold text-slate-700 hover:bg-blue-50">{label}</a>)}<a href="https://v0-evermont.vercel.app/login" className="mt-2 rounded-lg bg-[#0504AA] px-3 py-3 text-center text-sm font-semibold text-white">Sign In</a><Link to="/register" className="rounded-lg border border-[#0504AA] px-3 py-3 text-center text-sm font-semibold text-[#0504AA]">Open an Account</Link></nav>}
       </header>
 
       <main id="top">
