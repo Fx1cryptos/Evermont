@@ -4,6 +4,22 @@ import { supabase } from '@/lib/supabase'
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+const mapProfile = (profile: {
+  id: string
+  email: string
+  first_name: string
+  last_name: string
+  created_at: string
+  updated_at: string
+}): User => ({
+  id: profile.id,
+  email: profile.email,
+  firstName: profile.first_name,
+  lastName: profile.last_name,
+  createdAt: profile.created_at,
+  updatedAt: profile.updated_at,
+})
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
@@ -24,14 +40,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .single()
 
           if (profile) {
-            setUser({
-              id: profile.id,
-              email: profile.email,
-              firstName: profile.first_name,
-              lastName: profile.last_name,
-              createdAt: profile.created_at,
-              updatedAt: profile.updated_at,
-            })
+            setUser(mapProfile(profile))
           }
         }
       } catch (err) {
@@ -54,14 +63,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .single()
 
         if (profile) {
-          setUser({
-            id: profile.id,
-            email: profile.email,
-            firstName: profile.first_name,
-            lastName: profile.last_name,
-            createdAt: profile.created_at,
-            updatedAt: profile.updated_at,
-          })
+          setUser(mapProfile(profile))
         }
       } else {
         setUser(null)
@@ -105,6 +107,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           last_name: lastName,
         }, { onConflict: 'id' })
         if (profileError) throw new Error('Your account was created, but we could not finish your member profile.')
+        setUser({
+          id: data.user.id,
+          email,
+          firstName,
+          lastName,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        })
       }
 
       return data
@@ -118,12 +128,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string) => {
     setError(null)
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
       if (error) throw error
+      if (!data.user) throw new Error('Login failed')
+
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', data.user.id)
+        .single()
+
+      if (profileError || !profile) {
+        throw new Error('Signed in, but your member profile could not be loaded.')
+      }
+
+      setUser(mapProfile(profile))
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed'
       setError(message)

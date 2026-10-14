@@ -15,8 +15,11 @@ export const App: React.FC = () => {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path={ROUTES.LOGIN} element={<Login />} />
+        <Route path={ROUTES.SIGN_IN} element={<Login />} />
         <Route path={ROUTES.REGISTER} element={<Register />} />
+        <Route path={ROUTES.SIGN_UP} element={<Register />} />
         <Route path={ROUTES.DASHBOARD} element={<MemberDashboardPage />} />
+        <Route path={ROUTES.ACCOUNT} element={<MemberDashboardPage />} />
         <Route path="/admin" element={<AdminDashboardPage />} />
         <Route path="/admin/members/:id" element={<MemberDetailPage />} />
         <Route path="/admin/accounts/:id" element={<AccountHistoryPage />} />

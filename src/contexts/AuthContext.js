@@ -2,6 +2,14 @@ import { jsx as _jsx } from "react/jsx-runtime";
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 const AuthContext = createContext(undefined);
+const mapProfile = (profile) => ({
+    id: profile.id,
+    email: profile.email,
+    firstName: profile.first_name,
+    lastName: profile.last_name,
+    createdAt: profile.created_at,
+    updatedAt: profile.updated_at,
+});
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -17,14 +25,7 @@ export const AuthProvider = ({ children }) => {
                         .eq('id', session.user.id)
                         .single();
                     if (profile) {
-                        setUser({
-                            id: profile.id,
-                            email: profile.email,
-                            firstName: profile.first_name,
-                            lastName: profile.last_name,
-                            createdAt: profile.created_at,
-                            updatedAt: profile.updated_at,
-                        });
+                        setUser(mapProfile(profile));
                     }
                 }
             }
@@ -44,14 +45,7 @@ export const AuthProvider = ({ children }) => {
                     .eq('id', session.user.id)
                     .single();
                 if (profile) {
-                    setUser({
-                        id: profile.id,
-                        email: profile.email,
-                        firstName: profile.first_name,
-                        lastName: profile.last_name,
-                        createdAt: profile.created_at,
-                        updatedAt: profile.updated_at,
-                    });
+                    setUser(mapProfile(profile));
                 }
             }
             else {
@@ -92,6 +86,14 @@ export const AuthProvider = ({ children }) => {
                 }, { onConflict: 'id' });
                 if (profileError)
                     throw new Error('Your account was created, but we could not finish your member profile.');
+                setUser({
+                    id: data.user.id,
+                    email,
+                    firstName,
+                    lastName,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                });
             }
             return data;
         }
@@ -104,12 +106,23 @@ export const AuthProvider = ({ children }) => {
     const signIn = async (email, password) => {
         setError(null);
         try {
-            const { error } = await supabase.auth.signInWithPassword({
+            const { data, error } = await supabase.auth.signInWithPassword({
                 email,
                 password,
             });
             if (error)
                 throw error;
+            if (!data.user)
+                throw new Error('Login failed');
+            const { data: profile, error: profileError } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', data.user.id)
+                .single();
+            if (profileError || !profile) {
+                throw new Error('Signed in, but your member profile could not be loaded.');
+            }
+            setUser(mapProfile(profile));
         }
         catch (err) {
             const message = err instanceof Error ? err.message : 'Login failed';
