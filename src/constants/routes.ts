@@ -12,4 +12,9 @@ export const ROUTES = {
   TRANSACTIONS: '/transactions',
   PROFILE: '/profile',
   SETTINGS: '/settings',
+  CHECKING: '/checking',
+  SAVINGS: '/savings',
+  CRYPTOCURRENCY: '/cryptocurrency',
+  LOANS: '/loans',
+  RETIREMENT: '/retirement',
 } as const

@@ -45,7 +45,7 @@ const faqs = [
 export const HomePage: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
-  const navItems = [['Products', 'products'], ['Loans', 'loans'], ['Security', 'security'], ['About', 'about'], ['Contact', 'contact']]
+  const navItems = [['Products', 'products'], ['Checking', '/checking'], ['Savings', '/savings'], ['Crypto', '/cryptocurrency'], ['Loans', '/loans'], ['Retirement', '/retirement'], ['Security', 'security'], ['About', 'about'], ['Contact', 'contact']]
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-[#101533]">
@@ -57,7 +57,7 @@ export const HomePage: React.FC = () => {
             <span className="hidden border-l border-slate-200 pl-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 sm:block">Secured Private Wealth Bank</span>
           </a>
           <nav className="hidden items-center gap-7 text-sm font-medium text-slate-600 lg:flex" aria-label="Primary navigation">
-            {navItems.map(([label, id]) => <a key={id} href={`#${id}`} className="transition-colors hover:text-[#0504AA]">{label}</a>)}
+            {navItems.map(([label, id]) => id.startsWith('/') ? <Link key={id} to={id} className="transition-colors hover:text-[#0504AA]">{label}</Link> : <a key={id} href={`#${id}`} className="transition-colors hover:text-[#0504AA]">{label}</a>)}
           </nav>
           <div className="hidden items-center gap-3 sm:flex">
             <a href="https://v0-evermont.vercel.app/login" className="rounded-full px-4 py-2.5 text-sm font-semibold text-[#0504AA] transition-colors hover:bg-blue-50">Sign In</a>
@@ -65,7 +65,7 @@ export const HomePage: React.FC = () => {
           </div>
           <button className="rounded-lg p-2 text-[#0504AA] sm:hidden" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen}>{menuOpen ? <X /> : <Menu />}</button>
         </div>
-        {menuOpen && <nav className="flex flex-col gap-1 border-t border-slate-100 bg-white px-5 py-4 sm:hidden" aria-label="Mobile navigation">{navItems.map(([label, id]) => <a key={id} href={`#${id}`} onClick={() => setMenuOpen(false)} className="rounded-lg px-3 py-3 text-sm font-semibold text-slate-700 hover:bg-blue-50">{label}</a>)}<a href="https://v0-evermont.vercel.app/login" className="mt-2 rounded-lg bg-[#0504AA] px-3 py-3 text-center text-sm font-semibold text-white">Sign In</a><Link to="/register" className="rounded-lg border border-[#0504AA] px-3 py-3 text-center text-sm font-semibold text-[#0504AA]">Open an Account</Link></nav>}
+        {menuOpen && <nav className="flex flex-col gap-1 border-t border-slate-100 bg-white px-5 py-4 sm:hidden" aria-label="Mobile navigation">{navItems.map(([label, id]) => id.startsWith('/') ? <Link key={id} to={id} onClick={() => setMenuOpen(false)} className="rounded-lg px-3 py-3 text-sm font-semibold text-slate-700 hover:bg-blue-50">{label}</Link> : <a key={id} href={`#${id}`} onClick={() => setMenuOpen(false)} className="rounded-lg px-3 py-3 text-sm font-semibold text-slate-700 hover:bg-blue-50">{label}</a>)}<a href="https://v0-evermont.vercel.app/login" className="mt-2 rounded-lg bg-[#0504AA] px-3 py-3 text-center text-sm font-semibold text-white">Sign In</a><Link to="/register" className="rounded-lg border border-[#0504AA] px-3 py-3 text-center text-sm font-semibold text-[#0504AA]">Open an Account</Link></nav>}
       </header>
 
       <main id="top">

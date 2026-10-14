@@ -7,6 +7,7 @@ import { Login } from '@/pages/auth/Login'
 import { Register } from '@/pages/auth/Register'
 import { MemberDashboardPage } from '@/pages/MemberDashboardPage'
 import { HomePage } from '@/pages/HomePage'
+import { ServicePage } from '@/pages/ServicePage'
 import { ROUTES } from '@/constants/routes'
 
 export const App: React.FC = () => {
@@ -20,6 +21,11 @@ export const App: React.FC = () => {
         <Route path={ROUTES.SIGN_UP} element={<Register />} />
         <Route path={ROUTES.DASHBOARD} element={<MemberDashboardPage />} />
         <Route path={ROUTES.ACCOUNT} element={<MemberDashboardPage />} />
+        <Route path="/checking" element={<ServicePage />} />
+        <Route path="/savings" element={<ServicePage />} />
+        <Route path="/cryptocurrency" element={<ServicePage />} />
+        <Route path="/loans" element={<ServicePage />} />
+        <Route path="/retirement" element={<ServicePage />} />
         <Route path="/admin" element={<AdminDashboardPage />} />
         <Route path="/admin/members/:id" element={<MemberDetailPage />} />
         <Route path="/admin/accounts/:id" element={<AccountHistoryPage />} />
