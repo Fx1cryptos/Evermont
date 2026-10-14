@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /login
+Disallow: /register
+Disallow: /dashboard
+Disallow: /account
+Disallow: /admin
+
+Sitemap: https://evermontcredit.online/sitemap.xml
