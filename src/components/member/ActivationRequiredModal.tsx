@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { EVERMONT_COLORS as C } from '@/constants/design'
+import { ROUTES } from '@/constants/routes'
 
 export const ActivationRequiredModal: React.FC<{
   open: boolean
@@ -7,6 +9,7 @@ export const ActivationRequiredModal: React.FC<{
   ratePercent?: number | null
   onClose: () => void
 }> = ({ open, onClose }) => {
+  const navigate = useNavigate()
   useEffect(() => {
     if (!open) return
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -40,6 +43,13 @@ export const ActivationRequiredModal: React.FC<{
           style={{ background: C.blue }}
         >
           OK
+        </button>
+        <button
+          type="button"
+          onClick={() => { onClose(); navigate(ROUTES.ACCOUNTS) }}
+          className="mt-3 w-full rounded-xl border border-[#C9A227] px-4 py-2 font-semibold text-[#0504AA] transition hover:bg-[#fffaf0]"
+        >
+          Activate Your Account
         </button>
       </div>
     </div>
