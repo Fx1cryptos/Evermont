@@ -9,6 +9,7 @@ import { MemberDashboardPage } from '@/pages/MemberDashboardPage'
 import { HomePage } from '@/pages/HomePage'
 import { ServicePage } from '@/pages/ServicePage'
 import { OpenCheckingPage } from '@/pages/OpenCheckingPage'
+import { AboutPage } from '@/pages/AboutPage'
 import { ROUTES } from '@/constants/routes'
 import { PublicTrustBanner } from '@/components/PublicTrustBanner'
 
@@ -29,6 +30,7 @@ export const App: React.FC = () => {
         <Route path={ROUTES.REGISTER} element={<Register />} />
         <Route path={ROUTES.SIGN_UP} element={<Register />} />
         <Route path={ROUTES.OPEN_CHECKING} element={<PublicPage><OpenCheckingPage /></PublicPage>} />
+        <Route path={ROUTES.ABOUT} element={<PublicPage><AboutPage /></PublicPage>} />
         <Route path={ROUTES.DASHBOARD} element={<MemberDashboardPage />} />
         <Route path={ROUTES.ACCOUNT} element={<MemberDashboardPage />} />
         <Route path="/checking" element={<PublicPage><ServicePage /></PublicPage>} />

@@ -45,7 +45,7 @@ const faqs = [
 export const HomePage: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
-  const navItems = [['Products', 'products'], ['Checking', '/checking'], ['Savings', '/savings'], ['Crypto', '/cryptocurrency'], ['Loans', '/loans'], ['Retirement', '/retirement'], ['Security', 'security'], ['About', 'about'], ['Contact', 'contact']]
+  const navItems = [['Products', 'products'], ['Checking', '/checking'], ['Savings', '/savings'], ['Crypto', '/cryptocurrency'], ['Loans', '/loans'], ['Retirement', '/retirement'], ['Security', 'security'], ['About', '/about'], ['Contact', 'contact']]
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-[#101533]">
