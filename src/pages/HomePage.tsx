@@ -42,7 +42,7 @@ export const HomePage: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-[#101533]">
+    <div className="min-h-screen bg-[#f8fafc] pb-11 text-[#101533]">
       <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
           <a href="#top" className="flex items-center gap-3" aria-label="Evermont home">
@@ -95,6 +95,12 @@ export const HomePage: React.FC = () => {
       </main>
 
       <footer id="contact" className="bg-white"><div className="mx-auto max-w-7xl px-5 py-12 lg:px-8"><div className="flex flex-col justify-between gap-10 border-b border-slate-200 pb-10 md:flex-row"><div><img src={logoUrl} alt="Evermont Credit Union" className="h-12 w-12 object-contain" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = logoFallbackUrl }} /><p className="mt-4 max-w-xs text-sm leading-6 text-slate-500">Your money. Your community. Your future.</p></div><div className="grid grid-cols-2 gap-x-14 gap-y-4 text-sm text-slate-500 sm:grid-cols-3"><a href="#products" className="hover:text-[#0504AA]">Products</a><a href="#loans" className="hover:text-[#0504AA]">Loans</a><a href="#security" className="hover:text-[#0504AA]">Security</a><a href="#about" className="hover:text-[#0504AA]">About</a><a href="#contact" className="hover:text-[#0504AA]">Contact</a><a href="#contact" className="hover:text-[#0504AA]">Support</a></div></div><div className="flex flex-col justify-between gap-3 pt-6 text-xs text-slate-400 sm:flex-row"><span>© 2026 Evermont Credit Union. All rights reserved.</span><div className="flex gap-5"><a href="#privacy" className="hover:text-[#0504AA]">Privacy</a><a href="#terms" className="hover:text-[#0504AA]">Terms</a><a href="#security" className="hover:text-[#0504AA]">Security</a></div></div></div></footer>
+      <aside className="fixed inset-x-0 bottom-0 z-50 border-t border-[#C9A227]/40 bg-[#0504AA]/95 px-4 py-2.5 text-center text-xs font-medium text-white shadow-[0_-4px_18px_rgba(5,4,170,0.16)] backdrop-blur-sm" aria-label="Security notice">
+        <div className="mx-auto flex max-w-7xl items-center justify-center gap-2">
+          <ShieldCheck className="size-3.5 shrink-0 text-[#f1d56f]" aria-hidden="true" />
+          <span>Your information is protected by Evermont security controls.</span>
+        </div>
+      </aside>
     </div>
   )
 }
