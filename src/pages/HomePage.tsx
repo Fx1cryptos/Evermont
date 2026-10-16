@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { PageMeta } from '@/components/PageMeta'
 import {
   ArrowRight,
   Car,
@@ -45,10 +46,17 @@ const faqs = [
 export const HomePage: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
+
   const navItems = [['Products', 'products'], ['Checking', '/checking'], ['Savings', '/savings'], ['Crypto', '/cryptocurrency'], ['Loans', '/loans'], ['Retirement', '/retirement'], ['Security', 'security'], ['About', '/about'], ['Contact', 'contact']]
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-[#101533]">
+    <>
+      <PageMeta
+        title="Evermont Credit Union | Secured Private Wealth Banking"
+        description="Evermont Credit Union provides a refined private-wealth banking experience focused on discretion, clarity, and responsible service. Explore accounts, manage your finances, and access member services with confidence."
+        canonical="https://evermontcredit.online/"
+      />
+      <div className="min-h-screen bg-[#f8fafc] text-[#101533]">
       <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
           <a href="#top" className="flex items-center gap-3" aria-label="Evermont home">
@@ -99,6 +107,7 @@ export const HomePage: React.FC = () => {
 
       <footer id="contact" className="bg-white"><div className="mx-auto max-w-7xl px-5 py-12 lg:px-8"><div className="flex flex-col justify-between gap-10 border-b border-slate-200 pb-10 md:flex-row"><div><img src={logoUrl} alt="Evermont secured private wealth bank" className="h-12 w-12 object-contain" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = logoFallbackUrl }} /><p className="mt-4 max-w-xs text-sm leading-6 text-slate-500">Where Private Wealth Is Protected. Built on Integrity. Guided by Excellence.</p><a href={`mailto:${supportEmail}`} className="mt-4 inline-block text-sm font-semibold text-[#0504AA] hover:underline">{supportEmail}</a><div className="mt-6 border-t border-slate-100 pt-5"><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8d6e0c]">Connect with Evermont</p><div className="mt-3 flex items-center gap-3"><a href="https://www.instagram.com/evermontcreditunion" target="_blank" rel="noopener noreferrer" aria-label="Evermont Credit Union on Instagram" className="flex size-9 items-center justify-center rounded-full bg-[#0504AA] text-white transition hover:bg-[#C9A227] hover:text-[#101533]"><img src="https://cdn.simpleicons.org/instagram/FFFFFF" alt="Instagram" className="size-4" /></a><a href="https://www.facebook.com/share/1GupMnFfkt/" target="_blank" rel="noopener noreferrer" aria-label="Evermont Credit Union on Facebook" className="flex size-9 items-center justify-center rounded-full bg-[#0504AA] text-white transition hover:bg-[#C9A227] hover:text-[#101533]"><img src="https://cdn.simpleicons.org/facebook/FFFFFF" alt="Facebook" className="size-4" /></a></div></div><p className="mt-4 text-xs text-slate-400">Official domain: evermontcredit.online</p></div><div className="grid grid-cols-2 gap-x-14 gap-y-4 text-sm text-slate-500 sm:grid-cols-3"><a href="#products" className="hover:text-[#0504AA]">Products</a><a href="#loans" className="hover:text-[#0504AA]">Loans</a><a href="#security" className="hover:text-[#0504AA]">Security</a><a href="#about" className="hover:text-[#0504AA]">About</a><a href="#faq" className="hover:text-[#0504AA]">FAQ</a><a href="#contact" className="hover:text-[#0504AA]">Contact Support</a><a href="https://v0-evermont-credit.vercel.app" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-[#0504AA]">Member Portal <ExternalLink className="size-3" /></a><a href="https://evermont-credit-unio-2tld.bolt.host" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-[#0504AA]">Business &amp; Operations <ExternalLink className="size-3" /></a></div></div><div className="flex flex-col justify-between gap-3 pt-6 text-xs text-slate-400 sm:flex-row"><span>© 2026 Evermont Secured Private Wealth Bank. All rights reserved.</span><div className="flex gap-5"><a href="#privacy" className="hover:text-[#0504AA]">Privacy</a><a href="#terms" className="hover:text-[#0504AA]">Terms</a><a href="#security" className="hover:text-[#0504AA]">Security</a></div></div></div></footer>
     </div>
+    </>
   )
 }
 

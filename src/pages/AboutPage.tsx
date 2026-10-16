@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { ArrowRight, Check, ExternalLink, Mail, ShieldCheck } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { PageMeta } from '@/components/PageMeta'
 
 const gateway = 'https://gateway.pinata.cloud/ipfs/'
 const logoUrl = `${gateway}bafkreicrwvjqxdzit62i5e2yvk24atabo2ob3ayyxluwzb2pmyrrzq6z2i`
@@ -20,15 +21,12 @@ const goals = ['Responsible Service', 'Privacy', 'Digital Experience', 'Transpar
 const commitments = ['We communicate with care and clarity.', 'We treat your information with respect.', 'We keep the long view in every conversation.']
 
 export const AboutPage: React.FC = () => {
-  useEffect(() => {
-    document.title = 'About Evermont Credit Union | Private Wealth, Protected'
-    const description = 'Learn about Evermont Credit Union, our philosophy, mission, and considered approach to private financial service.'
-    let meta = document.querySelector('meta[name="description"]')
-    if (!meta) { meta = document.createElement('meta'); meta.setAttribute('name', 'description'); document.head.appendChild(meta) }
-    meta.setAttribute('content', description)
-  }, [])
-
-  return <div className="min-h-screen bg-[#f8fafc] text-[#101533]">
+  return <>
+    <PageMeta
+      title="About Evermont | Private Wealth and Responsible Service"
+      description="Learn about Evermont Credit Union’s approach to private wealth, guided by discretion, integrity, and a focus on individual financial priorities."
+    />
+    <div className="min-h-screen bg-[#f8fafc] text-[#101533]">
     <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
         <Link to="/" className="flex items-center gap-3" aria-label="Evermont home"><img src={logoUrl} alt="Evermont Credit Union" className="h-11 w-11 object-contain" /><span className="text-lg font-bold tracking-[-0.04em]">EVERMONT</span></Link>
@@ -57,7 +55,8 @@ export const AboutPage: React.FC = () => {
       <section className="mx-auto max-w-7xl px-5 pb-20 lg:px-8"><div className="grid gap-5 overflow-hidden rounded-3xl border border-slate-200 bg-white md:grid-cols-2"><div className="grid grid-cols-2 gap-2 bg-slate-100 p-2"><img src={storefrontImages[0]} alt="Evermont storefront" className="h-full min-h-64 w-full rounded-2xl object-cover" /><img src={storefrontImages[1]} alt="Evermont storefront detail" className="h-full min-h-64 w-full rounded-2xl object-cover" /></div><div id="contact" className="flex flex-col justify-center p-8 sm:p-12"><p className="text-sm font-bold uppercase tracking-[0.18em] text-[#C9A227]">Connect with Evermont</p><h2 className="mt-4 text-3xl font-semibold">Let’s start a thoughtful conversation.</h2><p className="mt-4 leading-7 text-slate-600">For general questions, contact our team directly.</p><div className="mt-7 space-y-3 text-sm"><a href="mailto:support@evermontcredit.online" className="flex items-center gap-3 font-semibold text-[#0504AA] hover:underline"><Mail className="size-4" /> support@evermontcredit.online</a><a href="mailto:info@evermontcredit.online" className="flex items-center gap-3 font-semibold text-[#0504AA] hover:underline"><Mail className="size-4" /> info@evermontcredit.online</a><a href="https://www.youtube.com/@EvermontCreditUnion" target="_blank" rel="noreferrer" className="flex items-center gap-3 font-semibold text-[#0504AA] hover:underline"><ExternalLink className="size-4" /> YouTube</a></div><div className="mt-8 flex flex-wrap gap-3"><Link to="/open-checking" className="rounded-full bg-[#0504AA] px-5 py-3 text-sm font-semibold text-white hover:bg-[#0807c8]">Contact / Open an Account</Link><Link to="/" className="rounded-full border border-slate-300 px-5 py-3 text-sm font-semibold text-[#0504AA] hover:border-[#0504AA]">Return to Home</Link></div></div></div></section>
     </main>
     <footer className="border-t border-slate-200 bg-white"><div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between lg:px-8"><span>Where Private Wealth Is Protected.</span><span>Built on Integrity. Guided by Excellence.</span></div></footer>
-  </div>
+    </div>
+    </>
 }
 
 export default AboutPage
