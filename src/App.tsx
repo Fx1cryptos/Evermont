@@ -7,6 +7,7 @@ import { AccountHistoryPage } from '@/pages/admin/AccountHistoryPage'
 import { Login } from '@/pages/auth/Login'
 import { Register } from '@/pages/auth/Register'
 import { MemberDashboardPage } from '@/pages/MemberDashboardPage'
+import { HomePage } from '@/pages/HomePage'
 import { TransactionsPage } from '@/pages/TransactionsPage'
 import { FinancialInsightsPage } from '@/pages/FinancialInsightsPage'
 import { ProfilePage } from '@/pages/ProfilePage'
@@ -14,12 +15,6 @@ import { AccountsPage } from '@/pages/AccountsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { ServicePage } from '@/pages/ServicePage'
 import { ROUTES } from '@/constants/routes'
-
-const PortalEntry: React.FC = () => {
-  const { user, loading } = useAuth()
-  if (loading) return <main className="flex min-h-screen items-center justify-center text-sm text-slate-600">Loading member portal...</main>
-  return <Navigate to={user ? ROUTES.DASHBOARD : ROUTES.LOGIN} replace />
-}
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth()
@@ -31,7 +26,7 @@ export const App: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<PortalEntry />} />
+        <Route path="/" element={<HomePage />} />
         <Route path="/sign-in" element={<Login />} />
         <Route path="/signup" element={<Register />} />
         <Route path={ROUTES.LOGIN} element={<Login />} />
