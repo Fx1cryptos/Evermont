@@ -11,16 +11,10 @@ import { ServicePage } from '@/pages/ServicePage'
 import { OpenCheckingPage } from '@/pages/OpenCheckingPage'
 import { AboutPage } from '@/pages/AboutPage'
 import { ROUTES } from '@/constants/routes'
-import { PublicTrustBanner } from '@/components/PublicTrustBanner'
 import { ProductPage } from '@/pages/ProductPage'
 import { EvermontAssistant } from '@/components/EvermontAssistant'
 
-const PublicPage: React.FC<React.PropsWithChildren> = ({ children }) => (
-  <>
-    {children}
-    <PublicTrustBanner />
-  </>
-)
+const PublicPage: React.FC<React.PropsWithChildren> = ({ children }) => <>{children}</>
 
 export const App: React.FC = () => {
   return (
