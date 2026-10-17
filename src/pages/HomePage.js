@@ -8,13 +8,13 @@ const logoFallbackUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com
 const pinataGateway = 'https://gateway.pinata.cloud/ipfs/';
 const supportEmail = 'support@evermontcredit.online';
 const products = [
-    { name: 'Checking Account', path: '/checking', description: 'A simpler way to manage everyday money.', benefit: 'No monthly maintenance fees', icon: WalletCards, tone: 'blue', image: `${pinataGateway}bafkreidchfnomj35rvey7yabgyvckshfm4s56onupq2g5nuhsf5cbuzbwy` },
-    { name: 'Savings Account', path: '/savings', description: 'Build a stronger financial foundation.', benefit: 'Competitive dividend rates', icon: PiggyBank, tone: 'gold', image: `${pinataGateway}bafybeidiwp4dtjw2662f5vqwollfbtfj7dfmuk746kwsxiy2fkaryb7kva` },
-    { name: 'Credit Card', path: '/credit-card', description: 'Flexible spending with member-first benefits.', benefit: 'Rewards on every purchase', icon: CreditCard, tone: 'ink', image: `${pinataGateway}bafkreibw4situowzxkn7xeaupaxltjbqwffw44hrstgp6er27lyx2fyymq` },
-    { name: '401(k)', path: '/retirement', description: 'Invest in the future you are building.', benefit: 'Guidance for every chapter', icon: TrendingUp, tone: 'blue', image: `${pinataGateway}bafkreiarkceaf2lkozxg4donpczcgxv7nwxtukvrvh2j4d7dzajfqmn4qm` },
-    { name: 'Crypto Loan', path: '/cryptocurrency', description: 'Access liquidity without selling your assets.', benefit: 'Thoughtful digital asset lending', icon: Gem, tone: 'ink', image: `${pinataGateway}bafkreiahf6sasjnaxbwvpiylqd3k3dyeos32dwlpb6qyir6u3v4cmvybpm` },
-    { name: 'Personal Loan', path: '/personal-loan', description: 'Make room for what matters most.', benefit: 'Rates designed around you', icon: Landmark, tone: 'blue', image: `${pinataGateway}bafybeifr5exhupokbda4vilfwuuqkhkogxtq4lzbt7huciou6t3jkd2eja` },
-    { name: 'Auto Loan', path: '/auto-loan', description: 'Get moving with a confident plan.', benefit: 'Fast, local decisions', icon: Car, tone: 'gold', image: `${pinataGateway}bafybeifk33kwar6p5myte4d3a6gwovyiutnip75t2onj2kbxtmdsjv7bxe` },
+    { name: 'Checking Account', path: '/banking/private-checking', description: 'A simpler way to manage everyday money.', benefit: 'No monthly maintenance fees', icon: WalletCards, tone: 'blue', image: `${pinataGateway}bafkreidchfnomj35rvey7yabgyvckshfm4s56onupq2g5nuhsf5cbuzbwy` },
+    { name: 'Savings Account', path: '/banking/private-savings', description: 'Build a stronger financial foundation.', benefit: 'Competitive dividend rates', icon: PiggyBank, tone: 'gold', image: `${pinataGateway}bafybeidiwp4dtjw2662f5vqwollfbtfj7dfmuk746kwsxiy2fkaryb7kva` },
+    { name: 'Credit Card', path: '/banking/credit-card', description: 'Flexible spending with member-first benefits.', benefit: 'Rewards on every purchase', icon: CreditCard, tone: 'ink', image: `${pinataGateway}bafkreibw4situowzxkn7xeaupaxltjbqwffw44hrstgp6er27lyx2fyymq` },
+    { name: '401(k)', path: '/banking/retirement-401k', description: 'Invest in the future you are building.', benefit: 'Guidance for every chapter', icon: TrendingUp, tone: 'blue', image: `${pinataGateway}bafkreiarkceaf2lkozxg4donpczcgxv7nwxtukvrvh2j4d7dzajfqmn4qm` },
+    { name: 'Crypto Loan', path: '/banking/digital-asset-lending', description: 'Access liquidity without selling your assets.', benefit: 'Thoughtful digital asset lending', icon: Gem, tone: 'ink', image: `${pinataGateway}bafkreiahf6sasjnaxbwvpiylqd3k3dyeos32dwlpb6qyir6u3v4cmvybpm` },
+    { name: 'Personal Loan', path: '/loans/personal', description: 'Make room for what matters most.', benefit: 'Rates designed around you', icon: Landmark, tone: 'blue', image: `${pinataGateway}bafybeifr5exhupokbda4vilfwuuqkhkogxtq4lzbt7huciou6t3jkd2eja` },
+    { name: 'Auto Loan', path: '/loans/auto', description: 'Get moving with a confident plan.', benefit: 'Fast, local decisions', icon: Car, tone: 'gold', image: `${pinataGateway}bafybeifk33kwar6p5myte4d3a6gwovyiutnip75t2onj2kbxtmdsjv7bxe` },
 ];
 const benefits = ['Member-owned and community-led', 'Straightforward products and pricing', 'People who know your name and goals'];
 const faqs = [
