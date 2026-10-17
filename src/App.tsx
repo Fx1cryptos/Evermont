@@ -12,6 +12,8 @@ import { OpenCheckingPage } from '@/pages/OpenCheckingPage'
 import { AboutPage } from '@/pages/AboutPage'
 import { ROUTES } from '@/constants/routes'
 import { PublicTrustBanner } from '@/components/PublicTrustBanner'
+import { ProductPage } from '@/pages/ProductPage'
+import { EvermontAssistant } from '@/components/EvermontAssistant'
 
 const PublicPage: React.FC<React.PropsWithChildren> = ({ children }) => (
   <>
@@ -38,10 +40,12 @@ export const App: React.FC = () => {
         <Route path="/cryptocurrency" element={<PublicPage><ServicePage /></PublicPage>} />
         <Route path="/loans" element={<PublicPage><ServicePage /></PublicPage>} />
         <Route path="/retirement" element={<PublicPage><ServicePage /></PublicPage>} />
+        {['/banking/private-checking','/banking/private-savings','/banking/credit-card','/banking/retirement-401k','/loans/personal','/loans/auto','/banking/digital-asset-lending'].map(path => <Route key={path} path={path} element={<ProductPage />} />)}
         <Route path="/admin" element={<AdminDashboardPage />} />
         <Route path="/admin/members/:id" element={<MemberDetailPage />} />
         <Route path="/admin/accounts/:id" element={<AccountHistoryPage />} />
       </Routes>
+      <EvermontAssistant />
     </BrowserRouter>
   )
 }
