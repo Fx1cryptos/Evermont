@@ -9,6 +9,7 @@ module.exports = {
   ],
   ignorePatterns: ['dist', '.eslintrc.cjs'],
   parser: '@typescript-eslint/parser',
+  settings: { react: { version: 'detect' } },
   plugins: ['react-refresh', '@typescript-eslint'],
   rules: {
     'react/react-in-jsx-scope': 'off',

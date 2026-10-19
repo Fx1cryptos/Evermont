@@ -338,7 +338,7 @@ export const MemberDashboardPage: React.FC = () => {
             </div>
           ) : accountsError ? (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
-              <p className="font-bold">We couldn't load your accounts.</p>
+              <p className="font-bold">We couldn&apos;t load your accounts.</p>
               <p className="mt-1">
                 {accountsError} Your saved records have not been changed.
                 Please refresh or contact member support if this continues.
