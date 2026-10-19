@@ -1,5 +1,6 @@
 import React from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { SpeedInsights } from '@vercel/speed-insights/react'
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage'
 import { MemberDetailPage } from '@/pages/admin/MemberDetailPage'
 import { AccountHistoryPage } from '@/pages/admin/AccountHistoryPage'
@@ -40,6 +41,7 @@ export const App: React.FC = () => {
         <Route path="/admin/accounts/:id" element={<AccountHistoryPage />} />
       </Routes>
       <EvermontAssistant />
+      <SpeedInsights />
     </BrowserRouter>
   )
 }
