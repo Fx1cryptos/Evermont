@@ -102,15 +102,23 @@ export const AuthProvider = ({ children }) => {
             throw err;
         }
     };
-    const signIn = async (email, password) => {
+    const signIn = async (identifier, password) => {
         setError(null);
         try {
-            const { error } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            });
+            let email = identifier.trim();
+            if (!email.includes('@')) {
+                const { data: profile, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('email')
+                    .eq('username', email)
+                    .maybeSingle();
+                if (profileError || !profile?.email)
+                    throw new Error('Invalid username or password');
+                email = profile.email;
+            }
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
             if (error)
-                throw error;
+                throw new Error('Invalid username or password');
         }
         catch (err) {
             const message = err instanceof Error ? err.message : 'Login failed';
