@@ -1,36 +1,5 @@
 import { Notification, NotificationPreference, NotificationType } from '@/types'
 import { supabase } from '@/lib/supabase'
-const DEMO_NOTIFICATIONS: Notification[] = [
-  {
-    id: '1',
-    userId: 'demo-user',
-    type: 'transaction',
-    title: 'Transfer Completed',
-    message: 'Your transfer of $500.00 to savings account was completed successfully.',
-    read: false,
-    createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '2',
-    userId: 'demo-user',
-    type: 'security',
-    title: 'Account Access',
-    message: 'Your account was accessed from a new device. If this wasn\'t you, please contact support.',
-    read: false,
-    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '3',
-    userId: 'demo-user',
-    type: 'account',
-    title: 'Direct Deposit Received',
-    message: 'Your salary deposit of $2,500.00 has been received.',
-    read: true,
-    readAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
-    createdAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
-  },
-]
-
 const DEFAULT_PREFERENCES: NotificationPreference = {
   id: 'pref-default',
   userId: '',
@@ -56,7 +25,7 @@ export const notificationService = {
 
       if (error) {
         console.warn('Failed to fetch notifications from Supabase:', error)
-        return DEMO_NOTIFICATIONS.slice(offset, offset + limit)
+        return []
       }
 
       return (
@@ -74,7 +43,7 @@ export const notificationService = {
       )
     } catch (error) {
       console.error('Error fetching notifications:', error)
-      return DEMO_NOTIFICATIONS
+      return []
     }
   },
 
@@ -88,13 +57,13 @@ export const notificationService = {
 
       if (error) {
         console.warn('Failed to fetch unread count:', error)
-        return DEMO_NOTIFICATIONS.filter((n) => !n.read).length
+        return 0
       }
 
       return count || 0
     } catch (error) {
       console.error('Error fetching unread count:', error)
-      return DEMO_NOTIFICATIONS.filter((n) => !n.read).length
+      return 0
     }
   },
 
