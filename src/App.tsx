@@ -13,7 +13,9 @@ import { AboutPage } from '@/pages/AboutPage'
 import { ROUTES } from '@/constants/routes'
 import { ProductPage } from '@/pages/ProductPage'
 import { EvermontAssistant } from '@/components/EvermontAssistant'
+import { SEO } from '@/components/SEO'
 
+const PrivatePage: React.FC<React.PropsWithChildren> = ({ children }) => <><SEO title="Member Portal" description="Secure Evermont member area" noIndex />{children}</>
 const PublicPage: React.FC<React.PropsWithChildren> = ({ children }) => <>{children}</>
 
 export const App: React.FC = () => {
@@ -27,17 +29,17 @@ export const App: React.FC = () => {
         <Route path={ROUTES.SIGN_UP} element={<Register />} />
         <Route path={ROUTES.OPEN_CHECKING} element={<PublicPage><OpenCheckingPage /></PublicPage>} />
         <Route path={ROUTES.ABOUT} element={<PublicPage><AboutPage /></PublicPage>} />
-        <Route path={ROUTES.DASHBOARD} element={<MemberDashboardPage />} />
-        <Route path={ROUTES.ACCOUNT} element={<MemberDashboardPage />} />
+        <Route path={ROUTES.DASHBOARD} element={<PrivatePage><MemberDashboardPage /></PrivatePage>} />
+        <Route path={ROUTES.ACCOUNT} element={<PrivatePage><MemberDashboardPage /></PrivatePage>} />
         <Route path="/checking" element={<PublicPage><ServicePage /></PublicPage>} />
         <Route path="/savings" element={<PublicPage><ServicePage /></PublicPage>} />
         <Route path="/cryptocurrency" element={<PublicPage><ServicePage /></PublicPage>} />
         <Route path="/loans" element={<PublicPage><ServicePage /></PublicPage>} />
         <Route path="/retirement" element={<PublicPage><ServicePage /></PublicPage>} />
         {['/banking/private-checking','/banking/private-savings','/banking/credit-card','/banking/retirement-401k','/loans/personal','/loans/auto','/banking/digital-asset-lending'].map(path => <Route key={path} path={path} element={<ProductPage />} />)}
-        <Route path="/admin" element={<AdminDashboardPage />} />
-        <Route path="/admin/members/:id" element={<MemberDetailPage />} />
-        <Route path="/admin/accounts/:id" element={<AccountHistoryPage />} />
+        <Route path="/admin" element={<PrivatePage><AdminDashboardPage /></PrivatePage>} />
+        <Route path="/admin/members/:id" element={<PrivatePage><MemberDetailPage /></PrivatePage>} />
+        <Route path="/admin/accounts/:id" element={<PrivatePage><AccountHistoryPage /></PrivatePage>} />
       </Routes>
       <EvermontAssistant />
     </BrowserRouter>

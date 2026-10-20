@@ -27,15 +27,8 @@ const services: Record<string, Service> = {
 export const ServicePage: React.FC = () => {
   const { service = 'checking' } = useParams()
   const content = services[service] ?? services.checking
-  const metadata = {
-    checking: ['Checking Accounts | Evermont Credit Union', 'Open a checking account with Evermont Credit Union. A clear, secure way to manage everyday money with no monthly maintenance fees.'],
-    savings: ['Savings Accounts | Evermont Credit Union', 'Build a stronger financial foundation with an Evermont savings account. Competitive dividend rates and a straightforward digital experience.'],
-    retirement: ['Retirement Planning | Evermont Credit Union', 'Plan for the future with Evermont’s retirement solutions. Thoughtful guidance designed around your long-term financial goals.'],
-  }[service]
-  const [title, description] = metadata ?? [`${content.eyebrow} | Evermont Credit Union`, content.intro]
-
   return <>
-    <PageMeta title={title} description={description} />
+    <PageMeta title={content.title} description={content.intro} canonical={`https://evermontcredit.online/services/${service}`} />
     <div className="min-h-screen bg-[#f8fafc] text-[#101533]">
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur"><div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8"><Link to="/" className="flex items-center gap-3" aria-label="Evermont home"><img src={logoUrl} alt="Evermont Credit Union" className="h-11 w-11 object-contain" /><span className="text-lg font-bold tracking-[-0.04em]">EVERMONT</span></Link><nav className="flex items-center gap-3"><Link to="/" className="hidden rounded-full px-4 py-2.5 text-sm font-semibold text-slate-600 hover:text-[#0504AA] sm:inline">Home</Link><a href={loginUrl} className="rounded-full px-4 py-2.5 text-sm font-semibold text-[#0504AA] hover:bg-blue-50">Member Login</a><Link to="/register" className="rounded-full bg-[#0504AA] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0807c8]">Open an Account</Link></nav></div></header>
     <main><section className="bg-white"><div className="mx-auto grid max-w-7xl gap-10 px-5 py-16 lg:grid-cols-[1fr_.9fr] lg:items-center lg:px-8 lg:py-24"><div><p className="text-sm font-bold uppercase tracking-[0.18em] text-[#C9A227]">{content.eyebrow}</p><h1 className="mt-4 max-w-3xl text-5xl font-semibold leading-[1.05] tracking-[-0.045em] sm:text-6xl">{content.title}</h1><p className="mt-7 max-w-2xl text-lg leading-8 text-slate-600">{content.intro}</p><div className="mt-9 flex flex-wrap gap-4"><Link to="/open-checking" className="inline-flex items-center gap-2 rounded-full bg-[#0504AA] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-900/15 hover:bg-[#0807c8]">{content.cta} <ArrowRight className="size-4" /></Link><a href={loginUrl} className="rounded-full border border-slate-300 px-6 py-3.5 text-sm font-semibold text-[#0504AA] hover:border-[#0504AA]">Member Login</a></div></div><figure className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-100 shadow-xl shadow-blue-950/10"><img src={content.image} alt={content.imageAlt} className="aspect-[4/3] w-full object-cover" /><figcaption className="bg-[#101533] px-5 py-3 text-sm font-medium text-white">Evermont perspective</figcaption></figure></div></section>

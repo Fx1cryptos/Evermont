@@ -1,23 +1,3 @@
-import { useEffect } from 'react';
-export const PageMeta = ({ title, description, canonical }) => {
-    useEffect(() => {
-        document.title = title;
-        let descriptionMeta = document.querySelector('meta[name="description"]');
-        if (!descriptionMeta) {
-            descriptionMeta = document.createElement('meta');
-            descriptionMeta.setAttribute('name', 'description');
-            document.head.appendChild(descriptionMeta);
-        }
-        descriptionMeta.setAttribute('content', description);
-        if (canonical) {
-            let canonicalLink = document.querySelector('link[rel="canonical"]');
-            if (!canonicalLink) {
-                canonicalLink = document.createElement('link');
-                canonicalLink.setAttribute('rel', 'canonical');
-                document.head.appendChild(canonicalLink);
-            }
-            canonicalLink.setAttribute('href', canonical);
-        }
-    }, [title, description, canonical]);
-    return null;
-};
+import { jsx as _jsx } from "react/jsx-runtime";
+import { SEO } from './SEO';
+export const PageMeta = ({ title, description, canonical, noIndex }) => (_jsx(SEO, { title: title, description: description, path: canonical?.replace('https://evermontcredit.online', '') || '/', noIndex: noIndex }));
