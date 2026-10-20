@@ -8,7 +8,7 @@ export const ActivationRequiredModal: React.FC<{
   fee?: number | null
   ratePercent?: number | null
   onClose: () => void
-}> = ({ open, onClose }) => {
+}> = ({ open, fee, ratePercent, onClose }) => {
   const navigate = useNavigate()
   useEffect(() => {
     if (!open) return
@@ -36,7 +36,8 @@ export const ActivationRequiredModal: React.FC<{
         <p className="mt-4 text-center text-sm leading-6 text-slate-700">
           Please contact our support team to confirm your account activation requirements before using this feature.
         </p>
-        <a href="mailto:support@evermontcredit.online" className="mt-4 block text-center text-sm font-semibold text-[#0504AA] underline">Contact Support</a>
+        {fee != null && <div className="mt-5 rounded-xl bg-[#fffaf0] p-4 text-center"><p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Activation fee</p><p className="mt-1 text-2xl font-semibold text-[#0504AA]">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(fee)}</p>{ratePercent != null && <p className="mt-1 text-xs text-slate-500">Calculated at {ratePercent}%</p>}</div>}
+        <button type="button" onClick={() => { onClose(); navigate(ROUTES.SUPPORT) }} className="mt-4 block w-full text-center text-sm font-semibold text-[#0504AA] underline">Contact Support</button>
         <button
           onClick={onClose}
           className="mt-6 w-full rounded-xl px-4 py-2 font-semibold text-white"

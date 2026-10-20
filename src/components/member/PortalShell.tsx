@@ -8,6 +8,7 @@ const logo = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_6322-t
 const navigation = [
   { label: 'Dashboard', to: ROUTES.DASHBOARD, icon: LayoutDashboard },
   { label: 'Accounts', to: ROUTES.ACCOUNTS, icon: WalletCards },
+  { label: 'Activation', to: ROUTES.ACTIVATION, icon: ShieldCheck },
   { label: 'Transactions', to: ROUTES.TRANSACTIONS, icon: Receipt },
   { label: 'Insights', to: ROUTES.INSIGHTS, icon: BarChart3 },
   { label: 'Support', to: ROUTES.SUPPORT, icon: Headphones },
