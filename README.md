@@ -1,7 +1,4 @@
-Here is a complete replacement README.md for the Evermont Credit Union project. It updates the documentation for your current domain, separates the public homepage from the member portal, and gives future developers or AI coding agents clear instructions for SEO, testing, security, Git, and Vercel deployment.
-
 Evermont Credit Union
-
 Secured Private Wealth Banking
 Where Private Wealth is Protected.
 
