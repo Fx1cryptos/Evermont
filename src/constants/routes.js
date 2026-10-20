@@ -10,4 +10,5 @@ export const ROUTES = {
     INSIGHTS: '/insights',
     PROFILE: '/profile',
     SETTINGS: '/settings',
+    SUPPORT: '/support',
 };

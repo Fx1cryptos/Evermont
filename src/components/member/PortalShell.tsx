@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ArrowLeft, ArrowRight, BarChart3, Briefcase, ChevronRight, LayoutDashboard, LogOut, Menu, Receipt, Settings, ShieldCheck, UserRound, WalletCards, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, BarChart3, Briefcase, ChevronRight, Headphones, LayoutDashboard, LogOut, Menu, Receipt, Settings, ShieldCheck, UserRound, WalletCards, X } from 'lucide-react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
 import { useAuth } from '@/contexts/AuthContext'
@@ -10,6 +10,7 @@ const navigation = [
   { label: 'Accounts', to: ROUTES.ACCOUNTS, icon: WalletCards },
   { label: 'Transactions', to: ROUTES.TRANSACTIONS, icon: Receipt },
   { label: 'Insights', to: ROUTES.INSIGHTS, icon: BarChart3 },
+  { label: 'Support', to: ROUTES.SUPPORT, icon: Headphones },
   { label: 'Profile', to: ROUTES.PROFILE, icon: UserRound },
   { label: 'Settings', to: ROUTES.SETTINGS, icon: Settings },
 ]
@@ -46,4 +47,4 @@ export const PortalShell: React.FC<React.PropsWithChildren<{ title: string; eyeb
   </div>
 }
 
-export const SupportCard: React.FC = () => <aside className="rounded-2xl bg-[#0504AA] p-5 text-white"><div className="flex items-center gap-3"><div className="rounded-xl bg-white/10 p-2"><ShieldCheck className="size-5 text-[#C9A227]" /></div><div><p className="font-semibold">Need help?</p><p className="text-sm text-blue-100">Our member support team is here.</p></div></div><a href="mailto:support@evermont.com" className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#C9A227]">Contact support <ChevronRight className="size-4" /></a></aside>
+export const SupportCard: React.FC = () => <aside className="rounded-2xl bg-[#0504AA] p-5 text-white"><div className="flex items-center gap-3"><div className="rounded-xl bg-white/10 p-2"><ShieldCheck className="size-5 text-[#C9A227]" /></div><div><p className="font-semibold">Need help?</p><p className="text-sm text-blue-100">Our member support team is here.</p></div></div><Link to={ROUTES.SUPPORT} className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#C9A227]">Contact support <ChevronRight className="size-4" /></Link></aside>

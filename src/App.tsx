@@ -13,6 +13,8 @@ import { FinancialInsightsPage } from '@/pages/FinancialInsightsPage'
 import { ProfilePage } from '@/pages/ProfilePage'
 import { AccountsPage } from '@/pages/AccountsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
+import { SupportPage } from '@/pages/SupportPage'
+import { SupportThreadPage } from '@/pages/SupportThreadPage'
 import { ServicePage } from '@/pages/ServicePage'
 import { ROUTES } from '@/constants/routes'
 
@@ -37,6 +39,8 @@ export const App: React.FC = () => {
         <Route path={ROUTES.TRANSACTIONS} element={<ProtectedRoute><TransactionsPage /></ProtectedRoute>} />
         <Route path={ROUTES.INSIGHTS} element={<ProtectedRoute><FinancialInsightsPage /></ProtectedRoute>} />
         <Route path={ROUTES.PROFILE} element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+        <Route path={`${ROUTES.SUPPORT}/:id`} element={<ProtectedRoute><SupportThreadPage /></ProtectedRoute>} />
+        <Route path={ROUTES.SUPPORT} element={<ProtectedRoute><SupportPage /></ProtectedRoute>} />
         <Route path="/services/:service" element={<ServicePage />} />
         <Route path="/admin" element={<AdminDashboardPage />} />
         <Route path="/admin/members/:id" element={<MemberDetailPage />} />
