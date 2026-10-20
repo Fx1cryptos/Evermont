@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { ROUTES } from '@/constants/routes'
+import { SEO } from '@/components/SEO'
 
 export const Login: React.FC = () => {
   const navigate = useNavigate()
@@ -37,6 +38,8 @@ export const Login: React.FC = () => {
   }
 
   return (
+    <>
+      <SEO title="Member Login" description="Sign in securely to your Evermont Credit Union member account." path="/login" />
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-lg shadow-md border border-evermont-border p-8">
@@ -124,5 +127,6 @@ export const Login: React.FC = () => {
         </div>
       </div>
     </div>
+    </>
   )
 }

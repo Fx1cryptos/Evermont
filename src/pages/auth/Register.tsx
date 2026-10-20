@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { ROUTES } from '@/constants/routes'
+import { SEO } from '@/components/SEO'
 
 export const Register: React.FC = () => {
   const navigate = useNavigate()
@@ -56,6 +57,8 @@ export const Register: React.FC = () => {
   }
 
   return (
+    <>
+      <SEO title="Open an Account" description="Start your membership with Evermont Credit Union. Open a checking or savings account and access modern private-wealth banking tools." path="/register" />
     <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md rounded-lg border border-evermont-border bg-white p-8 shadow-md">
         <div className="mb-7 text-center">
@@ -84,5 +87,6 @@ export const Register: React.FC = () => {
         <p className="mt-6 text-center text-sm text-gray-600">Already a member? <Link to={ROUTES.LOGIN} className="font-medium text-evermont-blue hover:underline">Sign in</Link></p>
       </div>
     </main>
+    </>
   )
 }

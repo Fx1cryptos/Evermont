@@ -53,7 +53,7 @@ export const HomePage: React.FC = () => {
     <>
       <PageMeta
         title="Evermont Credit Union | Secured Private Wealth Banking"
-        description="Evermont Credit Union provides a refined private-wealth banking experience focused on discretion, clarity, and responsible service. Explore accounts, manage your finances, and access member services with confidence."
+        description="Modern digital banking built for members. Checking, savings, lending, and thoughtful financial tools with a focus on security, clarity, and community."
         canonical="https://evermontcredit.online/"
       />
       <div className="min-h-screen bg-[#f8fafc] text-[#101533]">
