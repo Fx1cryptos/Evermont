@@ -6,8 +6,10 @@ export const ROUTES = {
     RESET_PASSWORD: '/reset-password',
     DASHBOARD: '/dashboard',
     ACCOUNTS: '/accounts',
+    ACTIVATION: '/activation',
     TRANSACTIONS: '/transactions',
     INSIGHTS: '/insights',
     PROFILE: '/profile',
     SETTINGS: '/settings',
+    SUPPORT: '/support',
 };
