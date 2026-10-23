@@ -1,9 +1,20 @@
 User-agent: *
 Allow: /
+Allow: /about
+Allow: /checking
+Allow: /savings
+Allow: /credit-card
+Allow: /loans
+Allow: /retirement
+Allow: /security
+Allow: /contact
+Allow: /open-account
 Disallow: /login
 Disallow: /register
 Disallow: /dashboard
 Disallow: /account
 Disallow: /admin
+Disallow: /open-checking
+Disallow: /banking/
 
 Sitemap: https://evermontcredit.online/sitemap.xml

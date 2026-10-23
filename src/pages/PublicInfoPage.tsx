@@ -1,0 +1,26 @@
+import React from 'react'
+import { Link, useLocation } from 'react-router-dom'
+import { ArrowRight, Check, LockKeyhole, Mail, ShieldCheck } from 'lucide-react'
+import { PublicChrome } from '@/components/PublicChrome'
+import { PageMeta } from '@/components/PageMeta'
+
+const pageContent: Record<string, { title: string; description: string; eyebrow: string; intro: string; benefits: string[]; body: string }> = {
+  '/security': { title: 'Security & Privacy | Evermont Credit Union', description: 'Learn how Evermont approaches account security, privacy, and member support.', eyebrow: 'Security & privacy', intro: 'Thoughtful protection for what matters.', body: 'Evermont combines careful service practices, secure technology, and clear communication to help members manage their financial lives with confidence. We do not make promises beyond what we can verify; if you need help with an account concern, contact our support team directly.', benefits: ['Layered account protection and secure sign-in practices', 'Privacy-minded handling of member information', 'Human support when you need to ask a question'] },
+  '/contact': { title: 'Contact Evermont Credit Union', description: 'Contact Evermont Credit Union for support, questions, and account guidance.', eyebrow: 'We are here to help', intro: 'A clear path to the right conversation.', body: 'For general questions, account guidance, or support, email our team. Please do not send passwords, full account numbers, or other sensitive information by email.', benefits: ['Support email: support@evermontcredit.online', 'Clear guidance for products and account questions', 'A direct path for member support'] },
+  '/open-account': { title: 'Open an Account | Evermont Credit Union', description: 'Start your Evermont Credit Union account opening journey.', eyebrow: 'Begin with Evermont', intro: 'A considered first step toward what comes next.', body: 'Start your account opening journey through our existing secure application flow. If you have questions before beginning, our support team can help you understand the next step.', benefits: ['Begin through the existing account application flow', 'Explore checking and savings options', 'Contact support when you need personal guidance'] },
+}
+
+export const PublicInfoPage: React.FC = () => {
+  const path = useLocation().pathname
+  const content = pageContent[path] ?? pageContent['/contact']
+  const isSecurity = path === '/security'
+  return <PublicChrome>
+    <PageMeta title={content.title} description={content.description} canonical={`https://evermontcredit.online${path}`} />
+    <main>
+      <section className="bg-white"><div className="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-28"><div className="max-w-3xl"><p className="text-sm font-bold uppercase tracking-[0.18em] text-[#C9A227]">{content.eyebrow}</p><h1 className="mt-4 text-5xl font-semibold leading-tight tracking-[-0.04em] text-[#101533] sm:text-6xl">{content.intro}</h1><p className="mt-7 max-w-2xl text-lg leading-8 text-slate-600">{content.body}</p><div className="mt-9 flex flex-wrap gap-4"><Link to={path === '/open-account' ? '/open-checking' : '/about'} className="inline-flex items-center gap-2 rounded-full bg-[#0504AA] px-6 py-3.5 text-sm font-semibold text-white">{path === '/open-account' ? 'Start an application' : 'Learn about Evermont'} <ArrowRight className="size-4" /></Link>{path === '/contact' && <a href="mailto:support@evermontcredit.online" className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-6 py-3.5 text-sm font-semibold text-[#0504AA]"><Mail className="size-4" /> Email support</a>}</div></div></div></section>
+      <section className="mx-auto max-w-7xl px-5 py-16 lg:px-8 lg:py-24"><div className="grid gap-5 md:grid-cols-3">{content.benefits.map((benefit) => <div key={benefit} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><div className="flex size-11 items-center justify-center rounded-xl bg-[#edf1ff] text-[#0504AA]">{isSecurity ? <LockKeyhole className="size-5" /> : <Check className="size-5" />}</div><p className="mt-5 font-semibold leading-7 text-[#101533]">{benefit}</p></div>)}</div></section>
+      {isSecurity && <section className="border-y border-slate-200 bg-[#101533] text-white"><div className="mx-auto flex max-w-7xl items-center gap-5 px-5 py-12 lg:px-8"><ShieldCheck className="size-8 shrink-0 text-[#C9A227]" /><p className="max-w-2xl leading-7 text-slate-300">If you notice unusual activity or have a security concern, contact Evermont support promptly. Never share your password or security codes.</p></div></section>}
+      <section className="bg-[#eef1ff]"><div className="mx-auto flex max-w-7xl flex-col gap-5 px-5 py-14 sm:flex-row sm:items-center sm:justify-between lg:px-8"><div><h2 className="text-3xl font-semibold text-[#101533]">Built on integrity. Guided by excellence.</h2><p className="mt-2 text-slate-600">Explore products and support designed around your goals.</p></div><Link to="/open-account" className="inline-flex items-center gap-2 rounded-full bg-[#0504AA] px-6 py-3.5 text-sm font-semibold text-white">Open an Account <ArrowRight className="size-4" /></Link></div></section>
+    </main>
+  </PublicChrome>
+}
