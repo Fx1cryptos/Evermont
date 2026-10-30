@@ -13,7 +13,15 @@ body,
 }
 
 body {
-  @apply bg-evermont-light text-gray-900 font-sans;
+  @apply bg-evermont-light text-gray-900 font-sans antialiased;
+}
+
+button, a, input, select, textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  @apply bg-evermont-blue/15 text-evermont-blue;
 }
 
 html {

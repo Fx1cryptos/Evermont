@@ -1,4 +1,5 @@
 import { jsx as _jsx, Fragment as _Fragment, jsxs as _jsxs } from "react/jsx-runtime";
+import React from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
@@ -25,5 +26,16 @@ const ProtectedRoute = ({ children }) => {
     return user ? _jsx(_Fragment, { children: children }) : _jsx(Navigate, { to: ROUTES.LOGIN, replace: true });
 };
 export const App = () => {
+    React.useEffect(() => {
+        const isPrivate = window.location.pathname.startsWith('/dashboard') || window.location.pathname.startsWith('/accounts') || window.location.pathname.startsWith('/transactions') || window.location.pathname.startsWith('/profile') || window.location.pathname.startsWith('/settings') || window.location.pathname.startsWith('/activation') || window.location.pathname.startsWith('/support') || window.location.pathname.startsWith('/admin');
+        document.title = isPrivate ? 'Evermont Credit Union | Member Portal' : 'Evermont Credit Union';
+        let robots = document.querySelector('meta[name="robots"]');
+        if (!robots) {
+            robots = document.createElement('meta');
+            robots.setAttribute('name', 'robots');
+            document.head.appendChild(robots);
+        }
+        robots.setAttribute('content', isPrivate ? 'noindex, nofollow' : 'index, follow');
+    }, []);
     return (_jsx(BrowserRouter, { children: _jsxs(Routes, { children: [_jsx(Route, { path: "/", element: _jsx(HomePage, {}) }), _jsx(Route, { path: "/sign-in", element: _jsx(Login, {}) }), _jsx(Route, { path: "/signup", element: _jsx(Register, {}) }), _jsx(Route, { path: ROUTES.LOGIN, element: _jsx(Login, {}) }), _jsx(Route, { path: ROUTES.REGISTER, element: _jsx(Register, {}) }), _jsx(Route, { path: ROUTES.DASHBOARD, element: _jsx(ProtectedRoute, { children: _jsx(MemberDashboardPage, {}) }) }), _jsx(Route, { path: ROUTES.ACCOUNTS, element: _jsx(ProtectedRoute, { children: _jsx(AccountsPage, {}) }) }), _jsx(Route, { path: ROUTES.ACTIVATION, element: _jsx(ProtectedRoute, { children: _jsx(ActivationPage, {}) }) }), _jsx(Route, { path: ROUTES.SETTINGS, element: _jsx(ProtectedRoute, { children: _jsx(SettingsPage, {}) }) }), _jsx(Route, { path: ROUTES.TRANSACTIONS, element: _jsx(ProtectedRoute, { children: _jsx(TransactionsPage, {}) }) }), _jsx(Route, { path: ROUTES.INSIGHTS, element: _jsx(ProtectedRoute, { children: _jsx(FinancialInsightsPage, {}) }) }), _jsx(Route, { path: ROUTES.PROFILE, element: _jsx(ProtectedRoute, { children: _jsx(ProfilePage, {}) }) }), _jsx(Route, { path: `${ROUTES.SUPPORT}/:id`, element: _jsx(ProtectedRoute, { children: _jsx(SupportThreadPage, {}) }) }), _jsx(Route, { path: ROUTES.SUPPORT, element: _jsx(ProtectedRoute, { children: _jsx(SupportPage, {}) }) }), _jsx(Route, { path: "/services/:service", element: _jsx(ServicePage, {}) }), _jsx(Route, { path: "/admin", element: _jsx(AdminDashboardPage, {}) }), _jsx(Route, { path: "/admin/members/:id", element: _jsx(MemberDetailPage, {}) }), _jsx(Route, { path: "/admin/accounts/:id", element: _jsx(AccountHistoryPage, {}) })] }) }));
 };

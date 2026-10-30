@@ -26,6 +26,13 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 }
 
 export const App: React.FC = () => {
+  React.useEffect(() => {
+    const isPrivate = window.location.pathname.startsWith('/dashboard') || window.location.pathname.startsWith('/accounts') || window.location.pathname.startsWith('/transactions') || window.location.pathname.startsWith('/profile') || window.location.pathname.startsWith('/settings') || window.location.pathname.startsWith('/activation') || window.location.pathname.startsWith('/support') || window.location.pathname.startsWith('/admin')
+    document.title = isPrivate ? 'Evermont Credit Union | Member Portal' : 'Evermont Credit Union'
+    let robots = document.querySelector('meta[name="robots"]')
+    if (!robots) { robots = document.createElement('meta'); robots.setAttribute('name', 'robots'); document.head.appendChild(robots) }
+    robots.setAttribute('content', isPrivate ? 'noindex, nofollow' : 'index, follow')
+  }, [])
   return (
     <BrowserRouter>
       <Routes>
