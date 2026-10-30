@@ -28,7 +28,7 @@ export const Login: React.FC = () => {
     try {
       setLoading(true)
       await signIn(email, password)
-      navigate(ROUTES.DASHBOARD)
+      navigate(ROUTES.HOME)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed'
       setError(message)

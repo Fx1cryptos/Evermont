@@ -5,7 +5,6 @@ import { MemberDetailPage } from '@/pages/admin/MemberDetailPage'
 import { AccountHistoryPage } from '@/pages/admin/AccountHistoryPage'
 import { Login } from '@/pages/auth/Login'
 import { Register } from '@/pages/auth/Register'
-import { MemberDashboardPage } from '@/pages/MemberDashboardPage'
 import { HomePage } from '@/pages/HomePage'
 import { ServicePage } from '@/pages/ServicePage'
 import { OpenCheckingPage } from '@/pages/OpenCheckingPage'
@@ -13,16 +12,9 @@ import { AboutPage } from '@/pages/AboutPage'
 import { ROUTES } from '@/constants/routes'
 import { ProductPage } from '@/pages/ProductPage'
 import { EvermontAssistant } from '@/components/EvermontAssistant'
-import { SEO } from '@/components/SEO'
 import { PublicInfoPage } from '@/pages/PublicInfoPage'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
-
-const PrivatePage: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const { user, loading } = useAuth()
-  if (loading) return <div className="min-h-screen bg-[#f3f6fc] p-8 text-slate-600">Loading secure area…</div>
-  return user ? <><SEO title="Member Portal" description="Secure Evermont member area" noIndex />{children}</> : <Navigate to={ROUTES.LOGIN} replace />
-}
 
 const AdminPage: React.FC<React.PropsWithChildren> = ({ children }) => {
   const { user, loading: authLoading } = useAuth()
@@ -60,8 +52,6 @@ export const App: React.FC = () => {
         <Route path={ROUTES.SIGN_UP} element={<Register />} />
         <Route path={ROUTES.OPEN_CHECKING} element={<PublicPage><OpenCheckingPage /></PublicPage>} />
         <Route path={ROUTES.ABOUT} element={<PublicPage><AboutPage /></PublicPage>} />
-        <Route path={ROUTES.DASHBOARD} element={<PrivatePage><MemberDashboardPage /></PrivatePage>} />
-        <Route path={ROUTES.ACCOUNT} element={<PrivatePage><MemberDashboardPage /></PrivatePage>} />
         <Route path="/checking" element={<PublicPage><ServicePage /></PublicPage>} />
         <Route path="/savings" element={<PublicPage><ServicePage /></PublicPage>} />
         <Route path="/cryptocurrency" element={<PublicPage><ServicePage /></PublicPage>} />

@@ -41,7 +41,7 @@ export const Register = () => {
             setLoading(true);
             const result = await signUp(email, form.password, firstName, lastName);
             if (result.session) {
-                navigate(ROUTES.DASHBOARD, { replace: true });
+                navigate(ROUTES.HOME, { replace: true });
             }
             else {
                 setMessage('Account created. Check your email to confirm your membership, then sign in.');

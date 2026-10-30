@@ -25,7 +25,7 @@ export const Login = () => {
         try {
             setLoading(true);
             await signIn(email, password);
-            navigate(ROUTES.DASHBOARD);
+            navigate(ROUTES.HOME);
         }
         catch (err) {
             const message = err instanceof Error ? err.message : 'Login failed';
