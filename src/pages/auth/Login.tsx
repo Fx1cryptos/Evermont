@@ -20,7 +20,7 @@ export const Login: React.FC = () => {
     setError(null)
 
     if (!username.trim() || !password.trim()) {
-      setError('Please enter both username and password')
+      setError('Please enter both email and password')
       return
     }
 
@@ -61,13 +61,13 @@ export const Login: React.FC = () => {
             <div className="mb-9">
               <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#C9A227]">Member portal</p>
               <h1 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-[#0504AA] sm:text-4xl">Welcome back.</h1>
-              <p className="mt-3 text-sm leading-6 text-slate-500">Sign in to continue to your secure Evermont account.</p>
+              <p className="mt-3 text-sm leading-6 text-slate-500">Sign in with the email on the account, not the member name.</p>
             </div>
 
             {(error || authError) && <div role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error || authError}</div>}
 
             <form onSubmit={handleSubmit} className="space-y-5">
-              <Input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} disabled={loading} label="Username" required />
+              <Input type="email" placeholder="Email" value={username} onChange={(e) => setUsername(e.target.value)} disabled={loading} label="Email" required />
               <div className="relative">
                 <Input type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading} label="Password" required />
                 <button type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-10 rounded-md text-slate-500 hover:text-[#0504AA]" disabled={loading}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
