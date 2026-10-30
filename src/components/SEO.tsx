@@ -22,6 +22,10 @@ export const SEO: React.FC<SEOProps> = ({ title, description, path = '/', noInde
       <meta property="og:description" content={description} />
       <meta property="og:url" content={url} />
       <meta property="og:type" content="website" />
+      <meta property="og:site_name" content={siteName} />
+      <meta property="og:image" content={`${siteUrl}/images/evermont-logo.jpeg`} />
+      <meta name="twitter:image" content={`${siteUrl}/images/evermont-logo.jpeg`} />
+      <script type="application/ld+json">{JSON.stringify({ '@context': 'https://schema.org', '@type': 'Organization', name: siteName, url: siteUrl, email: 'support@evermontcredit.online', logo: `${siteUrl}/images/evermont-logo.jpeg` })}</script>
       <meta name="twitter:card" content="summary" />
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />

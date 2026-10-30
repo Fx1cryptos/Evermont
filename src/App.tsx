@@ -41,6 +41,7 @@ export const App: React.FC = () => {
         <Route path="/security" element={<PublicInfoPage />} />
         <Route path="/contact" element={<PublicInfoPage />} />
         <Route path="/open-account" element={<PublicInfoPage />} />
+        {['/mission','/membership','/faq','/privacy','/terms','/disclosures','/accessibility','/fraud-prevention'].map(path => <Route key={path} path={path} element={<PublicInfoPage />} />)}
         {['/banking/private-checking','/banking/private-savings','/banking/credit-card','/banking/retirement-401k','/loans/personal','/loans/auto','/banking/digital-asset-lending'].map(path => <Route key={path} path={path} element={<ProductPage />} />)}
         <Route path="/admin" element={<PrivatePage><AdminDashboardPage /></PrivatePage>} />
         <Route path="/admin/members/:id" element={<PrivatePage><MemberDetailPage /></PrivatePage>} />
