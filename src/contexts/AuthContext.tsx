@@ -119,19 +119,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (identifier: string, password: string) => {
     setError(null)
     try {
-      let email = identifier.trim()
+      const email = identifier.trim()
       if (!email.includes('@')) {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('email')
-          .eq('username', email)
-          .maybeSingle()
-        if (profileError || !profile?.email) throw new Error('Invalid username or password')
-        email = profile.email
+        throw new Error('Sign in with the email on the account, not the member name.')
       }
 
       const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) throw new Error('Invalid username or password')
+      if (error) throw new Error('Incorrect email or password')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed'
       setError(message)
