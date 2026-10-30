@@ -19,7 +19,6 @@ import { SupportThreadPage } from '@/pages/SupportThreadPage'
 import { ServicePage } from '@/pages/ServicePage'
 import { ROUTES } from '@/constants/routes'
 
-const PUBLIC_SITE = 'https://evermontcredit.online'
 const MEMBER_PORTAL = 'https://v0-evermont.vercel.app'
 const MEMBER_PREFIXES = ['/login', '/sign-in', '/register', '/signup', '/dashboard', '/accounts', '/activation', '/transactions', '/insights', '/profile', '/settings', '/support', '/admin', '/forgot-password', '/reset-password']
 
@@ -69,5 +68,3 @@ export const App: React.FC = () => {
     </BrowserRouter>
   )
 }
-
-export { PUBLIC_SITE, MEMBER_PORTAL }
