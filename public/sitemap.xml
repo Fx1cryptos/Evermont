@@ -4,10 +4,18 @@
   <url><loc>https://evermontcredit.online/about</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://evermontcredit.online/checking</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://evermontcredit.online/savings</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://evermontcredit.online/retirement</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://evermontcredit.online/credit-card</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://evermontcredit.online/loans</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://evermontcredit.online/cryptocurrency</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://evermontcredit.online/open-checking</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://evermontcredit.online/contact</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://evermontcredit.online/loans</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://evermontcredit.online/retirement</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://evermontcredit.online/security</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://evermontcredit.online/mission</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://evermontcredit.online/membership</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://evermontcredit.online/faq</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://evermontcredit.online/contact</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://evermontcredit.online/open-account</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://evermontcredit.online/privacy</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://evermontcredit.online/terms</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://evermontcredit.online/disclosures</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://evermontcredit.online/accessibility</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://evermontcredit.online/fraud-prevention</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
 </urlset>

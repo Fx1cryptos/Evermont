@@ -1,64 +1,35 @@
 import { supabase } from '@/lib/supabase';
 export const ledgerService = {
     async createLedgerEntry(params) {
-        if (!supabase) {
-            const now = new Date().toISOString();
-            return {
-                id: crypto.randomUUID(),
-                accountId: params.accountId,
-                memberId: params.memberId,
-                referenceId: params.referenceId,
-                entryType: params.entryType,
-                amount: params.amount,
-                debit: params.debit,
-                credit: params.credit,
-                description: params.description,
-                category: params.category,
-                status: params.status ?? 'completed',
-                balanceAfter: params.amount,
-                createdAt: now,
-                updatedAt: now,
-            };
-        }
-        const now = new Date().toISOString();
-        const { data, error } = await supabase
-            .from('ledger_entries')
-            .insert([
-            {
-                account_id: params.accountId,
-                member_id: params.memberId,
-                reference_id: params.referenceId,
-                entry_type: params.entryType,
-                amount: params.amount,
-                debit: params.debit ?? null,
-                credit: params.credit ?? null,
-                description: params.description,
-                category: params.category,
-                status: params.status ?? 'completed',
-                balance_after: params.amount,
-                created_at: now,
-                updated_at: now,
-            },
-        ])
-            .select('*')
-            .single();
+        const { data, error } = await supabase.rpc('create_ledger_entry', {
+            p_account_id: params.accountId,
+            p_member_id: params.memberId,
+            p_reference_id: params.referenceId,
+            p_entry_type: params.entryType,
+            p_amount: params.amount,
+            p_description: params.description,
+            p_category: params.category,
+            p_status: params.status ?? 'completed',
+        });
         if (error)
             throw error;
+        if (!data)
+            throw new Error('Ledger entry was not created');
         return {
-            id: data.id,
+            id: data.reference_id,
             accountId: data.account_id,
             memberId: data.member_id,
             referenceId: data.reference_id,
-            entryType: data.entry_type,
-            amount: data.amount,
-            debit: data.debit,
-            credit: data.credit,
-            description: data.description,
-            category: data.category,
-            status: data.status,
+            entryType: params.entryType,
+            amount: params.amount,
+            debit: params.debit,
+            credit: params.credit,
+            description: params.description,
+            category: params.category,
+            status: params.status ?? 'completed',
             balanceAfter: data.balance_after,
-            createdAt: data.created_at,
-            updatedAt: data.updated_at,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
         };
     },
     async getAccountHistory(accountId) {
