@@ -27,7 +27,7 @@ export const PortalShell: React.FC<React.PropsWithChildren<{ title: string; eyeb
   return <div className="min-h-screen bg-[#f6f7fb] text-[#101533]">
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-[258px] border-r border-slate-200 bg-white px-4 py-5 lg:flex lg:flex-col">
       <Link to={ROUTES.DASHBOARD} className="flex items-center gap-3 px-2" aria-label="Evermont member dashboard">
-        <img src="/images/evermont-logo.jpeg" alt="Evermont Credit Union" className="size-11 rounded-xl object-cover ring-1 ring-[#0504AA]/10" />
+        <img src="/images/evermont-logo.svg" alt="Evermont Credit Union" className="size-11 rounded-xl object-cover ring-1 ring-[#0504AA]/10" />
         <span><strong className="block text-sm tracking-tight text-[#0504AA]">EVERMONT</strong><small className="block text-[10px] font-semibold uppercase tracking-[.18em] text-[#C9A227]">Credit Union</small></span>
       </Link>
       <div className="mt-8 rounded-2xl bg-[#f6f7fb] p-3"><p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#C9A227]">Private wealth</p><p className="mt-1 text-sm font-semibold text-[#101533]">Welcome, {String(displayName).split(' ')[0]}</p><p className="mt-1 text-xs text-slate-500">Where private wealth is protected.</p></div>

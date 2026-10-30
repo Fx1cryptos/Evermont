@@ -42,12 +42,12 @@ export const Login: React.FC = () => {
         <section className="relative hidden overflow-hidden bg-[#0504AA] lg:flex lg:min-h-screen lg:flex-col lg:justify-between lg:p-12 xl:p-16" aria-label="Evermont private banking">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(201,162,39,0.22),transparent_32%),linear-gradient(145deg,#0504AA_0%,#07145c_100%)]" />
           <div className="relative z-10">
-            <img src="/images/evermont-logo.jpeg" alt="Evermont Credit Union" className="h-20 w-20 rounded-2xl object-cover shadow-2xl ring-1 ring-white/20" />
+            <img src="/images/evermont-logo.svg" alt="Evermont Credit Union" className="h-20 w-20 rounded-2xl bg-white p-1 object-contain shadow-2xl ring-1 ring-white/20" />
             <p className="mt-10 max-w-lg text-5xl font-semibold leading-[1.08] tracking-[-0.04em] text-white xl:text-6xl">Where private wealth is protected.</p>
             <p className="mt-6 max-w-md text-base leading-7 text-blue-100">Secure access to your Evermont member relationship, accounts, and financial future.</p>
           </div>
           <div className="relative z-10 overflow-hidden rounded-[2rem] border border-white/15 bg-white/10 p-3 shadow-2xl backdrop-blur-sm">
-            <img src="/images/evermont-logo.jpeg" alt="Evermont Credit Union private wealth visual" className="h-56 w-full rounded-[1.5rem] object-cover opacity-90 xl:h-72" />
+            <img src="/images/evermont-logo.svg" alt="Evermont Credit Union private wealth visual" className="h-56 w-full rounded-[1.5rem] object-cover opacity-90 xl:h-72" />
           </div>
           <p className="relative z-10 text-xs uppercase tracking-[0.24em] text-[#e6ca75]">Evermont Credit Union · Secured Private Wealth Bank</p>
         </section>
@@ -55,7 +55,7 @@ export const Login: React.FC = () => {
         <section className="flex min-h-screen items-center justify-center px-5 py-8 sm:px-8 lg:px-14 xl:px-24">
           <div className="w-full max-w-[430px]">
             <div className="mb-10 flex items-center gap-4 lg:hidden">
-              <img src="/images/evermont-logo.jpeg" alt="Evermont Credit Union" className="h-14 w-14 rounded-xl object-cover shadow-md ring-1 ring-[#0504AA]/10" />
+              <img src="/images/evermont-logo.svg" alt="Evermont Credit Union" className="h-14 w-14 rounded-xl bg-white p-1 object-contain shadow-md ring-1 ring-[#0504AA]/10" />
               <div><p className="text-sm font-semibold text-[#0504AA]">Evermont Credit Union</p><p className="text-xs text-slate-500">Secured Private Wealth Bank</p></div>
             </div>
             <div className="mb-9">
