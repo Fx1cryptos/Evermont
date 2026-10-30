@@ -157,22 +157,18 @@ export const MemberDashboardPage: React.FC = () => {
       <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <Link to={ROUTES.HOME} className="flex items-center gap-3">
-            <img src="/images/evermont-logo.jpeg" alt="Evermont Credit Union" className="h-11 w-11 rounded-2xl object-cover shadow-lg shadow-blue-900/20" />
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0504AA] text-white shadow-lg shadow-blue-900/20">
+              <Landmark size={23} />
+            </span>
             <span>
               <span className="block text-lg font-black tracking-[0.12em] text-[#0504AA]">
                 EVERMONT
               </span>
               <span className="block text-[10px] font-semibold uppercase tracking-[0.19em] text-slate-500">
-                Member Banking
+                Private Wealth Banking
               </span>
             </span>
           </Link>
-
-          <nav className="hidden items-center gap-1 rounded-xl bg-slate-100 p-1 md:flex" aria-label="Member portal sections">
-            <a href="#accounts" className="rounded-lg px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-white hover:text-[#0504AA]">Accounts</a>
-            <a href="#transactions" className="rounded-lg px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-white hover:text-[#0504AA]">Activity</a>
-            <a href="#banking-actions" className="rounded-lg px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-white hover:text-[#0504AA]">Services</a>
-          </nav>
 
           <div className="flex items-center gap-3">
             <div className="hidden text-right sm:block">
@@ -207,7 +203,7 @@ export const MemberDashboardPage: React.FC = () => {
               </div>
 
               <p className="text-sm font-medium text-blue-100">
-                YOUR FINANCIAL OVERVIEW
+                WHERE PRIVATE WEALTH IS PROTECTED.
               </p>
               <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
                 Welcome back, {firstName}.
