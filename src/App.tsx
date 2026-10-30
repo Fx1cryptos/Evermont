@@ -19,6 +19,10 @@ import { SupportThreadPage } from '@/pages/SupportThreadPage'
 import { ServicePage } from '@/pages/ServicePage'
 import { ROUTES } from '@/constants/routes'
 
+const PUBLIC_SITE = 'https://evermontcredit.online'
+const MEMBER_PORTAL = 'https://v0-evermont.vercel.app'
+const MEMBER_PREFIXES = ['/login', '/sign-in', '/register', '/signup', '/dashboard', '/accounts', '/activation', '/transactions', '/insights', '/profile', '/settings', '/support', '/admin', '/forgot-password', '/reset-password']
+
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth()
   if (loading) return <main className="flex min-h-screen items-center justify-center text-sm text-slate-600">Loading member portal...</main>
@@ -27,8 +31,15 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
 export const App: React.FC = () => {
   React.useEffect(() => {
-    const isPrivate = window.location.pathname.startsWith('/dashboard') || window.location.pathname.startsWith('/accounts') || window.location.pathname.startsWith('/transactions') || window.location.pathname.startsWith('/profile') || window.location.pathname.startsWith('/settings') || window.location.pathname.startsWith('/activation') || window.location.pathname.startsWith('/support') || window.location.pathname.startsWith('/admin')
-    document.title = isPrivate ? 'Evermont Credit Union | Member Portal' : 'Evermont Credit Union'
+    const host = window.location.hostname
+    const path = window.location.pathname
+    const onPublicDomain = host === 'evermontcredit.online' || host === 'www.evermontcredit.online'
+    if (onPublicDomain && MEMBER_PREFIXES.some(route => path === route || path.startsWith(`${route}/`))) {
+      window.location.replace(`${MEMBER_PORTAL}${path}${window.location.search}${window.location.hash}`)
+      return
+    }
+    const isPrivate = MEMBER_PREFIXES.some(route => path === route || path.startsWith(`${route}/`))
+    document.title = isPrivate ? 'Evermont Credit Union | Member Portal' : 'Evermont Credit Union | Secured Private Wealth Banking'
     let robots = document.querySelector('meta[name="robots"]')
     if (!robots) { robots = document.createElement('meta'); robots.setAttribute('name', 'robots'); document.head.appendChild(robots) }
     robots.setAttribute('content', isPrivate ? 'noindex, nofollow' : 'index, follow')
@@ -58,3 +69,5 @@ export const App: React.FC = () => {
     </BrowserRouter>
   )
 }
+
+export { PUBLIC_SITE, MEMBER_PORTAL }
