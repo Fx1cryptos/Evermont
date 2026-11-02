@@ -60,7 +60,7 @@ export const validatePhone = (phone: string): ValidationError[] => {
 
 export const validateZipCode = (zipCode: string): ValidationError[] => {
   const errors: ValidationError[] = []
-  if (zipCode && !/^[\d\-]+$/.test(zipCode)) {
+  if (zipCode && !/^[\d-]+$/.test(zipCode)) {
     errors.push({ field: 'zipCode', message: 'Invalid ZIP code format' })
   }
   return errors

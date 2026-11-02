@@ -2,7 +2,7 @@ Evermont Ecosystem Architecture
 
 1. Overview
 
-Evermont Credit Union is positioned as a Secured Private Wealth Bank.
+Evermont is positioned as a Secured Private Wealth Bank.
 
 The Evermont ecosystem consists of three existing web applications that serve different purposes but should provide a consistent experience.
 
@@ -10,7 +10,7 @@ The goal is to coordinate their navigation, branding, functionality, and backend
 
 2. Platform One: Builder
 
-Website: https://evermont.builder.cloud
+Website: https://evermontcredit.online
 
 Role: Public Website and Main Entry Point
 
@@ -39,7 +39,7 @@ Builder should remain the public entry point unless a future architectural decis
 
 3. Platform Two: v0/Vercel
 
-Website: https://v0-evermont.vercel.app
+Website: https://evermontcredit.online
 
 Role: Primary Functional Portal
 
@@ -79,7 +79,7 @@ The v0 portal should also provide suitable navigation back to Builder for public
 
 4. Platform Three: Bolt
 
-Website: https://evermont-credit-unio-2tld.bolt.host
+Website: https://evermontcredit.online
 
 Role: Existing Project for Evaluation
 

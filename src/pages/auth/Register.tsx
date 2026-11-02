@@ -60,7 +60,7 @@ export const Register: React.FC = () => {
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-md items-center">
         <div className="w-full rounded-[2rem] border border-slate-200 bg-white p-7 shadow-xl shadow-[#0504AA]/10 sm:p-9">
           <div className="mb-7 text-center">
-            <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_6322-tg87iWvXcAFbQxeY6odhRyl9qwRpt9.jpeg" alt="Evermont Credit Union" className="mx-auto h-24 w-24 rounded-2xl object-cover shadow-lg ring-4 ring-[#0504AA]/10" />
+            <img src="/images/evermont-logo.svg" alt="Evermont" className="mx-auto h-24 w-24 rounded-2xl object-cover shadow-lg ring-4 ring-[#0504AA]/10" />
             <p className="mt-5 text-xs font-bold uppercase tracking-[0.22em] text-[#C9A227]">Evermont Private Wealth</p>
             <h1 className="mt-2 text-2xl font-semibold tracking-tight text-[#0504AA]">Become a member</h1>
             <p className="mt-2 text-sm text-slate-500">A secure foundation for your financial future</p>
@@ -84,7 +84,7 @@ export const Register: React.FC = () => {
           <Button type="submit" variant="primary" size="lg" className="w-full" loading={loading} disabled={loading}>{loading ? 'Creating account...' : 'Create account'}</Button>
         </form>
         <a
-          href="https://evermontcredit.online"
+          href="/"
           className="mt-4 block w-full rounded-md border border-[#0504AA] px-4 py-3 text-center text-sm font-semibold text-[#0504AA] transition-colors hover:bg-[#0504AA] hover:text-white"
         >
           Visit the Homepage

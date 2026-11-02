@@ -37,7 +37,7 @@ export const FinancialInsightsPage: React.FC = () => {
       const { data: accounts, error: accountsError } = await supabase.from('accounts').select('id').eq('user_id', user.id)
       if (accountsError) throw accountsError
       const ids = (accounts || []).map(account => account.id)
-      if (!ids.length) { if (active) { setRows([]); setLoading(false) }; return }
+      if (!ids.length) { if (active) { setRows([]); setLoading(false) } return }
       const { data, error: ledgerError } = await supabase.from('ledger_entries').select('id,created_at,description,category,debit,credit,amount,status').eq('member_id', user.id).in('account_id', ids).gte('created_at', start.toISOString()).order('created_at', { ascending: false })
       if (ledgerError) throw ledgerError
       if (active) { setRows((data || []) as Row[]); setError(''); setLoading(false) }

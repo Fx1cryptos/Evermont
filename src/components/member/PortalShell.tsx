@@ -4,7 +4,7 @@ import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
 import { useAuth } from '@/contexts/AuthContext'
 
-const PUBLIC_HOME = 'https://evermontcredit.online'
+const PUBLIC_HOME = '/'
 const navigation = [
   { label: 'Dashboard', to: ROUTES.DASHBOARD, icon: LayoutDashboard },
   { label: 'My Accounts', to: ROUTES.ACCOUNTS, icon: WalletCards },
@@ -28,8 +28,8 @@ export const PortalShell: React.FC<React.PropsWithChildren<{ title: string; eyeb
   return <div className="min-h-screen bg-[#f6f7fb] text-[#101533]">
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-[258px] border-r border-slate-200 bg-white px-4 py-5 lg:flex lg:flex-col">
       <a href={PUBLIC_HOME} className="flex items-center gap-3 px-2" aria-label="Evermont public homepage">
-        <img src="/images/evermont-logo.svg" alt="Evermont Credit Union" className="size-11 rounded-xl object-cover ring-1 ring-[#0504AA]/10" />
-        <span><strong className="block text-sm tracking-tight text-[#0504AA]">EVERMONT</strong><small className="block text-[10px] font-semibold uppercase tracking-[.18em] text-[#C9A227]">Credit Union</small></span>
+        <img src="/images/evermont-logo.svg" alt="Evermont" className="size-11 rounded-xl object-cover ring-1 ring-[#0504AA]/10" />
+        <span><strong className="block text-sm tracking-tight text-[#0504AA]">EVERMONT</strong><small className="block text-[10px] font-semibold uppercase tracking-[.18em] text-[#C9A227]">Private Wealth</small></span>
       </a>
       <div className="mt-8 rounded-2xl bg-[#f6f7fb] p-3"><p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#C9A227]">Private wealth</p><p className="mt-1 text-sm font-semibold text-[#101533]">Welcome, {String(displayName).split(' ')[0]}</p><p className="mt-1 text-xs text-slate-500">Where private wealth is protected.</p></div>
       <nav className="mt-7 grid gap-1" aria-label="Member navigation">{navigation.map(({ label, to, icon: Icon }) => <NavLink key={to} to={to} className={navClass}><Icon className="size-4" />{label}</NavLink>)}</nav>

@@ -2,7 +2,7 @@ Evermont Ecosystem — AI Development Instructions
 
 1. Project Overview
 
-Evermont Credit Union is positioned as a Secured Private Wealth Bank.
+Evermont is positioned as a Secured Private Wealth Bank.
 
 Brand identity:
 
@@ -17,7 +17,7 @@ This repository supports the development and coordination of three existing Ever
 
 Platform A: Builder — Public Website
 
-URL: https://evermont.builder.cloud
+URL: https://evermontcredit.online
 
 Purpose:
 
@@ -30,7 +30,7 @@ Builder is the public-facing entry point for the Evermont ecosystem.
 
 Platform B: v0/Vercel — Primary Functional Portal
 
-URL: https://v0-evermont.vercel.app
+URL: https://evermontcredit.online
 
 Purpose:
 
@@ -59,7 +59,7 @@ Verify the current repository state before relying on these details.
 
 Platform C: Bolt — Existing Project
 
-URL: https://evermont-credit-unio-2tld.bolt.host
+URL: https://evermontcredit.online
 
 Purpose:
 

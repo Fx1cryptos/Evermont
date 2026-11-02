@@ -4,8 +4,11 @@ import { useAuth } from '@/contexts/AuthContext'
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage'
 import { MemberDetailPage } from '@/pages/admin/MemberDetailPage'
 import { AccountHistoryPage } from '@/pages/admin/AccountHistoryPage'
+import { AdminComingSoonPage } from '@/pages/admin/AdminComingSoonPage'
 import { Login } from '@/pages/auth/Login'
 import { Register } from '@/pages/auth/Register'
+import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage'
+import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage'
 import { MemberDashboardPage } from '@/pages/MemberDashboardPage'
 import { HomePage } from '@/pages/HomePage'
 import { TransactionsPage } from '@/pages/TransactionsPage'
@@ -17,10 +20,12 @@ import { SettingsPage } from '@/pages/SettingsPage'
 import { SupportPage } from '@/pages/SupportPage'
 import { SupportThreadPage } from '@/pages/SupportThreadPage'
 import { ServicePage } from '@/pages/ServicePage'
+import { ContentPage } from '@/pages/public/ContentPage'
+import { NotFoundPage } from '@/pages/public/NotFoundPage'
+import { PAGES } from '@/pages/public/content'
+import { AdminRoute } from '@/components/admin/AdminRoute'
+import { NoIndex } from '@/components/Seo'
 import { ROUTES } from '@/constants/routes'
-
-const MEMBER_PORTAL = 'https://v0-evermont.vercel.app'
-const MEMBER_PREFIXES = ['/login', '/sign-in', '/register', '/signup', '/dashboard', '/accounts', '/activation', '/transactions', '/insights', '/profile', '/settings', '/support', '/admin', '/forgot-password', '/reset-password']
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth()
@@ -28,43 +33,48 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return user ? <>{children}</> : <Navigate to={ROUTES.LOGIN} replace />
 }
 
-export const App: React.FC = () => {
-  React.useEffect(() => {
-    const host = window.location.hostname
-    const path = window.location.pathname
-    const onPublicDomain = host === 'evermontcredit.online' || host === 'www.evermontcredit.online'
-    if (onPublicDomain && MEMBER_PREFIXES.some(route => path === route || path.startsWith(`${route}/`))) {
-      window.location.replace(`${MEMBER_PORTAL}${path}${window.location.search}${window.location.hash}`)
-      return
-    }
-    const isPrivate = MEMBER_PREFIXES.some(route => path === route || path.startsWith(`${route}/`))
-    document.title = isPrivate ? 'Evermont Credit Union | Member Portal' : 'Evermont Credit Union | Secured Private Wealth Banking'
-    let robots = document.querySelector('meta[name="robots"]')
-    if (!robots) { robots = document.createElement('meta'); robots.setAttribute('name', 'robots'); document.head.appendChild(robots) }
-    robots.setAttribute('content', isPrivate ? 'noindex, nofollow' : 'index, follow')
-  }, [])
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/sign-in" element={<Login />} />
-        <Route path="/signup" element={<Register />} />
-        <Route path={ROUTES.LOGIN} element={<Login />} />
-        <Route path={ROUTES.REGISTER} element={<Register />} />
-        <Route path={ROUTES.DASHBOARD} element={<ProtectedRoute><MemberDashboardPage /></ProtectedRoute>} />
-        <Route path={ROUTES.ACCOUNTS} element={<ProtectedRoute><AccountsPage /></ProtectedRoute>} />
-        <Route path={ROUTES.ACTIVATION} element={<ProtectedRoute><ActivationPage /></ProtectedRoute>} />
-        <Route path={ROUTES.SETTINGS} element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-        <Route path={ROUTES.TRANSACTIONS} element={<ProtectedRoute><TransactionsPage /></ProtectedRoute>} />
-        <Route path={ROUTES.INSIGHTS} element={<ProtectedRoute><FinancialInsightsPage /></ProtectedRoute>} />
-        <Route path={ROUTES.PROFILE} element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-        <Route path={`${ROUTES.SUPPORT}/:id`} element={<ProtectedRoute><SupportThreadPage /></ProtectedRoute>} />
-        <Route path={ROUTES.SUPPORT} element={<ProtectedRoute><SupportPage /></ProtectedRoute>} />
-        <Route path="/services/:service" element={<ServicePage />} />
-        <Route path="/admin" element={<AdminDashboardPage />} />
-        <Route path="/admin/members/:id" element={<MemberDetailPage />} />
-        <Route path="/admin/accounts/:id" element={<AccountHistoryPage />} />
-      </Routes>
-    </BrowserRouter>
-  )
-}
+/** Private screens: protected + noindex. */
+const Private: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => <><NoIndex title={title} /><ProtectedRoute>{children}</ProtectedRoute></>
+const Auth: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => <><NoIndex title={title} />{children}</>
+const Admin: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => <><NoIndex title={title} /><AdminRoute>{children}</AdminRoute></>
+
+const ADMIN_SOON = ['members', 'accounts', 'transactions', 'support', 'audit-logs', 'security', 'settings']
+
+/** Router-agnostic route table, shared by the browser app and the build-time prerenderer. */
+export const AppRoutes: React.FC = () => (
+  <Routes>
+    <Route path="/" element={<HomePage />} />
+    {Object.keys(PAGES).map(path => <Route key={path} path={path} element={<ContentPage />} />)}
+    <Route path="/services/:service" element={<ServicePage />} />
+
+    <Route path="/sign-in" element={<Navigate to={ROUTES.LOGIN} replace />} />
+    <Route path="/signup" element={<Navigate to={ROUTES.REGISTER} replace />} />
+    <Route path={ROUTES.LOGIN} element={<Auth title="Member Sign In"><Login /></Auth>} />
+    <Route path={ROUTES.REGISTER} element={<Auth title="Open an Account"><Register /></Auth>} />
+    <Route path={ROUTES.FORGOT_PASSWORD} element={<Auth title="Forgot Password"><ForgotPasswordPage /></Auth>} />
+    <Route path={ROUTES.RESET_PASSWORD} element={<Auth title="Reset Password"><ResetPasswordPage /></Auth>} />
+
+    <Route path={ROUTES.DASHBOARD} element={<Private title="Dashboard"><MemberDashboardPage /></Private>} />
+    <Route path={ROUTES.ACCOUNTS} element={<Private title="My Accounts"><AccountsPage /></Private>} />
+    <Route path={ROUTES.ACTIVATION} element={<Private title="Activation"><ActivationPage /></Private>} />
+    <Route path={ROUTES.SETTINGS} element={<Private title="Settings"><SettingsPage /></Private>} />
+    <Route path={ROUTES.TRANSACTIONS} element={<Private title="Transactions"><TransactionsPage /></Private>} />
+    <Route path={ROUTES.INSIGHTS} element={<Private title="Insights"><FinancialInsightsPage /></Private>} />
+    <Route path={ROUTES.PROFILE} element={<Private title="Profile"><ProfilePage /></Private>} />
+    <Route path={`${ROUTES.SUPPORT}/:id`} element={<Private title="Support"><SupportThreadPage /></Private>} />
+    <Route path={ROUTES.SUPPORT} element={<Private title="Help & Support"><SupportPage /></Private>} />
+
+    <Route path="/admin" element={<Admin title="Admin"><AdminDashboardPage /></Admin>} />
+    <Route path="/admin/members/:id" element={<Admin title="Member Detail"><MemberDetailPage /></Admin>} />
+    <Route path="/admin/accounts/:id" element={<Admin title="Account History"><AccountHistoryPage /></Admin>} />
+    {ADMIN_SOON.map(s => <Route key={s} path={`/admin/${s}`} element={<Admin title="Admin"><AdminComingSoonPage section={s} /></Admin>} />)}
+
+    <Route path="*" element={<NotFoundPage />} />
+  </Routes>
+)
+
+export const App: React.FC = () => (
+  <BrowserRouter>
+    <AppRoutes />
+  </BrowserRouter>
+)

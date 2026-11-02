@@ -4,7 +4,7 @@ This document captures the current requirements and constraints for creating a r
 
 ## Summary
 
-The repository is the existing Evermont Credit Union app. The current Supabase schema supports member profiles and account records, but it only defines the following account types in `supabase/schema.sql`:
+The repository is the existing Evermont app. The current Supabase schema supports member profiles and account records, but it only defines the following account types in `supabase/schema.sql`:
 
 - checking
 - savings
@@ -70,7 +70,7 @@ Before creating the test account, the following questions must be answered:
 
 The secure, correct approach is:
 
-1. Check whether a Supabase Auth user for `Dutch229moore@gmail.com` already exists.
+1. Check whether a Supabase Auth user for `<member-email@example.com>` already exists.
 2. If the user exists, link that auth user ID to the correct `public.profiles` row.
 3. If no user exists, create one through Supabase Auth using admin/server-side credentials.
 4. If a profile/member record already exists, update it rather than creating a duplicate.
@@ -85,7 +85,7 @@ After the setup is complete, verify:
 
 - Auth user exists in Supabase Auth
 - Auth user is linked to the correct profile/member record
-- Login with `Dutch229moore@gmail.com` succeeds
+- Login with `<member-email@example.com>` succeeds
 - Dashboard loads correctly
 - Account balances display correctly
 - Transaction history loads
