@@ -1,7 +1,7 @@
 {
   "name": "evermont",
   "version": "0.1.0",
-  "description": "Evermont - private wealth & digital banking prototype",
+  "description": "Evermont Private Bank & Trust - private wealth & digital banking prototype",
   "private": true,
   "type": "module",
   "scripts": {

@@ -40,7 +40,7 @@ const serviceContent: Record<string, { eyebrow: string; title: string; descripti
   'digital-assets': {
     eyebrow: 'Digital-asset education',
     title: 'Understand the opportunity and the risk.',
-    description: 'Learn about volatility, security, custody, and the limitations of digital-asset services. Evermont does not claim services that are not verified.',
+    description: 'Learn about volatility, security, custody, and the limitations of digital-asset services. Evermont Private Bank & Trust does not claim services that are not verified.',
     points: ['Risk and volatility education', 'Security best practices', 'Clear service limitations'],
   },
 }

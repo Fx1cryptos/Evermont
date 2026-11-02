@@ -62,7 +62,7 @@ export const PAGES: Record<string, PageContent> = {
     eyebrow: 'Legal', heading: 'Important Disclosures',
     intro: 'Please read these disclosures carefully.',
     sections: [
-      { heading: 'Not a bank', body: `${n} is a demonstration prototype. It is not a bank, credit union, broker-dealer or investment adviser and holds no banking charter.` },
+      { heading: 'Not a chartered bank', body: `${n} is a demonstration prototype. It is not a chartered bank, credit union, broker-dealer or investment adviser and holds no banking charter.` },
       { heading: 'No deposit insurance', body: 'Nothing on this site is FDIC or NCUA insured. No deposits are accepted.' },
       { heading: 'No real money movement', body: 'Balances or activity shown in the portal come only from records in the prototype database. No funds are transferred, held or lent.' },
       { heading: 'Educational content', body: 'Product pages describe how financial products commonly work. They do not quote rates, terms or eligibility.' },

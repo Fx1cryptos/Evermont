@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
-import { LOGO_PATH, SITE_NAME } from '@/config/site'
+import { LOGO_PATH, SITE_NAME, SITE_SHORT_NAME } from '@/config/site'
 
 export const PRIMARY_NAV = [
   { label: 'Banking', to: '/services/checking' },
@@ -21,7 +21,7 @@ export const SiteHeader: React.FC = () => {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
         <Link to="/" className="flex items-center gap-3" aria-label={`${SITE_NAME} home`}>
           <img src={LOGO_PATH} alt={`${SITE_NAME} logo`} width={44} height={44} className="h-11 w-11 rounded-xl object-contain" />
-          <span className="text-lg font-bold tracking-[-0.04em] text-[#101533]">{SITE_NAME}</span>
+          <span className="text-lg font-bold tracking-[-0.04em] text-[#101533]">{SITE_SHORT_NAME}</span>
           <span className="hidden border-l border-slate-200 pl-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#C9A227] sm:block">Private Wealth</span>
         </Link>
         <nav className="hidden items-center gap-7 text-sm font-medium text-slate-600 lg:flex" aria-label="Primary navigation">

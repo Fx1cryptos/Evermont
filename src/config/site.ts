@@ -1,12 +1,14 @@
 /** Single source of truth for brand + domain. Rename the brand here. */
-export const SITE_NAME = 'Evermont'
+export const SITE_NAME = 'Evermont Private Bank & Trust'
+/** Short form for tight spaces such as logo text. */
+export const SITE_SHORT_NAME = 'Evermont'
 export const SITE_TAGLINE = 'Private Wealth & Digital Banking'
 export const SITE_URL = 'https://evermontcredit.online'
 export const SUPPORT_EMAIL = 'support@evermontcredit.online'
 export const INFO_EMAIL = 'info@evermontcredit.online'
 export const LOGO_PATH = '/images/evermont-logo.svg'
 export const OG_IMAGE = `${SITE_URL}/images/evermont-logo.jpeg`
-export const DISCLAIMER = 'Prototype for demonstration. Not a bank. Not FDIC or NCUA insured. No real money movement.'
+export const DISCLAIMER = 'Prototype for demonstration. Not a chartered bank. Not FDIC or NCUA insured. No real money movement.'
 
 export const absoluteUrl = (path = '/') => `${SITE_URL}${path === '/' ? '/' : path}`
 
@@ -20,7 +22,7 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
   { path: '/security', title: `Security at ${SITE_NAME}`, description: `How ${SITE_NAME} approaches account security, authentication, privacy and fraud awareness.` },
   { path: '/privacy', title: `Privacy Policy | ${SITE_NAME}`, description: `How ${SITE_NAME} collects, uses and protects information in this demonstration prototype.` },
   { path: '/terms', title: `Terms of Use | ${SITE_NAME}`, description: `Terms governing use of the ${SITE_NAME} website and member portal prototype.` },
-  { path: '/disclosures', title: `Disclosures | ${SITE_NAME}`, description: `Important disclosures: ${SITE_NAME} is a prototype, not a bank, and not FDIC or NCUA insured.` },
+  { path: '/disclosures', title: `Disclosures | ${SITE_NAME}`, description: `Important disclosures: ${SITE_NAME} is a prototype, not a chartered bank, and not FDIC or NCUA insured.` },
   { path: '/accessibility', title: `Accessibility | ${SITE_NAME}`, description: `${SITE_NAME}'s commitment to an accessible experience for every visitor.` },
   { path: '/loans', title: `Loans | ${SITE_NAME}`, description: `Explore personal loans, auto loans and credit card education from ${SITE_NAME}.` },
   { path: '/loans/personal', title: `Personal Loans | ${SITE_NAME}`, description: `Personal loan education: how personal lending works and what to prepare before applying.` },

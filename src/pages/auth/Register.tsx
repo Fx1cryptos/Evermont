@@ -60,8 +60,8 @@ export const Register: React.FC = () => {
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-md items-center">
         <div className="w-full rounded-[2rem] border border-slate-200 bg-white p-7 shadow-xl shadow-[#0504AA]/10 sm:p-9">
           <div className="mb-7 text-center">
-            <img src="/images/evermont-logo.svg" alt="Evermont" className="mx-auto h-24 w-24 rounded-2xl object-cover shadow-lg ring-4 ring-[#0504AA]/10" />
-            <p className="mt-5 text-xs font-bold uppercase tracking-[0.22em] text-[#C9A227]">Evermont Private Wealth</p>
+            <img src="/images/evermont-logo.svg" alt="Evermont Private Bank & Trust" className="mx-auto h-24 w-24 rounded-2xl object-cover shadow-lg ring-4 ring-[#0504AA]/10" />
+            <p className="mt-5 text-xs font-bold uppercase tracking-[0.22em] text-[#C9A227]">Evermont Private Bank & Trust</p>
             <h1 className="mt-2 text-2xl font-semibold tracking-tight text-[#0504AA]">Become a member</h1>
             <p className="mt-2 text-sm text-slate-500">A secure foundation for your financial future</p>
           </div>
