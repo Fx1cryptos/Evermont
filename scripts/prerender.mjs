@@ -1,5 +1,6 @@
-// Build-time prerender: renders each public route to dist/<route>/index.html with per-route <head>,
-// writes dist/404.html, sitemap.xml (public routes only). Portal/auth/admin stay client-rendered (noindex).
+// Build-time prerender: renders each public route to dist/<route>.html (index.html for /)
+// with that route's <title> inside the Primary SEO marker. Vercel cleanUrls serves those
+// files without the .html suffix. Portal, auth, and admin routes stay on app.html (noindex).
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -16,20 +17,31 @@ const base = template
   .replace(/\s*<meta (name|property)="(description|robots|og:[^"]+|twitter:[^"]+)"[^>]*>/g, '')
   .replace(/\s*<link rel="canonical"[^>]*>/g, '')
 
+const SEO_MARKER = '<!-- Primary SEO -->'
+
 const page = (url) => {
   const { html, head } = render(url)
-  return base.replace('</head>', `${head}\n  </head>`).replace('<div id="root"></div>', `<div id="root">${html}</div>`)
+  if (!head.includes('<title')) throw new Error(`Prerender produced no <title> for ${url}`)
+  if (!base.includes(SEO_MARKER)) throw new Error('index.html is missing the Primary SEO marker')
+  return base
+    .replace(SEO_MARKER, `${SEO_MARKER}\n${head}`)
+    .replace('<div id="root"></div>', `<div id="root">${html}</div>`)
 }
+
+// trailingSlash:false + cleanUrls:true serves /about from about.html, not about/index.html.
+const outFile = (routePath) => routePath === '/'
+  ? path.join(dist, 'index.html')
+  : path.join(dist, `${routePath.replace(/^\//, '')}.html`)
 
 const today = new Date().toISOString().slice(0, 10)
 for (const r of PUBLIC_ROUTES) {
-  const out = r.path === '/' ? path.join(dist, 'index.html') : path.join(dist, r.path.slice(1), 'index.html')
+  const out = outFile(r.path)
   fs.mkdirSync(path.dirname(out), { recursive: true })
   fs.writeFileSync(out, page(r.path))
 }
 fs.writeFileSync(path.join(dist, '404.html'), page('/__not-found__'))
 // SPA shell for client-only (portal/auth/admin) routes: noindex.
-fs.writeFileSync(path.join(dist, 'app.html'), base.replace('</head>', '  <title>Evermont Private Bank &amp; Trust</title>\n    <meta name="robots" content="noindex, nofollow" />\n  </head>'))
+fs.writeFileSync(path.join(dist, 'app.html'), base.replace(SEO_MARKER, `${SEO_MARKER}\n  <title>Evermont Private Bank &amp; Trust</title>\n  <meta name="robots" content="noindex, nofollow" />`))
 
 const urls = PUBLIC_ROUTES.map(r => `  <url>\n    <loc>${SITE_URL}${r.path}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${r.path === '/' ? 'weekly' : 'monthly'}</changefreq>\n    <priority>${r.path === '/' ? '1.0' : '0.7'}</priority>\n  </url>`).join('\n')
 fs.writeFileSync(path.join(dist, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`)
