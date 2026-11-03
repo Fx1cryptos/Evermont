@@ -1,112 +1,121 @@
 import { Transaction } from '@/types'
-import { supabase } from '@/lib/supabase'
+import { isSupabaseConfigured, supabase } from '@/lib/supabase'
+import { LEDGER_ENTRY_COLUMNS, LedgerDirection, mapLedgerRow, MappedLedgerEntry } from '@/utils/ledgerMapping'
 
 export interface TransactionFilters {
   accountId?: string
-  type?: 'debit' | 'credit'
-  status?: 'pending' | 'completed' | 'failed'
+  type?: LedgerDirection
+  status?: string
   startDate?: Date
   endDate?: Date
   limit?: number
   offset?: number
 }
 
+export interface LedgerActivity extends Transaction {
+  memberId: string
+  referenceId: string
+  entryType: string
+  category: string
+  debit: string | null
+  credit: string | null
+  balanceAfter: string | null
+  direction: LedgerDirection
+  displayAmount: string
+}
+
+const toActivity = (entry: MappedLedgerEntry): LedgerActivity => ({
+  id: entry.id,
+  accountId: entry.accountId,
+  memberId: entry.memberId,
+  type: entry.direction,
+  direction: entry.direction,
+  amount: entry.amount,
+  displayAmount: entry.displayAmount,
+  description: entry.description,
+  status: entry.status,
+  createdAt: entry.createdAt,
+  completedAt: entry.status === 'completed' ? entry.createdAt : null,
+  referenceId: entry.referenceId,
+  entryType: entry.entryType,
+  category: entry.category,
+  debit: entry.debit,
+  credit: entry.credit,
+  balanceAfter: entry.balanceAfter,
+})
+
+const applyWindow = (rows: LedgerActivity[], filters: TransactionFilters) => {
+  if (!filters.limit || filters.limit < 1) return rows
+  const offset = filters.offset && filters.offset > 0 ? filters.offset : 0
+  return rows.slice(offset, offset + filters.limit)
+}
+
 export const transactionService = {
-  async getTransactions(
-    userId: string,
-    filters: TransactionFilters = {}
-  ): Promise<Transaction[]> {
+  /**
+   * Member activity is read from public.ledger_entries.
+   * There is no demo transaction list: an empty ledger stays empty.
+   */
+  async getTransactions(userId: string, filters: TransactionFilters = {}): Promise<LedgerActivity[]> {
+    if (!userId || !isSupabaseConfigured) return []
+
     try {
-      if (!supabase) return []
-
       let query = supabase
-        .from('transactions')
-        .select('*')
-        .eq('user_id', userId)
+        .from('ledger_entries')
+        .select(LEDGER_ENTRY_COLUMNS)
+        .eq('member_id', userId)
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
 
-      if (filters.accountId) {
-        query = query.eq('account_id', filters.accountId)
-      }
+      if (filters.accountId) query = query.eq('account_id', filters.accountId)
+      if (filters.status) query = query.eq('status', filters.status)
+      if (filters.startDate) query = query.gte('created_at', filters.startDate.toISOString())
+      if (filters.endDate) query = query.lte('created_at', filters.endDate.toISOString())
 
-      if (filters.type) {
-        query = query.eq('type', filters.type)
-      }
-
-      if (filters.status) {
-        query = query.eq('status', filters.status)
-      }
-
-      if (filters.startDate) {
-        query = query.gte('created_at', filters.startDate.toISOString())
-      }
-
-      if (filters.endDate) {
-        query = query.lte('created_at', filters.endDate.toISOString())
-      }
-
-      query = query.order('created_at', { ascending: false })
-
-      if (filters.limit) {
-        query = query.limit(filters.limit)
-      }
-
-      if (filters.offset) {
-        query = query.range(filters.offset, filters.offset + (filters.limit || 10) - 1)
+      // Direction depends on entry_type and the posted columns, so a type
+      // filter is applied after mapping. Unfiltered pages can be windowed in SQL.
+      if (!filters.type && filters.limit && filters.limit > 0) {
+        const offset = filters.offset && filters.offset > 0 ? filters.offset : 0
+        query = query.range(offset, offset + filters.limit - 1)
       }
 
       const { data, error } = await query
+      if (error) {
+        console.error('Failed to fetch ledger entries')
+        throw new Error('Unable to load transaction history.')
+      }
 
-      if (error) throw error
-
-      return (
-        data?.map((txn) => ({
-          id: txn.id,
-          accountId: txn.account_id,
-          type: txn.type,
-          amount: txn.amount,
-          description: txn.description,
-          status: txn.status,
-          createdAt: txn.created_at,
-          completedAt: txn.completed_at,
-        })) || []
-      )
+      let rows = ((data || []) as Parameters<typeof mapLedgerRow>[0][]).map((row) => toActivity(mapLedgerRow(row)))
+      if (filters.type) rows = rows.filter((row) => row.direction === filters.type)
+      return filters.type ? applyWindow(rows, filters) : rows
     } catch (error) {
-      console.error('Error fetching transactions:', error)
-      throw error
+      if (error instanceof Error && error.message === 'Unable to load transaction history.') throw error
+      console.error('Error fetching ledger entries')
+      throw new Error('Unable to load transaction history.')
     }
   },
 
-  async getTransactionById(transactionId: string, userId: string): Promise<Transaction | null> {
-    try {
-      if (!supabase) return null
+  async getTransactionById(transactionId: string, userId: string): Promise<LedgerActivity | null> {
+    if (!transactionId || !userId || !isSupabaseConfigured) return null
 
-      const { data, error } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('id', transactionId)
-        .eq('user_id', userId)
-        .single()
+    const { data, error } = await supabase
+      .from('ledger_entries')
+      .select(LEDGER_ENTRY_COLUMNS)
+      .eq('id', transactionId)
+      .eq('member_id', userId)
+      .maybeSingle()
 
-      if (error) throw error
-
-      return data
-        ? {
-            id: data.id,
-            accountId: data.account_id,
-            type: data.type,
-            amount: data.amount,
-            description: data.description,
-            status: data.status,
-            createdAt: data.created_at,
-            completedAt: data.completed_at,
-          }
-        : null
-    } catch (error) {
-      console.error('Error fetching transaction:', error)
-      throw error
+    if (error) {
+      console.error('Failed to fetch ledger entry')
+      throw new Error('Unable to load transaction.')
     }
+
+    return data ? toActivity(mapLedgerRow(data)) : null
   },
 
+  /**
+   * Browser code must not insert a completed transfer or change a balance.
+   * Posting belongs to the database function public.create_ledger_entry.
+   */
   async createTransfer(
     userId: string,
     sourceAccountId: string,
@@ -114,54 +123,11 @@ export const transactionService = {
     amount: string,
     description: string
   ): Promise<Transaction> {
-    const id = crypto.randomUUID()
-    const now = new Date().toISOString()
-
-    try {
-      if (!supabase) {
-        return {
-          id,
-          accountId: sourceAccountId,
-          type: 'debit',
-          amount,
-          description: `Transfer to ${recipientName}: ${description}`,
-          status: 'completed',
-          createdAt: now,
-          completedAt: now,
-        }
-      }
-
-      const { error } = await supabase.from('transactions').insert([
-        {
-          id,
-          user_id: userId,
-          account_id: sourceAccountId,
-          type: 'debit',
-          amount,
-          description: `Transfer to ${recipientName}: ${description}`,
-          status: 'completed',
-          created_at: now,
-          completed_at: now,
-        },
-      ])
-
-      if (error) {
-        console.warn('Failed to create transfer in Supabase:', error)
-      }
-
-      return {
-        id,
-        accountId: sourceAccountId,
-        type: 'debit',
-        amount,
-        description: `Transfer to ${recipientName}: ${description}`,
-        status: 'completed',
-        createdAt: now,
-        completedAt: now,
-      }
-    } catch (error) {
-      console.error('Error creating transfer:', error)
-      throw new Error('Failed to create transfer')
-    }
+    void userId
+    void sourceAccountId
+    void recipientName
+    void amount
+    void description
+    throw new Error('Transfers are not posted from the browser. No ledger entry was created.')
   },
 }
