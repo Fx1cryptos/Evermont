@@ -43,11 +43,11 @@
   "rewrites": [
     {
       "source": "/(login|sign-in|register|signup|forgot-password|reset-password|dashboard|accounts|activation|transactions|insights|profile|settings|support|admin)",
-      "destination": "/app.html"
+      "destination": "/app"
     },
     {
       "source": "/(login|sign-in|register|signup|forgot-password|reset-password|dashboard|accounts|activation|transactions|insights|profile|settings|support|admin)/:rest*",
-      "destination": "/app.html"
+      "destination": "/app"
     }
   ],
   "headers": [
