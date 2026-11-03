@@ -1,42 +1,31 @@
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { supabase } from '@/lib/supabase'
+import { ledgerService, type LedgerEntry } from '@/services/ledgerService'
 
-interface LedgerRow {
-  id: string
-  reference_id: string
-  description: string
-  category: string
-  entry_type: string
-  amount: string
-  debit?: string
-  credit?: string
-  status: string
-  balance_after: string
-  created_at: string
-}
+const money = (value: string | null) => value == null
+  ? '—'
+  : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value))
 
 export const AccountHistoryPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
-  const [rows, setRows] = useState<LedgerRow[]>([])
+  const [rows, setRows] = useState<LedgerEntry[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     const load = async () => {
-      if (!supabase || !id) return
+      if (!id) {
+        setLoading(false)
+        setError('Account not found.')
+        return
+      }
 
       try {
-        const { data, error } = await supabase
-          .from('ledger_entries')
-          .select('*')
-          .eq('account_id', id)
-          .order('created_at', { ascending: false })
-
-        if (error) throw error
-        setRows(data ?? [])
-      } catch (error) {
-        console.error('Failed to load account history', error)
+        setRows(await ledgerService.getAccountHistory(id))
+      } catch {
+        console.error('Failed to load account history')
+        setError('Account history could not be loaded from the ledger.')
       } finally {
         setLoading(false)
       }
@@ -59,8 +48,9 @@ export const AccountHistoryPage: React.FC = () => {
         <h1 className="text-2xl font-bold mb-4">Account history</h1>
 
         <div className="mb-4 text-sm text-red-600 font-semibold">
-          SIMULATED DATA NOTICE: Prototype financial figures shown here are demo-only and not live customer records.
+          Prototype notice: this page reads ledger entries for the selected account. It does not move money and is not a claim of chartered-bank deposit insurance or live settlement.
         </div>
+        {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
 
         <div className="overflow-auto rounded-lg border border-evermont-border bg-white">
           <table className="min-w-full text-sm">
@@ -77,16 +67,17 @@ export const AccountHistoryPage: React.FC = () => {
               </tr>
             </thead>
             <tbody>
+              {!rows.length && <tr><td className="p-6 text-slate-500" colSpan={8}>No ledger entries are posted for this account.</td></tr>}
               {rows.map((row) => (
                 <tr key={row.id} className="border-t">
-                  <td className="p-3">{new Date(row.created_at).toLocaleString()}</td>
-                  <td className="p-3">{row.reference_id}</td>
+                  <td className="p-3">{row.createdAt ? new Date(row.createdAt).toLocaleString() : '—'}</td>
+                  <td className="p-3">{row.referenceId || '—'}</td>
                   <td className="p-3">{row.description}</td>
-                  <td className="p-3">{row.entry_type}</td>
-                  <td className="p-3">{row.credit ? `$${Number(row.credit).toFixed(2)}` : '-'}</td>
-                  <td className="p-3">{row.debit ? `$${Number(row.debit).toFixed(2)}` : '-'}</td>
-                  <td className="p-3">{row.status}</td>
-                  <td className="p-3">${Number(row.balance_after).toFixed(2)}</td>
+                  <td className="p-3">{row.entryType || '—'}</td>
+                  <td className="p-3">{row.direction === 'credit' ? money(row.displayAmount) : '—'}</td>
+                  <td className="p-3">{row.direction === 'debit' ? money(row.displayAmount) : '—'}</td>
+                  <td className="p-3">{row.status || '—'}</td>
+                  <td className="p-3">{money(row.balanceAfter)}</td>
                 </tr>
               ))}
             </tbody>

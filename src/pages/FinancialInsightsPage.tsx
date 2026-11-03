@@ -2,20 +2,11 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { ArrowDownLeft, ArrowUpRight, BarChart3, CalendarDays, TrendingUp } from 'lucide-react'
 import { PortalShell } from '@/components/member/PortalShell'
 import { useAuth } from '@/contexts/AuthContext'
-import { supabase } from '@/lib/supabase'
+import { LedgerActivity, transactionService } from '@/services/transactionService'
+import { sumLedgerAmounts } from '@/utils/ledgerMapping'
 
 type Period = 30 | 90
-
-type Row = {
-  id: string
-  created_at: string
-  description: string
-  category: string | null
-  debit: number | string | null
-  credit: number | string | null
-  amount: number | string | null
-  status: string
-}
+type Row = LedgerActivity
 
 const money = (value: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)
 const completedStatuses = new Set(['completed', 'posted', 'settled'])
@@ -34,22 +25,26 @@ export const FinancialInsightsPage: React.FC = () => {
       setLoading(true)
       const start = new Date()
       start.setDate(start.getDate() - period)
-      const { data: accounts, error: accountsError } = await supabase.from('accounts').select('id').eq('user_id', user.id)
-      if (accountsError) throw accountsError
-      const ids = (accounts || []).map(account => account.id)
-      if (!ids.length) { if (active) { setRows([]); setLoading(false) } return }
-      const { data, error: ledgerError } = await supabase.from('ledger_entries').select('id,created_at,description,category,debit,credit,amount,status').eq('member_id', user.id).in('account_id', ids).gte('created_at', start.toISOString()).order('created_at', { ascending: false })
-      if (ledgerError) throw ledgerError
-      if (active) { setRows((data || []) as Row[]); setError(''); setLoading(false) }
+      const data = await transactionService.getTransactions(user.id, { startDate: start })
+      if (active) { setRows(data); setError(''); setLoading(false) }
     }
     void load().catch(() => { if (active) { setError('We could not load insights from your authorized activity.'); setLoading(false) } })
     return () => { active = false }
   }, [period, user])
 
   const completed = useMemo(() => rows.filter(row => completedStatuses.has(row.status.toLowerCase())), [rows])
-  const incoming = completed.reduce((sum, row) => sum + Number(row.credit || 0), 0)
-  const outgoing = completed.reduce((sum, row) => sum + Number(row.debit || 0), 0)
-  const categories = useMemo(() => completed.reduce<Record<string, number>>((result, row) => { const category = row.category?.trim(); if (category) result[category] = (result[category] || 0) + Number(row.debit || 0); return result }, {}), [completed])
+  const incoming = sumLedgerAmounts(completed.filter(row => row.direction === 'credit').map(row => row.displayAmount))
+  const outgoing = sumLedgerAmounts(completed.filter(row => row.direction === 'debit').map(row => row.displayAmount))
+  const categories = useMemo(() => {
+    const grouped: Record<string, string[]> = {}
+    completed.forEach(row => {
+      if (row.direction !== 'debit') return
+      const category = row.category?.trim()
+      if (!category) return
+      grouped[category] = [...(grouped[category] || []), row.displayAmount]
+    })
+    return Object.fromEntries(Object.entries(grouped).map(([category, amounts]) => [category, sumLedgerAmounts(amounts)]))
+  }, [completed])
   const topCategories = Object.entries(categories).sort((a, b) => b[1] - a[1]).slice(0, 5)
 
   return <PortalShell title="Financial insights" eyebrow="Your money, clearly understood">

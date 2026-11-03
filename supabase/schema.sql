@@ -216,14 +216,18 @@ begin
     raise exception 'account not found';
   end if;
 
-  if p_entry_type in ('withdrawal', 'fee') then
+  -- Outgoing transfers post as debits. Deposits, interest, and opening
+  -- balances post as credits. This function does not update existing rows.
+  if p_entry_type in ('withdrawal', 'fee', 'transfer') then
     v_next_balance := v_current_balance - p_amount;
     v_debit := p_amount;
     v_credit := null;
-  else
+  elsif p_entry_type in ('deposit', 'interest', 'opening_balance') then
     v_next_balance := v_current_balance + p_amount;
     v_debit := null;
     v_credit := p_amount;
+  else
+    raise exception 'invalid entry type';
   end if;
 
   insert into public.ledger_entries (

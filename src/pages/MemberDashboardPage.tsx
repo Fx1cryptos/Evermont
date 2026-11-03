@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { ROUTES } from '@/constants/routes'
 import { accountService } from '@/services/accountService'
 import { profileService } from '@/services/profileService'
-import { supabase } from '@/lib/supabase'
+import { transactionService, type LedgerActivity } from '@/services/transactionService'
 import { useActivationGate } from '@/hooks/useActivationGate'
 import { useNotifications } from '@/hooks/useNotifications'
 import { FeatureDialog } from '@/components/member/features/FeatureDialog'
@@ -17,7 +17,7 @@ import { VirtualCardPanel } from '@/components/member/features/VirtualCardPanel'
 import { SITE_NAME } from '@/config/site'
 import type { Account, Profile } from '@/types'
 
-type Row = { id: string; created_at: string; description: string; category: string; debit: number | string | null; credit: number | string | null; amount: number | string; status: string }
+type Row = LedgerActivity
 type GateResult = { activated: boolean; fee: number | null; ratePercent: number | null }
 type FeatureKey = 'ach' | 'mobile' | 'check' | 'card'
 type ServiceItem = { label: string; subtext: string; icon: React.FC<{ className?: string }>; to?: string; gated?: boolean; feature?: FeatureKey }
@@ -63,11 +63,12 @@ export const MemberDashboardPage: React.FC = () => {
       if (!active) return
       setProfile(p)
       setAccounts(a)
-      const ids = a.map(account => account.id)
-      if (!ids.length) return
-      const { data, error: queryError } = await supabase.from('ledger_entries').select('id,created_at,description,category,debit,credit,amount,status').eq('member_id', user.id).in('account_id', ids).order('created_at', { ascending: false }).limit(6)
-      if (queryError) setError('We could not load recent activity.')
-      else setRows((data || []) as Row[])
+      try {
+        const activity = await transactionService.getTransactions(user.id, { limit: 6 })
+        if (active) setRows(activity)
+      } catch {
+        if (active) setError('We could not load recent activity.')
+      }
     }).catch(() => setError('We could not load your member information.')).finally(() => { if (active) setLoading(false) })
     return () => { active = false }
   }, [user])
@@ -183,14 +184,14 @@ export const MemberDashboardPage: React.FC = () => {
 
         <Panel title="Recent activity" action={<Link to={ROUTES.TRANSACTIONS} className="text-sm font-semibold text-[#0504AA]">See all</Link>}>
           {error ? <p className="px-5 py-6 text-sm text-red-700">{error}</p> : rows.length ? <ul className="divide-y divide-slate-100">{rows.map(row => {
-            const credit = Number(row.credit || 0) > 0
+            const credit = row.direction === 'credit'
             return <li key={row.id} className="flex items-center gap-3 px-5 py-3.5">
               <span className={`flex size-8 shrink-0 items-center justify-center rounded-full ${credit ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>{credit ? <ArrowDownLeft className="size-3.5" /> : <ArrowUpRight className="size-3.5" />}</span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-[#101533]">{row.description}</p>
-                <p className="text-xs text-slate-500">{new Date(row.created_at).toLocaleDateString()} · <span className="capitalize">{row.status}</span></p>
+                <p className="text-xs text-slate-500">{row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '—'} · <span className="capitalize">{row.status}</span></p>
               </div>
-              <p className={`shrink-0 text-sm font-semibold tabular-nums ${credit ? 'text-emerald-700' : 'text-[#101533]'}`}>{credit ? '+' : '−'}{display(row.credit || row.debit || row.amount)}</p>
+              <p className={`shrink-0 text-sm font-semibold tabular-nums ${credit ? 'text-emerald-700' : 'text-[#101533]'}`}>{credit ? '+' : '−'}{display(row.displayAmount)}</p>
             </li>
           })}</ul> : <p className="px-5 py-8 text-sm text-slate-500">No recent activity is available.</p>}
         </Panel>
