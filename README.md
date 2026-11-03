@@ -1,4 +1,8 @@
-Evermont Credit Union
+> **Canonical domain:** https://evermontcredit.online (public site + member portal). Brand name and URLs live in `src/config/site.ts`.
+> Dev: `npm install`, `npm run dev`. Build (type-check, client build, SSR prerender of public pages, sitemap): `npm run build`. Local Vercel-like preview: `npm run preview`.
+> Prototype for demonstration. Not a bank. Not FDIC or NCUA insured. No real money movement.
+
+Evermont
 Secured Private Wealth Banking
 Where Private Wealth is Protected.
 
@@ -33,7 +37,7 @@ Table of Contents
 
 1. Project Overview
 
-Evermont Credit Union is a digital financial-services project designed around a premium private-wealth banking experience.
+Evermont is a digital financial-services project designed around a premium private-wealth banking experience.
 
 The project aims to deliver a polished, responsive, accessible, and trustworthy digital experience through a public marketing website and a separate member portal.
 
@@ -79,13 +83,13 @@ Do not represent a prototype, simulated balance, demonstration transaction, or p
 Brand details
 
 Property	Official value
-Brand name	Evermont Credit Union
+Brand name	Evermont
 Positioning	Secured Private Wealth Banking
 Primary tagline	Where Private Wealth is Protected.
 Secondary tagline	Built on Integrity. Guided by Excellence.
 Primary website	https://evermontcredit.online/
-Member portal	https://v0-evermont.vercel.app/
-Member login	https://v0-evermont.vercel.app/login
+Member portal	https://evermontcredit.online/
+Member login	https://evermontcredit.online/login
 Support email	support@evermontcredit.online
 Information email	info@evermontcredit.online
 Primary color	#0504AA
@@ -136,9 +140,9 @@ It must not automatically redirect every visitor to the member login page.
 
 3.2 Member portal
 
-Portal: https://v0-evermont.vercel.app/
+Portal: https://evermontcredit.online/
 
-Login: https://v0-evermont.vercel.app/login
+Login: https://evermontcredit.online/login
 
 Purpose: Member-facing application functionality.
 
@@ -402,10 +406,10 @@ Every indexable public page should have:
 
 Example homepage metadata:
 
-<title>Evermont Credit Union | Private Wealth Banking</title>
+<title>Evermont | Private Wealth Banking</title>
 <meta
   name="description"
-  content="Explore Evermont Credit Union's financial services, account information, and member resources."
+  content="Explore Evermont's financial services, account information, and member resources."
 />
 <link
   rel="canonical"
@@ -545,8 +549,8 @@ The public homepage and member portal are separate production destinations.
 Required navigation behavior
 
 Source	Action	Destination
-Public homepage	Sign In	https://v0-evermont.vercel.app/login
-Public homepage	Member Login	https://v0-evermont.vercel.app/login
+Public homepage	Sign In	https://evermontcredit.online/login
+Public homepage	Member Login	https://evermontcredit.online/login
 Public homepage	Open an Account	Verified portal registration route
 Public service page	Explore a service	Verified corresponding destination
 Member portal	Return to website	https://evermontcredit.online/
@@ -1143,8 +1147,8 @@ Use these definitions consistently in documentation, status reports, public-faci
 Official Resources
 
 * Website: https://evermontcredit.online/
-* Member portal: https://v0-evermont.vercel.app/
-* Member login: https://v0-evermont.vercel.app/login
+* Member portal: https://evermontcredit.online/
+* Member login: https://evermontcredit.online/login
 * Google Search Console: https://search.google.com/search-console/
 * Google Search Central: https://developers.google.com/search/docs
 * Vercel documentation: https://vercel.com/docs
@@ -1155,7 +1159,7 @@ Official Resources
 
 ⸻
 
-Evermont Credit Union
+Evermont
 Where Private Wealth is Protected.
 
 This README documents the intended architecture, engineering standards, and verification requirements. Actual implementation, regulatory status, production configuration, and feature availability must be independently verified.

@@ -1,6 +1,102 @@
 {
-  "installCommand": "pnpm install --frozen-lockfile",
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "npm ci",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.evermontcredit.online"
+        }
+      ],
+      "destination": "https://evermontcredit.online/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "v0-evermont.vercel.app"
+        }
+      ],
+      "destination": "https://evermontcredit.online/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "v0-evermont-credit.vercel.app"
+        }
+      ],
+      "destination": "https://evermontcredit.online/:path*",
+      "permanent": true
+    }
+  ],
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/(login|sign-in|register|signup|forgot-password|reset-password|dashboard|accounts|activation|transactions|insights|profile|settings|support|admin)",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/(login|sign-in|register|signup|forgot-password|reset-password|dashboard|accounts|activation|transactions|insights|profile|settings|support|admin)/:rest*",
+      "destination": "/app.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(login|sign-in|register|signup|forgot-password|reset-password|dashboard|accounts|activation|transactions|insights|profile|settings|support|admin)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/(login|sign-in|register|signup|forgot-password|reset-password|dashboard|accounts|activation|transactions|insights|profile|settings|support|admin)/:rest*",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/app.html",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains"
+        }
+      ]
+    }
   ]
 }

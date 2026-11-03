@@ -1,13 +1,8 @@
+import { SITE_NAME, SITE_URL } from './site'
+
 export const EVERMONT_FRONTEND = {
-  name: "Evermont Credit Union",
-  type: "Secured Private Wealth Bank",
-
-  // Primary member portal frontend
-  primaryUrl: "https://v0-evermont.vercel.app",
-
-  // Separate public website
-  secondaryUrl: "https://evermontcredit.online",
-
-  // Always treat the Vercel portal as the primary frontend
-  primaryFrontend: "v0",
-} as const;
+  name: SITE_NAME,
+  type: 'Private Wealth & Digital Banking prototype',
+  // Single canonical domain: public site and member portal are served from the same origin.
+  primaryUrl: SITE_URL,
+} as const

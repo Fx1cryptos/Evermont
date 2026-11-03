@@ -5,15 +5,15 @@
 “status”: “proposed_contract_pending_implementation_and_testing”,
 “platforms”: {
 “builder”: {
-“url”: “https://evermont.builder.cloud”,
+“url”: “https://evermontcredit.online”,
 “role”: “public_front_door”
 },
 “v0”: {
-“url”: “https://v0-evermont.vercel.app”,
+“url”: “https://evermontcredit.online”,
 “role”: “primary_functional_portal”
 },
 “bolt”: {
-“url”: “https://evermont-credit-unio-2tld.bolt.host”,
+“url”: “https://evermontcredit.online”,
 “role”: “existing_project_for_future_evaluation”
 }
 },

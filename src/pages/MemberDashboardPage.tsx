@@ -10,11 +10,23 @@ import { profileService } from '@/services/profileService'
 import { transactionService, type LedgerActivity } from '@/services/transactionService'
 import { useActivationGate } from '@/hooks/useActivationGate'
 import { useNotifications } from '@/hooks/useNotifications'
+import { FeatureDialog } from '@/components/member/features/FeatureDialog'
+import { AchTransferForm } from '@/components/member/features/AchTransferForm'
+import { CheckDepositForm } from '@/components/member/features/CheckDepositForm'
+import { VirtualCardPanel } from '@/components/member/features/VirtualCardPanel'
+import { SITE_NAME } from '@/config/site'
 import type { Account, Profile } from '@/types'
 
 type Row = LedgerActivity
 type GateResult = { activated: boolean; fee: number | null; ratePercent: number | null }
-type ServiceItem = { label: string; subtext: string; icon: React.FC<{ className?: string }>; to?: string; gated?: boolean }
+type FeatureKey = 'ach' | 'mobile' | 'check' | 'card'
+type ServiceItem = { label: string; subtext: string; icon: React.FC<{ className?: string }>; to?: string; gated?: boolean; feature?: FeatureKey }
+const FEATURE_META: Record<FeatureKey, { title: string; subtitle: string }> = {
+  ach: { title: 'ACH Transfer', subtitle: 'Send to an external U.S. bank account' },
+  mobile: { title: 'Mobile Deposit', subtitle: 'Capture a check with your device camera' },
+  check: { title: 'Check Deposit', subtitle: 'Upload front and back images of a check' },
+  card: { title: 'Virtual Card', subtitle: 'Display-only prototype card' },
+}
 
 const money = (value: unknown) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value) || 0)
 
@@ -38,6 +50,7 @@ export const MemberDashboardPage: React.FC = () => {
   const [error, setError] = useState('')
   const [gateOpen, setGateOpen] = useState(false)
   const [notice, setNotice] = useState('')
+  const [feature, setFeature] = useState<FeatureKey | null>(null)
   const [gateResult, setGateResult] = useState<GateResult>({ activated: false, fee: null, ratePercent: null })
   const total = useMemo(() => accounts.reduce((sum, account) => sum + Number(account.balance), 0), [accounts])
   const { check: checkActivation, checking } = useActivationGate(user?.id, total)
@@ -80,14 +93,30 @@ export const MemberDashboardPage: React.FC = () => {
     setGateOpen(true)
   }
 
+  // New features use the same activation gate as Transfer/Withdraw. The status is re-checked on click.
+  const openFeature = async (key: FeatureKey) => {
+    setNotice('')
+    const result = await checkActivation()
+    setGateResult(result)
+    if (!result.activated) { setGateOpen(true); return }
+    setFeature(key)
+  }
+
+  const quickActions: { key: FeatureKey; label: string; subtext: string; icon: React.FC<{ className?: string }> }[] = [
+    { key: 'ach', label: 'ACH Transfer', subtext: 'Send to another bank', icon: Building2 },
+    { key: 'mobile', label: 'Mobile Deposit', subtext: 'Snap a check', icon: Smartphone },
+    { key: 'check', label: 'Check Deposit', subtext: 'Upload check images', icon: FileText },
+    { key: 'card', label: 'Virtual Card', subtext: 'View your card', icon: CreditCard },
+  ]
+
   const services: ServiceItem[] = [
     { label: 'Transfer', subtext: 'Requires activation', icon: Send, gated: true },
     { label: 'Withdraw', subtext: 'Requires activation', icon: WalletCards, gated: true },
-    { label: 'ACH', subtext: 'Requires activation', icon: Building2, gated: true },
-    { label: 'Mobile Deposit', subtext: 'Requires activation', icon: Smartphone, gated: true },
-    { label: 'Check Deposit', subtext: 'Requires activation', icon: FileText, gated: true },
+    { label: 'ACH Transfer', subtext: 'Requires activation', icon: Building2, gated: true, feature: 'ach' },
+    { label: 'Mobile Deposit', subtext: 'Requires activation', icon: Smartphone, gated: true, feature: 'mobile' },
+    { label: 'Check Deposit', subtext: 'Requires activation', icon: FileText, gated: true, feature: 'check' },
     { label: 'Mobile Debit', subtext: 'Requires activation', icon: CreditCard, gated: true },
-    { label: 'Virtual Card', subtext: 'Requires activation', icon: WalletCards, gated: true },
+    { label: 'Virtual Card', subtext: 'Requires activation', icon: WalletCards, gated: true, feature: 'card' },
     { label: 'Support', subtext: 'Message the team', icon: Headphones, to: ROUTES.SUPPORT },
     { label: 'Accounts', subtext: 'Open details', icon: Landmark, to: ROUTES.ACCOUNTS },
     { label: 'Activity', subtext: 'Full history', icon: Receipt, to: ROUTES.TRANSACTIONS },
@@ -100,14 +129,16 @@ export const MemberDashboardPage: React.FC = () => {
     <div className="mt-5 grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_292px]">
       <div className="order-2 space-y-5 lg:order-1">
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-          <div className="bg-[#0504AA] px-5 py-5 text-white sm:px-6">
-            <div className="flex items-start justify-between gap-4">
+          <div className="relative overflow-hidden bg-gradient-to-br from-[#0504AA] via-[#06058f] to-[#0b0d2a] px-5 py-6 text-white sm:px-7 sm:py-7">
+            <div className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full border border-[#C9A227]/25" aria-hidden="true" />
+            <p className="relative mb-3 text-xs font-medium text-blue-100">{SITE_NAME}</p>
+            <div className="relative flex items-start justify-between gap-4">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[.16em] text-[#C9A227]">Total relationship balance</p>
                 <p className="mt-2 font-semibold tabular-nums tracking-tight text-3xl sm:text-4xl">{hidden ? '••••••' : money(total)}</p>
                 <p className="mt-2 text-sm text-blue-100">{accounts.length === 1 ? '1 account' : `${accounts.length} accounts`}</p>
               </div>
-              <button type="button" onClick={() => setHidden(!hidden)} className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-white">
+              <button type="button" onClick={() => setHidden(!hidden)} aria-pressed={hidden} className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-white hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A227]">
                 {hidden ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
                 {hidden ? 'Show' : 'Hide'}
               </button>
@@ -120,6 +151,21 @@ export const MemberDashboardPage: React.FC = () => {
             <button type="button" disabled={checking} onClick={requestMovement} className="px-4 py-3 text-center text-sm font-semibold text-[#0504AA] hover:bg-slate-50 disabled:opacity-60">Withdraw</button>
           </div>
           {notice && <p role="status" className="border-t border-slate-100 px-5 py-3 text-sm text-slate-600">{notice}</p>}
+        </section>
+
+        <section aria-labelledby="quick-actions-title" className="rounded-2xl border border-slate-200 bg-white p-5">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 id="quick-actions-title" className="text-sm font-semibold text-[#101533]">Quick actions</h2>
+            <span className="h-px w-12 bg-[#C9A227]" aria-hidden="true" />
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {quickActions.map(({ key, label, subtext, icon: Icon }) => (
+              <button key={key} type="button" disabled={checking} onClick={() => { void openFeature(key) }} className="group flex flex-col items-start gap-3 rounded-xl border border-slate-200 p-4 text-left transition hover:border-[#C9A227] hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0504AA] disabled:opacity-60">
+                <span className="flex size-10 items-center justify-center rounded-xl bg-[#0504AA] text-white ring-2 ring-[#C9A227]/0 transition group-hover:ring-[#C9A227]/60"><Icon className="size-5" /></span>
+                <span><span className="block text-sm font-semibold text-[#101533]">{label}</span><span className="block text-xs text-slate-500">{gateResult.activated ? subtext : 'Requires activation'}</span></span>
+              </button>
+            ))}
+          </div>
         </section>
 
         <Panel title="Accounts" action={<Link to={ROUTES.ACCOUNTS} className="text-sm font-semibold text-[#0504AA]">View all</Link>}>
@@ -169,14 +215,14 @@ export const MemberDashboardPage: React.FC = () => {
             <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500"><Bell className="size-3.5 text-[#0504AA]" />{unreadCount}</span>
           </div>
           <ul className="divide-y divide-slate-100">
-            {services.map(({ label, subtext, icon: Icon, to, gated }) => {
+            {services.map(({ label, subtext, icon: Icon, to, gated, feature: featureKey }) => {
               const body = <span className="flex items-center gap-3 px-4 py-3">
                 <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#0504AA]/8 text-[#0504AA]"><Icon className="size-4" /></span>
                 <span className="min-w-0"><span className="block text-sm font-semibold text-[#101533]">{label}</span><span className="block text-xs text-slate-500">{subtext}</span></span>
               </span>
               return <li key={label}>{to
-                ? <Link to={to} className="block hover:bg-slate-50">{body}</Link>
-                : <button type="button" onClick={gated ? requestMovement : undefined} className="block w-full text-left hover:bg-slate-50">{body}</button>}</li>
+                ? <Link to={to} className="block hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0504AA]">{body}</Link>
+                : <button type="button" onClick={featureKey ? () => { void openFeature(featureKey) } : gated ? requestMovement : undefined} disabled={checking} className="block w-full text-left hover:bg-slate-50 focus:outline-none focus-visible:bg-slate-50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0504AA] disabled:opacity-60">{body}</button>}</li>
             })}
           </ul>
         </section>
@@ -192,6 +238,11 @@ export const MemberDashboardPage: React.FC = () => {
       </div>
     </nav>
     <div className="mb-16 mt-6 flex items-center gap-2 text-xs text-slate-400 md:mb-0"><ShieldCheck className="size-3.5 text-[#0504AA]" />Member information stays in your signed-in session.</div>
+    <FeatureDialog open={feature != null} title={feature ? FEATURE_META[feature].title : ''} subtitle={feature ? FEATURE_META[feature].subtitle : undefined} onClose={() => setFeature(null)}>
+      {feature === 'ach' && <AchTransferForm onDone={() => setFeature(null)} />}
+      {(feature === 'mobile' || feature === 'check') && <CheckDepositForm key={feature} mode={feature} onDone={() => setFeature(null)} />}
+      {feature === 'card' && <VirtualCardPanel holder={memberName} onDone={() => setFeature(null)} />}
+    </FeatureDialog>
     <ActivationRequiredModal open={gateOpen} fee={gateResult.fee} ratePercent={gateResult.ratePercent} onClose={() => setGateOpen(false)} />
   </PortalShell>
 }

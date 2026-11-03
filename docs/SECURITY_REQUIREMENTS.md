@@ -4,15 +4,15 @@ Evermont Security Requirements
 
 This document defines the minimum security requirements for the Evermont website ecosystem.
 
-Evermont Credit Union is positioned as a Secured Private Wealth Bank.
+Evermont is positioned as a Secured Private Wealth Bank.
 
 All development work must prioritize the protection of member information, authentication credentials, account data, and financial records.
 
 These requirements apply to:
 
-1. Builder: https://evermont.builder.cloud
-2. v0/Vercel: https://v0-evermont.vercel.app
-3. Bolt: https://evermont-credit-unio-2tld.bolt.host
+1. Builder: https://evermontcredit.online
+2. v0/Vercel: https://evermontcredit.online
+3. Bolt: https://evermontcredit.online
 
 Documenting these requirements does not, by itself, prove that any application is secure or compliant.
 

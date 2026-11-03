@@ -1,19 +1,21 @@
 User-agent: *
 Allow: /
-Allow: /login
-Allow: /register
-Allow: /services/
 
-# Member portal and authenticated areas — do not index
+# Member portal, authentication and staff areas: not for search engines
+Disallow: /login
+Disallow: /sign-in
+Disallow: /register
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /reset-password
 Disallow: /dashboard
 Disallow: /accounts
+Disallow: /activation
 Disallow: /transactions
+Disallow: /insights
 Disallow: /profile
 Disallow: /settings
 Disallow: /support
-Disallow: /activation
-Disallow: /insights
 Disallow: /admin
 
-# Sitemap
 Sitemap: https://evermontcredit.online/sitemap.xml

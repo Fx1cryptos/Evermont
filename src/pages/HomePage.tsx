@@ -1,5 +1,9 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { Link } from 'react-router-dom'
+import { SiteHeader } from '@/components/site/SiteHeader'
+import { SiteFooter } from '@/components/site/SiteFooter'
+import { Seo } from '@/components/Seo'
+import { DISCLAIMER, LOGO_PATH, OG_IMAGE, SITE_NAME, SITE_URL, SUPPORT_EMAIL, routeMeta } from '@/config/site'
 import {
   ArrowRight,
   Car,
@@ -9,58 +13,39 @@ import {
   Gem,
   Landmark,
   LockKeyhole,
-  Menu,
   PiggyBank,
   ShieldCheck,
   Sparkles,
   TrendingUp,
   Users,
   WalletCards,
-  X,
 } from 'lucide-react'
 
-const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_6322-tg87iWvXcAFbQxeY6odhRyl9qwRpt9.jpeg'
 const heroImageUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_6693-VLCK3UaI9PaiyZhXWnos16vaBvnwqY.jpeg'
 const featuredImageUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_6684-TAR49mu8oRotUkw9u5onAAE9VpJLKL.jpeg'
-const logoFallbackUrl = logoUrl
 
 const pinataGateway = 'https://gateway.pinata.cloud/ipfs/'
 
 const products = [
-  { name: 'Checking Account', slug: 'checking', description: 'A simpler way to manage everyday money.', benefit: 'No monthly maintenance fees', icon: WalletCards, tone: 'blue', image: `${pinataGateway}bafkreidchfnomj35rvey7yabgyvckshfm4s56onupq2g5nuhsf5cbuzbwy` },
-  { name: 'Savings Account', slug: 'savings', description: 'Build a stronger financial foundation.', benefit: 'Competitive dividend rates', icon: PiggyBank, tone: 'gold', image: `${pinataGateway}bafybeidiwp4dtjw2662f5vqwollfbtfj7dfmuk746kwsxiy2fkaryb7kva` },
-  { name: 'Credit Card', slug: 'loans', description: 'Flexible spending with member-first benefits.', benefit: 'Rewards on every purchase', icon: CreditCard, tone: 'ink', image: `${pinataGateway}bafkreibw4situowzxkn7xeaupaxltjbqwffw44hrstgp6er27lyx2fyymq` },
-  { name: '401(k)', slug: 'investments', description: 'Invest in the future you are building.', benefit: 'Guidance for every chapter', icon: TrendingUp, tone: 'blue', image: `${pinataGateway}bafkreiarkceaf2lkozxg4donpczcgxv7nwxtukvrvh2j4d7dzajfqmn4qm` },
-  { name: 'Crypto Loan', slug: 'digital-assets', description: 'Access liquidity without selling your assets.', benefit: 'Thoughtful digital asset lending', icon: Gem, tone: 'ink', image: `${pinataGateway}bafkreiahf6sasjnaxbwvpiylqd3k3dyeos32dwlpb6qyir6u3v4cmvybpm` },
-  { name: 'Personal Loan', slug: 'loans', description: 'Make room for what matters most.', benefit: 'Rates designed around you', icon: Landmark, tone: 'blue', image: `${pinataGateway}bafybeifr5exhupokbda4vilfwuuqkhkogxtq4lzbt7huciou6t3jkd2eja` },
-  { name: 'Auto Loan', slug: 'loans', description: 'Get moving with a confident plan.', benefit: 'Fast, local decisions', icon: Car, tone: 'gold', image: `${pinataGateway}bafybeifk33kwar6p5myte4d3a6gwovyiutnip75t2onj2kbxtmdsjv7bxe` },
+  { name: 'Checking Account', slug: 'checking', href: '/services/checking', description: 'A simpler way to manage everyday money.', benefit: 'No monthly maintenance fees', icon: WalletCards, tone: 'blue', image: `${pinataGateway}bafkreidchfnomj35rvey7yabgyvckshfm4s56onupq2g5nuhsf5cbuzbwy` },
+  { name: 'Savings Account', slug: 'savings', href: '/services/savings', description: 'Build a stronger financial foundation.', benefit: 'Goal-based saving guidance', icon: PiggyBank, tone: 'gold', image: `${pinataGateway}bafybeidiwp4dtjw2662f5vqwollfbtfj7dfmuk746kwsxiy2fkaryb7kva` },
+  { name: 'Credit Card', slug: 'loans', href: '/credit-cards', description: 'Flexible spending with member-first benefits.', benefit: 'Responsible-use education', icon: CreditCard, tone: 'ink', image: `${pinataGateway}bafkreibw4situowzxkn7xeaupaxltjbqwffw44hrstgp6er27lyx2fyymq` },
+  { name: '401(k)', slug: 'investments', href: '/retirement', description: 'Invest in the future you are building.', benefit: 'Guidance for every chapter', icon: TrendingUp, tone: 'blue', image: `${pinataGateway}bafkreiarkceaf2lkozxg4donpczcgxv7nwxtukvrvh2j4d7dzajfqmn4qm` },
+  { name: 'Crypto Loan', slug: 'digital-assets', href: '/services/digital-assets', description: 'Access liquidity without selling your assets.', benefit: 'Thoughtful digital asset lending', icon: Gem, tone: 'ink', image: `${pinataGateway}bafkreiahf6sasjnaxbwvpiylqd3k3dyeos32dwlpb6qyir6u3v4cmvybpm` },
+  { name: 'Personal Loan', slug: 'loans', href: '/loans/personal', description: 'Make room for what matters most.', benefit: 'Clear borrowing guidance', icon: Landmark, tone: 'blue', image: `${pinataGateway}bafybeifr5exhupokbda4vilfwuuqkhkogxtq4lzbt7huciou6t3jkd2eja` },
+  { name: 'Auto Loan', slug: 'loans', href: '/loans/auto', description: 'Get moving with a confident plan.', benefit: 'Plan before you buy', icon: Car, tone: 'gold', image: `${pinataGateway}bafybeifk33kwar6p5myte4d3a6gwovyiutnip75t2onj2kbxtmdsjv7bxe` },
 ]
 
-const benefits = ['Member-owned and community-led', 'Straightforward products and pricing', 'People who know your name and goals']
+const benefits = ['Client-first and relationship-led', 'Straightforward products and pricing', 'People who know your name and goals']
 
 export const HomePage: React.FC = () => {
-  const [menuOpen, setMenuOpen] = useState(false)
+  const meta = routeMeta('/')!
+  const orgJsonLd = { '@context': 'https://schema.org', '@type': 'Organization', name: SITE_NAME, url: SITE_URL, logo: `${SITE_URL}${LOGO_PATH}`, image: OG_IMAGE, email: SUPPORT_EMAIL, description: meta.description }
 
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-11 text-[#101533]">
-      <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
-          <a href="#top" className="flex items-center gap-3" aria-label="Evermont home">
-            <img src={logoUrl} alt="Evermont Credit Union" className="h-11 w-11 object-contain" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = logoFallbackUrl }} />
-            <span className="text-lg font-bold tracking-[-0.04em] text-[#101533]">Evermont</span>
-            <span className="hidden border-l border-slate-200 pl-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 sm:block">Credit Union</span>
-          </a>
-          <nav className="hidden items-center gap-7 text-sm font-medium text-slate-600 lg:flex" aria-label="Primary navigation">
-            {['Products', 'Loans', 'Security', 'About', 'Contact'].map((item) => <a key={item} href={`#${item.toLowerCase()}`} className="transition-colors hover:text-[#0504AA]">{item}</a>)}
-          </nav>
-          <div className="hidden items-center gap-3 sm:flex">
-            <Link to="/login" className="rounded-full px-4 py-2.5 text-sm font-semibold text-[#0504AA] transition-colors hover:bg-blue-50">Sign In</Link>
-            <a href="#open-account" className="rounded-full bg-[#0504AA] px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-900/15 transition hover:bg-[#0807c8]">Open an Account</a>
-          </div>
-          <button className="rounded-lg p-2 text-[#0504AA] sm:hidden" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close menu' : 'Open menu'}>{menuOpen ? <X /> : <Menu />}</button>
-        </div>
-        {menuOpen && <nav className="flex flex-col gap-1 border-t border-slate-100 bg-white px-5 py-4 sm:hidden">{['Products', 'Loans', 'Security', 'About', 'Contact'].map((item) => <a key={item} href={`#${item.toLowerCase()}`} onClick={() => setMenuOpen(false)} className="rounded-lg px-3 py-3 text-sm font-semibold text-slate-700 hover:bg-blue-50">{item}</a>)}<Link to="/login" className="mt-2 rounded-lg bg-[#0504AA] px-3 py-3 text-center text-sm font-semibold text-white">Sign In</Link></nav>}
-      </header>
+      <Seo title={meta.title} description={meta.description} path="/" jsonLd={orgJsonLd} />
+      <SiteHeader />
 
       <main id="top">
         <section className="relative overflow-hidden bg-white">
@@ -73,32 +58,32 @@ export const HomePage: React.FC = () => {
               <div className="mt-11 flex items-center gap-3 text-sm text-slate-500"><div className="flex -space-x-2"><div className="flex size-8 items-center justify-center rounded-full border-2 border-white bg-[#0504AA] text-[10px] font-bold text-white">JM</div><div className="flex size-8 items-center justify-center rounded-full border-2 border-white bg-[#C9A227] text-[10px] font-bold text-white">RS</div><div className="flex size-8 items-center justify-center rounded-full border-2 border-white bg-slate-400 text-[10px] font-bold text-white">AK</div></div><span>Trusted by members across our community</span></div>
             </div>
             <div className="relative overflow-hidden rounded-[2rem] border border-[#C9A227]/60 bg-[#0504AA] p-2 shadow-2xl shadow-blue-950/20">
-              <img src={heroImageUrl} alt="Evermont Credit Union secured private wealth banking with mobile account access" className="h-auto w-full rounded-[1.5rem] object-cover" />
+              <img src={heroImageUrl} alt={`${SITE_NAME} secured private wealth banking with mobile account access`} className="h-auto w-full rounded-[1.5rem] object-cover" />
             </div>
           </div>
         </section>
 
         <section aria-labelledby="featured-campaign" className="mx-auto max-w-7xl px-5 py-10 lg:px-8 lg:py-14">
           <div className="overflow-hidden rounded-3xl border border-[#C9A227]/50 bg-[#0504AA] shadow-xl shadow-blue-950/10">
-            <img src={featuredImageUrl} alt="Evermont private wealth services and family office guidance" className="h-auto w-full object-cover" />
-            <h2 id="featured-campaign" className="sr-only">Evermont private wealth services</h2>
+            <img src={featuredImageUrl} alt="Evermont Private Bank & Trust private wealth services and family office guidance" className="h-auto w-full object-cover" />
+            <h2 id="featured-campaign" className="sr-only">Evermont Private Bank & Trust private wealth services</h2>
           </div>
         </section>
 
-        <section id="products" className="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-28"><div className="flex flex-col justify-between gap-5 md:flex-row md:items-end"><div><p className="text-sm font-bold uppercase tracking-[0.18em] text-[#C9A227]">Made for your next move</p><h2 className="mt-3 text-4xl font-semibold tracking-[-0.035em] sm:text-5xl">Financial solutions<br className="hidden sm:block" /> built around you.</h2></div><p className="max-w-sm text-base leading-7 text-slate-500">From first accounts to long-term plans, our products are designed to make progress feel possible.</p></div><div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">{products.map(({ name, slug, description, benefit, icon: Icon, tone, image }) => <Link key={name} to={`/services/${slug}`} aria-label={`Explore ${name}`} className="group flex min-h-[390px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-[#0504AA]/30 hover:shadow-xl"><div className="relative h-40 overflow-hidden bg-slate-100"><img src={image} alt={`${name} illustration`} className="size-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" /><div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/35 to-transparent" /></div><div className="flex flex-1 flex-col p-5"><div className="flex items-start justify-between gap-3"><div className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${tone === 'gold' ? 'bg-[#fff8df] text-[#a17c0b]' : tone === 'ink' ? 'bg-slate-100 text-slate-700' : 'bg-[#edf1ff] text-[#0504AA]'}`}><Icon className="size-5" /></div><span className="rounded-full bg-slate-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Evermont</span></div><h3 className="mt-5 text-lg font-semibold">{name}</h3><p className="mt-2 text-sm leading-6 text-slate-500">{description}</p><div className="mt-auto flex items-center justify-between border-t border-slate-100 pt-4"><span className="text-xs font-semibold text-slate-600">{benefit}</span><span className="inline-flex items-center gap-1.5 rounded-full bg-[#0504AA] px-3 py-2 text-xs font-bold text-white transition group-hover:bg-[#0807c8]">Explore <ExternalLink className="size-3.5" /></span></div></div></Link>)}</div></section>
+        <section id="products" className="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-28"><div className="flex flex-col justify-between gap-5 md:flex-row md:items-end"><div><p className="text-sm font-bold uppercase tracking-[0.18em] text-[#C9A227]">Made for your next move</p><h2 className="mt-3 text-4xl font-semibold tracking-[-0.035em] sm:text-5xl">Financial solutions<br className="hidden sm:block" /> built around you.</h2></div><p className="max-w-sm text-base leading-7 text-slate-500">From first accounts to long-term plans, our products are designed to make progress feel possible.</p></div><div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">{products.map(({ name, href, description, benefit, icon: Icon, tone, image }) => <Link key={name} to={href} aria-label={`Explore ${name}`} className="group flex min-h-[390px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-[#0504AA]/30 hover:shadow-xl"><div className="relative h-40 overflow-hidden bg-slate-100"><img src={image} alt={`${name} illustration`} className="size-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" /><div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/35 to-transparent" /></div><div className="flex flex-1 flex-col p-5"><div className="flex items-start justify-between gap-3"><div className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${tone === 'gold' ? 'bg-[#fff8df] text-[#a17c0b]' : tone === 'ink' ? 'bg-slate-100 text-slate-700' : 'bg-[#edf1ff] text-[#0504AA]'}`}><Icon className="size-5" /></div><span className="rounded-full bg-slate-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Evermont</span></div><h3 className="mt-5 text-lg font-semibold">{name}</h3><p className="mt-2 text-sm leading-6 text-slate-500">{description}</p><div className="mt-auto flex items-center justify-between border-t border-slate-100 pt-4"><span className="text-xs font-semibold text-slate-600">{benefit}</span><span className="inline-flex items-center gap-1.5 rounded-full bg-[#0504AA] px-3 py-2 text-xs font-bold text-white transition group-hover:bg-[#0807c8]">Explore <ExternalLink className="size-3.5" /></span></div></div></Link>)}</div></section>
 
-        <section id="about" className="bg-[#101533] text-white"><div className="mx-auto grid max-w-7xl gap-14 px-5 py-20 lg:grid-cols-2 lg:items-center lg:px-8 lg:py-24"><div><p className="text-sm font-bold uppercase tracking-[0.18em] text-[#f1d56f]">Why Evermont</p><h2 className="mt-4 text-4xl font-semibold leading-tight tracking-[-0.03em] sm:text-5xl">A financial partner<br />that feels closer.</h2><p className="mt-6 max-w-lg text-base leading-8 text-slate-300">We are built as a member-focused financial platform. Our success is measured by the progress of our members—not by outside shareholders. Every decision starts with you.</p><a href="#contact" className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-[#f1d56f] hover:text-white">Meet the Evermont difference <ArrowRight className="size-4" /></a></div><div className="grid gap-4 sm:grid-cols-2">{benefits.map((benefit, index) => <div key={benefit} className={`rounded-2xl border border-white/10 p-5 ${index === 0 ? 'bg-white/10 sm:col-span-2' : 'bg-white/5'}`}><div className="flex items-start gap-4"><div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#C9A227] text-[#101533]"><Check className="size-4" /></div><p className="font-medium leading-6 text-slate-100">{benefit}</p></div></div>)}</div></div></section>
+        <section id="about" className="bg-[#101533] text-white"><div className="mx-auto grid max-w-7xl gap-14 px-5 py-20 lg:grid-cols-2 lg:items-center lg:px-8 lg:py-24"><div><p className="text-sm font-bold uppercase tracking-[0.18em] text-[#f1d56f]">Why Evermont Private Bank & Trust</p><h2 className="mt-4 text-4xl font-semibold leading-tight tracking-[-0.03em] sm:text-5xl">A financial partner<br />that feels closer.</h2><p className="mt-6 max-w-lg text-base leading-8 text-slate-300">We are built as a member-focused financial platform. Our success is measured by the progress of our members—not by outside shareholders. Every decision starts with you.</p><a href="#contact" className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-[#f1d56f] hover:text-white">Meet the Evermont Private Bank & Trust difference <ArrowRight className="size-4" /></a></div><div className="grid gap-4 sm:grid-cols-2">{benefits.map((benefit, index) => <div key={benefit} className={`rounded-2xl border border-white/10 p-5 ${index === 0 ? 'bg-white/10 sm:col-span-2' : 'bg-white/5'}`}><div className="flex items-start gap-4"><div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#C9A227] text-[#101533]"><Check className="size-4" /></div><p className="font-medium leading-6 text-slate-100">{benefit}</p></div></div>)}</div></div></section>
 
         <section id="security" className="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-24"><div className="grid gap-10 rounded-3xl border border-slate-200 bg-white p-7 shadow-sm sm:p-10 lg:grid-cols-[1fr_1.5fr] lg:p-14"><div><div className="flex size-12 items-center justify-center rounded-xl bg-[#edf1ff] text-[#0504AA]"><LockKeyhole className="size-6" /></div><h2 className="mt-5 text-3xl font-semibold tracking-tight">Your security is our standard.</h2><p className="mt-4 leading-7 text-slate-500">We combine thoughtful technology with people who are ready to help protect what matters.</p></div><div className="grid gap-7 sm:grid-cols-3"><div><ShieldCheck className="size-5 text-[#C9A227]" /><h3 className="mt-3 font-semibold">Protected accounts</h3><p className="mt-2 text-sm leading-6 text-slate-500">Layered security controls and careful account protection.</p></div><div><Users className="size-5 text-[#C9A227]" /><h3 className="mt-3 font-semibold">Human support</h3><p className="mt-2 text-sm leading-6 text-slate-500">Real people, ready when you need a hand.</p></div><div><Landmark className="size-5 text-[#C9A227]" /><h3 className="mt-3 font-semibold">Local perspective</h3><p className="mt-2 text-sm leading-6 text-slate-500">Decisions made with your community in mind.</p></div></div></div></section>
 
         <section id="open-account" className="bg-[#eef1ff]"><div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-7 px-5 py-16 sm:flex-row sm:items-center lg:px-8"><div><p className="text-sm font-bold uppercase tracking-[0.18em] text-[#0504AA]">Start where you are</p><h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Your future has room to grow.</h2></div><Link to="/register" className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[#0504AA] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-900/15 transition hover:bg-[#0807c8]">Open an Account <ArrowRight className="size-4" /></Link></div></section>
       </main>
 
-      <footer id="contact" className="bg-white"><div className="mx-auto max-w-7xl px-5 py-12 lg:px-8"><div className="flex flex-col justify-between gap-10 border-b border-slate-200 pb-10 md:flex-row"><div><img src={logoUrl} alt="Evermont Credit Union" className="h-12 w-12 object-contain" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = logoFallbackUrl }} /><p className="mt-4 max-w-xs text-sm leading-6 text-slate-500">Your money. Your community. Your future.</p></div><div className="grid grid-cols-2 gap-x-14 gap-y-4 text-sm text-slate-500 sm:grid-cols-3"><a href="#products" className="hover:text-[#0504AA]">Products</a><a href="#loans" className="hover:text-[#0504AA]">Loans</a><a href="#security" className="hover:text-[#0504AA]">Security</a><a href="#about" className="hover:text-[#0504AA]">About</a><a href="#contact" className="hover:text-[#0504AA]">Contact</a><a href="#contact" className="hover:text-[#0504AA]">Support</a></div></div><div className="flex flex-col justify-between gap-3 pt-6 text-xs text-slate-400 sm:flex-row"><span>© 2026 Evermont Credit Union. All rights reserved.</span><div className="flex gap-5"><a href="#privacy" className="hover:text-[#0504AA]">Privacy</a><a href="#terms" className="hover:text-[#0504AA]">Terms</a><a href="#security" className="hover:text-[#0504AA]">Security</a></div></div></div></footer>
+      <SiteFooter />
       <aside className="fixed inset-x-0 bottom-0 z-50 border-t border-[#C9A227]/40 bg-[#0504AA]/95 px-4 py-2.5 text-center text-xs font-medium text-white shadow-[0_-4px_18px_rgba(5,4,170,0.16)] backdrop-blur-sm" aria-label="Security notice">
         <div className="mx-auto flex max-w-7xl items-center justify-center gap-2">
           <ShieldCheck className="size-3.5 shrink-0 text-[#f1d56f]" aria-hidden="true" />
-          <span>Your information is protected by Evermont security controls.</span>
+          <span>{DISCLAIMER}</span>
         </div>
       </aside>
     </div>

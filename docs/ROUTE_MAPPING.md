@@ -12,28 +12,28 @@ Important: Routes listed in this document must be verified against the current a
 
 Builder — Public Website
 
-https://evermont.builder.cloud
+https://evermontcredit.online
 
 v0/Vercel — Primary Functional Portal
 
-https://v0-evermont.vercel.app
+https://evermontcredit.online
 
 Bolt — Existing Project
 
-https://evermont-credit-unio-2tld.bolt.host
+https://evermontcredit.online
 
 3. Builder Homepage Navigation
 
 The following navigation is intended for Builder.
 
 Button or Product	Intended Destination	Verification
-Home / Logo	https://evermont.builder.cloud/	Verify
-Open an Account	https://v0-evermont.vercel.app/register	Verify route and registration
-Member Login	https://v0-evermont.vercel.app/login	Verify route and authentication
-Checking Account	https://v0-evermont.vercel.app/services/checking	Verify service slug
-Savings Account	https://v0-evermont.vercel.app/services/savings	Verify service slug
-Loans	https://v0-evermont.vercel.app/services/loans	Verify service slug
-Investments / Wealth	https://v0-evermont.vercel.app/services/investments	Verify service slug
+Home / Logo	https://evermontcredit.online/	Verify
+Open an Account	https://evermontcredit.online/register	Verify route and registration
+Member Login	https://evermontcredit.online/login	Verify route and authentication
+Checking Account	https://evermontcredit.online/services/checking	Verify service slug
+Savings Account	https://evermontcredit.online/services/savings	Verify service slug
+Loans	https://evermontcredit.online/services/loans	Verify service slug
+Investments / Wealth	https://evermontcredit.online/services/investments	Verify service slug
 Retirement Planning	Appropriate verified v0 route	Identify existing route
 Digital Assets	Appropriate verified v0 route	Identify existing route
 Contact	Appropriate public contact page	Verify destination
@@ -76,7 +76,7 @@ Registration
 
 Intended URL:
 
-https://v0-evermont.vercel.app/register
+https://evermontcredit.online/register
 
 Verify that:
 
@@ -90,7 +90,7 @@ Login
 
 Intended URL:
 
-https://v0-evermont.vercel.app/login
+https://evermontcredit.online/login
 
 Verify that:
 
@@ -126,7 +126,7 @@ The v0 portal should provide a link back to the public website when appropriate.
 
 Intended destination:
 
-https://evermont.builder.cloud/
+https://evermontcredit.online/
 
 Use this for public brand information and other relevant informational pages.
 
@@ -136,7 +136,7 @@ Do not redirect users away from active account workflows unexpectedly.
 
 Existing Bolt project:
 
-https://evermont-credit-unio-2tld.bolt.host
+https://evermontcredit.online
 
 Keep Bolt available as an independent application.
 

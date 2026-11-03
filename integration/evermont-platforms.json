@@ -13,7 +13,7 @@
 “platforms”: {
 “builder”: {
 “name”: “Evermont Builder”,
-“url”: “https://evermont.builder.cloud”,
+“url”: “https://evermontcredit.online”,
 “role”: “public_front_door”,
 “responsibilities”: [
 “public_homepage”,
@@ -26,7 +26,7 @@
 },
 “v0”: {
 “name”: “Evermont v0/Vercel”,
-“url”: “https://v0-evermont.vercel.app”,
+“url”: “https://evermontcredit.online”,
 “role”: “primary_functional_portal”,
 “responsibilities”: [
 “member_registration”,
@@ -45,7 +45,7 @@
 },
 “bolt”: {
 “name”: “Evermont Bolt”,
-“url”: “https://evermont-credit-unio-2tld.bolt.host”,
+“url”: “https://evermontcredit.online”,
 “role”: “existing_project_for_future_evaluation”,
 “responsibilities”: [
 “preserve_existing_application”,
