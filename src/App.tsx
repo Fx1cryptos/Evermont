@@ -6,6 +6,11 @@ import { HomePage } from '@/pages/HomePage'
 import { AboutPage } from '@/pages/AboutPage'
 import { ServicePage } from '@/pages/ServicePage'
 import { PublicInfoPage } from '@/pages/PublicInfoPage'
+import { PersonalBankingPage } from '@/pages/PersonalBankingPage'
+import { PrivateWealthPage } from '@/pages/PrivateWealthPage'
+import { ServicesDirectoryPage } from '@/pages/ServicesDirectoryPage'
+import { ResourcesPage } from '@/pages/ResourcesPage'
+import { ContactPage } from '@/pages/ContactPage'
 
 const Login = lazy(() => import('@/pages/auth/Login').then(module => ({ default: module.Login })))
 const Register = lazy(() => import('@/pages/auth/Register').then(module => ({ default: module.Register })))
@@ -27,32 +32,35 @@ const RouteAnalytics: React.FC = () => {
   return null
 }
 
-const infoPaths = ['/security', '/contact', '/open-account', '/mission', '/membership', '/faq', '/privacy', '/terms', '/disclosures', '/accessibility', '/fraud-prevention']
+const infoPaths = ['/security', '/open-account', '/privacy', '/terms', '/disclosures', '/accessibility']
 
 export const AppRoutes: React.FC = () => (
-  <>
-    <Suspense fallback={<LoadingFallback />}>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/checking" element={<ServicePage />} />
-        <Route path="/savings" element={<ServicePage />} />
-        <Route path="/credit-card" element={<ServicePage />} />
-        <Route path="/loans" element={<ServicePage />} />
-        <Route path="/retirement" element={<ServicePage />} />
-        <Route path="/cryptocurrency" element={<ServicePage />} />
-        {infoPaths.map((path) => <Route key={path} path={path} element={<PublicInfoPage />} />)}
-        {Object.entries(legacyRedirects).map(([from, to]) => (
-          <Route key={from} path={from} element={<Navigate to={to} replace />} />
-        ))}
-        <Route path={ROUTES.LOGIN} element={<Login />} />
-        <Route path={ROUTES.SIGN_IN} element={<Login />} />
-        <Route path={ROUTES.REGISTER} element={<Register />} />
-        <Route path={ROUTES.SIGN_UP} element={<Register />} />
-        <Route path="/admin/*" element={<AdminRoutes />} />
-      </Routes>
-    </Suspense>
-  </>
+  <Suspense fallback={<LoadingFallback />}>
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/about" element={<AboutPage />} />
+      <Route path="/personal-banking" element={<PersonalBankingPage />} />
+      <Route path="/private-wealth" element={<PrivateWealthPage />} />
+      <Route path="/services" element={<ServicesDirectoryPage />} />
+      <Route path="/resources" element={<ResourcesPage />} />
+      <Route path="/contact" element={<ContactPage />} />
+      <Route path="/checking" element={<ServicePage />} />
+      <Route path="/savings" element={<ServicePage />} />
+      <Route path="/credit-card" element={<ServicePage />} />
+      <Route path="/loans" element={<ServicePage />} />
+      <Route path="/retirement" element={<ServicePage />} />
+      <Route path="/cryptocurrency" element={<ServicePage />} />
+      {infoPaths.map((path) => <Route key={path} path={path} element={<PublicInfoPage />} />)}
+      {Object.entries(legacyRedirects).map(([from, to]) => (
+        <Route key={from} path={from} element={<Navigate to={to} replace />} />
+      ))}
+      <Route path={ROUTES.LOGIN} element={<Login />} />
+      <Route path={ROUTES.SIGN_IN} element={<Login />} />
+      <Route path={ROUTES.REGISTER} element={<Register />} />
+      <Route path={ROUTES.SIGN_UP} element={<Register />} />
+      <Route path="/admin/*" element={<AdminRoutes />} />
+    </Routes>
+  </Suspense>
 )
 
 export const App: React.FC = () => (
