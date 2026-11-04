@@ -43,4 +43,4 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
 export const routeMeta = (path: string) => PUBLIC_ROUTES.find(r => r.path === path)
 
 /** Paths that must never be indexed. Mirrored in public/robots.txt and vercel.json. */
-export const PRIVATE_PREFIXES = ['/login', '/sign-in', '/register', '/signup', '/forgot-password', '/reset-password', '/auth/callback', '/dashboard', '/accounts', '/activation', '/transactions', '/insights', '/profile', '/settings', '/support', '/admin']
+export const PRIVATE_PREFIXES = ['/login', '/sign-in', '/register', '/signup', '/forgot-password', '/reset-password', '/auth/callback', '/dashboard', '/accounts', '/activation', '/transactions', '/insights', '/profile', '/settings', '/support', '/admin', '/services/ach', '/services/mobile-deposit', '/services/check-deposit', '/services/wire']

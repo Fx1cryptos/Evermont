@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, CheckCircle, Clock3, CreditCard, MessageCircle, ShieldCheck } from 'lucide-react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { PortalShell } from '@/components/member/PortalShell'
 import { useAuth } from '@/contexts/AuthContext'
 import { useActivationGate } from '@/hooks/useActivationGate'
 import { accountService } from '@/services/accountService'
 import { activationService, type ActivationPaymentLog, type ActivationPaymentStatus } from '@/services/activationService'
 import { ROUTES } from '@/constants/routes'
+import { bankingServiceForPath } from '@/lib/bankingServices'
 import type { Account } from '@/types'
 
 const money = (value: number | null | undefined, currency = 'USD') => new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(Number(value) || 0)
@@ -18,6 +19,8 @@ const statusLabel = (status: ActivationPaymentStatus) => status.charAt(0).toUppe
 export const ActivationPage: React.FC = () => {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const nextService = bankingServiceForPath(searchParams.get('next') || '')
   const [accounts, setAccounts] = useState<Account[]>([])
   const [payments, setPayments] = useState<ActivationPaymentLog[]>([])
   const [loading, setLoading] = useState(true)
@@ -48,7 +51,7 @@ export const ActivationPage: React.FC = () => {
     <div className="mt-7 grid gap-6 lg:grid-cols-[1fr_320px]">
       <section className="rounded-2xl border border-[#C9A227]/50 bg-white p-6 shadow-sm sm:p-8">
         <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[.18em] text-[#C9A227]">Current status</p><h2 className="mt-2 text-2xl font-semibold text-[#0504AA]">{activation.activated ? 'Activated' : 'Activation required'}</h2></div><div className="rounded-2xl bg-[#0504AA]/10 p-3 text-[#0504AA]">{activation.activated ? <CheckCircle className="size-6" /> : <ShieldCheck className="size-6" />}</div></div>
-        <p className="mt-4 text-sm leading-6 text-slate-600">{activation.activated ? 'Your member account is activated. Payment history remains available below.' : 'Contact Evermont Private Bank & Trust Support to confirm the secure activation process for your account.'}</p>
+        <p className="mt-4 text-sm leading-6 text-slate-600">{activation.activated ? 'Your member account is activated. Payment history remains available below.' : 'Contact Evermont Private Bank & Trust Support to confirm the secure activation process for your account.'}</p>{nextService && <p className="mt-4 text-sm text-slate-600">{activation.activated ? <Link to={nextService.path} className="font-semibold text-[#0504AA]">Continue to {nextService.title}</Link> : `After activation you can return to ${nextService.title}.`}</p>}
         {!activation.activated && activation.fee !== null && <div className="mt-6 rounded-2xl bg-[#fffaf0] p-5"><p className="text-sm font-semibold text-slate-600">Calculated activation fee</p><p className="mt-1 text-3xl font-semibold text-[#0504AA]">{money(activation.fee)}</p>{activation.ratePercent !== null && <p className="mt-1 text-xs text-slate-500">Calculated at {activation.ratePercent}% of available balance.</p>}</div>}
         <div className="mt-6 flex flex-col gap-3 sm:flex-row"><button type="button" onClick={() => navigate(ROUTES.SUPPORT)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0504AA] px-5 py-3 text-sm font-semibold text-white shadow-sm"><MessageCircle className="size-4" />Contact Support about Activation</button><Link to={ROUTES.ACCOUNTS} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700"><ArrowLeft className="size-4" />Back to Accounts</Link></div>
       </section>

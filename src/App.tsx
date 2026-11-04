@@ -21,6 +21,7 @@ import { SettingsPage } from '@/pages/SettingsPage'
 import { SupportPage } from '@/pages/SupportPage'
 import { SupportThreadPage } from '@/pages/SupportThreadPage'
 import { ServicePage } from '@/pages/ServicePage'
+import { MemberBankingServicePage } from '@/pages/member/MemberBankingServicePage'
 import { ContentPage } from '@/pages/public/ContentPage'
 import { NotFoundPage } from '@/pages/public/NotFoundPage'
 import { PAGES } from '@/pages/public/content'
@@ -46,6 +47,10 @@ export const AppRoutes: React.FC = () => (
   <Routes>
     <Route path="/" element={<HomePage />} />
     {Object.keys(PAGES).map(path => <Route key={path} path={path} element={<ContentPage />} />)}
+    <Route path="/services/ach" element={<Private title="ACH Transfer"><MemberBankingServicePage service="ach" /></Private>} />
+    <Route path="/services/mobile-deposit" element={<Private title="Mobile Deposit"><MemberBankingServicePage service="mobile" /></Private>} />
+    <Route path="/services/check-deposit" element={<Private title="Check Deposit"><MemberBankingServicePage service="check" /></Private>} />
+    <Route path="/services/wire" element={<Private title="Wire Transfer"><MemberBankingServicePage service="wire" /></Private>} />
     <Route path="/services/:service" element={<ServicePage />} />
 
     <Route path="/sign-in" element={<Navigate to={ROUTES.LOGIN} replace />} />

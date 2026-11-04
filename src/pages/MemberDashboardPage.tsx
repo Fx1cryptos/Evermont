@@ -1,8 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Building2, FileText, Landmark, Smartphone } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
 import { PortalShell } from '@/components/member/PortalShell'
+import { ActivationRequiredModal } from '@/components/member/ActivationRequiredModal'
 import { useAuth } from '@/contexts/AuthContext'
 import { ROUTES } from '@/constants/routes'
+import { BANKING_SERVICES, type BankingServiceKey } from '@/lib/bankingServices'
 import { accountService } from '@/services/accountService'
 import { profileService } from '@/services/profileService'
 import { transactionService, type LedgerActivity } from '@/services/transactionService'
@@ -33,7 +36,12 @@ const ActivityList: React.FC<{ rows: LedgerActivity[]; empty: string }> = ({ row
   ))}</ul> : <p className="px-4 py-6 text-sm text-slate-500">{empty}</p>
 )
 
-const COMING_SOON = ['ACH transfer', 'Mobile deposit', 'Check deposit', 'Virtual card']
+const SERVICE_ICONS: Record<BankingServiceKey, React.FC<{ className?: string }>> = {
+  ach: Building2,
+  mobile: Smartphone,
+  check: FileText,
+  wire: Landmark,
+}
 
 export const MemberDashboardPage: React.FC = () => {
   const { user, loading: authLoading } = useAuth()
@@ -43,9 +51,14 @@ export const MemberDashboardPage: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const total = useMemo(() => accounts.reduce((sum, account) => sum + Number(account.balance), 0), [accounts])
-  const { check: checkActivation } = useActivationGate(user?.id, total)
+  const { check: checkActivation, checking } = useActivationGate(user?.id, total)
+  const navigate = useNavigate()
   const [activated, setActivated] = useState<boolean | null>(null)
   const [fee, setFee] = useState<number | null>(null)
+  const [ratePercent, setRatePercent] = useState<number | null>(null)
+  const [pendingService, setPendingService] = useState<string | null>(null)
+  const [gatePath, setGatePath] = useState<string | null>(null)
+  const [serviceError, setServiceError] = useState('')
 
   useEffect(() => {
     if (!user) return
@@ -69,13 +82,34 @@ export const MemberDashboardPage: React.FC = () => {
     void checkActivation().then((result) => {
       setActivated(result.activated)
       setFee(result.fee)
-    })
+      setRatePercent(result.ratePercent)
+    }).catch(() => setServiceError('We could not verify activation.'))
   }, [user, loading, error, checkActivation])
 
   const recent = rows.slice(0, 5)
   const transfers = rows.filter(row => row.entryType === 'transfer').slice(0, 5)
   const deposits = rows.filter(row => row.entryType === 'deposit').slice(0, 5)
   const memberName = [profile?.firstName || user?.firstName, profile?.lastName || user?.lastName].filter(Boolean).join(' ')
+
+  const openService = async (key: BankingServiceKey) => {
+    setServiceError('')
+    setPendingService(key)
+    try {
+      const result = await checkActivation()
+      setActivated(result.activated)
+      setFee(result.fee)
+      setRatePercent(result.ratePercent)
+      if (!result.activated) {
+        setGatePath(BANKING_SERVICES[key].path)
+        return
+      }
+      navigate(BANKING_SERVICES[key].path)
+    } catch {
+      setServiceError('We could not verify activation. The service was not opened.')
+    } finally {
+      setPendingService(null)
+    }
+  }
 
   if (authLoading || (user && loading)) return <main className="flex min-h-screen items-center justify-center bg-[#f6f7fb] text-sm text-slate-500">Loading your member portal...</main>
   if (!user) return <main className="p-8"><Link to={ROUTES.LOGIN}>Sign in</Link></main>
@@ -125,13 +159,28 @@ export const MemberDashboardPage: React.FC = () => {
         </div>
       </section>
 
-      <section className="rounded-xl border border-dashed border-slate-300 bg-white p-5">
-        <h2 className="text-sm font-semibold text-[#101533]">Coming soon</h2>
-        <p className="mt-1 text-sm text-slate-500">These are not available. Submitting a request here does not create a transfer, deposit, card, or receipt.</p>
-        <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-          {COMING_SOON.map(item => <li key={item} className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">{item} · Coming soon</li>)}
+      <section className="rounded-xl border border-slate-200 bg-white p-5" aria-labelledby="banking-services-title">
+        <h2 id="banking-services-title" className="text-sm font-semibold text-[#101533]">Banking services</h2>
+        <p className="mt-1 text-sm text-slate-500">These prepare a request only. They do not move money.</p>
+        {serviceError && <p role="alert" className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{serviceError}</p>}
+        <ul className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {(Object.keys(BANKING_SERVICES) as BankingServiceKey[]).map((key) => {
+            const item = BANKING_SERVICES[key]
+            const Icon = SERVICE_ICONS[key]
+            const busy = checking && pendingService === key
+            return (
+              <li key={key}>
+                <button type="button" onClick={() => void openService(key)} disabled={checking} aria-busy={busy} className="flex h-full w-full flex-col items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-left hover:border-[#C9A227] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0504AA] disabled:opacity-60">
+                  <span className="flex size-10 items-center justify-center rounded-xl bg-[#0504AA] text-white"><Icon className="size-5" aria-hidden="true" /></span>
+                  <span className="text-sm font-semibold text-[#0504AA]">{item.title}</span>
+                  <span className="text-xs leading-5 text-slate-500">{busy ? 'Checking activation…' : item.description}</span>
+                </button>
+              </li>
+            )
+          })}
         </ul>
       </section>
+      <ActivationRequiredModal open={gatePath != null} nextPath={gatePath || undefined} fee={fee} ratePercent={ratePercent} onClose={() => setGatePath(null)} />
     </div>
   </PortalShell>
 }

@@ -18,5 +18,9 @@ Disallow: /profile
 Disallow: /settings
 Disallow: /support
 Disallow: /admin
+Disallow: /services/ach
+Disallow: /services/mobile-deposit
+Disallow: /services/check-deposit
+Disallow: /services/wire
 
 Sitemap: https://evermontcredit.online/sitemap.xml
