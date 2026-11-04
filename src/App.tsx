@@ -9,6 +9,7 @@ import { Login } from '@/pages/auth/Login'
 import { Register } from '@/pages/auth/Register'
 import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage'
 import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage'
+import { EmailConfirmedPage } from '@/pages/auth/EmailConfirmedPage'
 import { MemberDashboardPage } from '@/pages/MemberDashboardPage'
 import { HomePage } from '@/pages/HomePage'
 import { TransactionsPage } from '@/pages/TransactionsPage'
@@ -53,6 +54,7 @@ export const AppRoutes: React.FC = () => (
     <Route path={ROUTES.REGISTER} element={<Auth title="Open an Account"><Register /></Auth>} />
     <Route path={ROUTES.FORGOT_PASSWORD} element={<Auth title="Forgot Password"><ForgotPasswordPage /></Auth>} />
     <Route path={ROUTES.RESET_PASSWORD} element={<Auth title="Reset Password"><ResetPasswordPage /></Auth>} />
+    <Route path="/auth/callback" element={<Auth title="Email confirmed"><EmailConfirmedPage /></Auth>} />
 
     <Route path={ROUTES.DASHBOARD} element={<Private title="Dashboard"><MemberDashboardPage /></Private>} />
     <Route path={ROUTES.ACCOUNTS} element={<Private title="My Accounts"><AccountsPage /></Private>} />

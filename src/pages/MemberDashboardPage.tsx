@@ -1,7 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { ArrowDownLeft, ArrowUpRight, Bell, Building2, CreditCard, Eye, EyeOff, FileText, Headphones, Landmark, Menu, Receipt, Send, ShieldCheck, Smartphone, WalletCards } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { ActivationRequiredModal } from '@/components/member/ActivationRequiredModal'
 import { PortalShell } from '@/components/member/PortalShell'
 import { useAuth } from '@/contexts/AuthContext'
 import { ROUTES } from '@/constants/routes'
@@ -9,30 +7,13 @@ import { accountService } from '@/services/accountService'
 import { profileService } from '@/services/profileService'
 import { transactionService, type LedgerActivity } from '@/services/transactionService'
 import { useActivationGate } from '@/hooks/useActivationGate'
-import { useNotifications } from '@/hooks/useNotifications'
-import { FeatureDialog } from '@/components/member/features/FeatureDialog'
-import { AchTransferForm } from '@/components/member/features/AchTransferForm'
-import { CheckDepositForm } from '@/components/member/features/CheckDepositForm'
-import { VirtualCardPanel } from '@/components/member/features/VirtualCardPanel'
-import { SITE_NAME } from '@/config/site'
 import type { Account, Profile } from '@/types'
-
-type Row = LedgerActivity
-type GateResult = { activated: boolean; fee: number | null; ratePercent: number | null }
-type FeatureKey = 'ach' | 'mobile' | 'check' | 'card'
-type ServiceItem = { label: string; subtext: string; icon: React.FC<{ className?: string }>; to?: string; gated?: boolean; feature?: FeatureKey }
-const FEATURE_META: Record<FeatureKey, { title: string; subtitle: string }> = {
-  ach: { title: 'ACH Transfer', subtitle: 'Send to an external U.S. bank account' },
-  mobile: { title: 'Mobile Deposit', subtitle: 'Capture a check with your device camera' },
-  check: { title: 'Check Deposit', subtitle: 'Upload front and back images of a check' },
-  card: { title: 'Virtual Card', subtitle: 'Display-only prototype card' },
-}
 
 const money = (value: unknown) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value) || 0)
 
 const Panel: React.FC<{ title: string; action?: React.ReactNode; children: React.ReactNode }> = ({ title, action, children }) => (
-  <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-    <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
+  <section className="rounded-xl border border-slate-200 bg-white">
+    <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
       <h2 className="text-sm font-semibold text-[#101533]">{title}</h2>
       {action}
     </div>
@@ -40,210 +21,118 @@ const Panel: React.FC<{ title: string; action?: React.ReactNode; children: React
   </section>
 )
 
+const ActivityList: React.FC<{ rows: LedgerActivity[]; empty: string }> = ({ rows, empty }) => (
+  rows.length ? <ul className="divide-y divide-slate-100">{rows.map(row => (
+    <li key={row.id} className="flex items-start justify-between gap-3 px-4 py-3">
+      <div className="min-w-0">
+        <p className="truncate text-sm font-medium text-[#101533]">{row.description}</p>
+        <p className="text-xs text-slate-500">{row.createdAt ? new Date(row.createdAt).toLocaleString() : 'Date not returned'} · <span className="capitalize">{row.entryType || row.status}</span></p>
+      </div>
+      <p className="shrink-0 text-sm font-semibold tabular-nums text-[#101533]">{row.direction === 'credit' ? '+' : '−'}{money(row.displayAmount)}</p>
+    </li>
+  ))}</ul> : <p className="px-4 py-6 text-sm text-slate-500">{empty}</p>
+)
+
+const COMING_SOON = ['ACH transfer', 'Mobile deposit', 'Check deposit', 'Virtual card']
+
 export const MemberDashboardPage: React.FC = () => {
   const { user, loading: authLoading } = useAuth()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [accounts, setAccounts] = useState<Account[]>([])
-  const [rows, setRows] = useState<Row[]>([])
-  const [hidden, setHidden] = useState(false)
+  const [rows, setRows] = useState<LedgerActivity[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [gateOpen, setGateOpen] = useState(false)
-  const [notice, setNotice] = useState('')
-  const [feature, setFeature] = useState<FeatureKey | null>(null)
-  const [gateResult, setGateResult] = useState<GateResult>({ activated: false, fee: null, ratePercent: null })
   const total = useMemo(() => accounts.reduce((sum, account) => sum + Number(account.balance), 0), [accounts])
-  const { check: checkActivation, checking } = useActivationGate(user?.id, total)
-  const { unreadCount } = useNotifications(user?.id)
+  const { check: checkActivation } = useActivationGate(user?.id, total)
+  const [activated, setActivated] = useState<boolean | null>(null)
+  const [fee, setFee] = useState<number | null>(null)
 
   useEffect(() => {
     if (!user) return
     let active = true
-    void Promise.all([profileService.getProfile(user.id), accountService.getAccounts(user.id)]).then(async ([p, a]) => {
+    void Promise.all([profileService.getProfile(user.id), accountService.getAccounts(user.id)]).then(async ([nextProfile, nextAccounts]) => {
       if (!active) return
-      setProfile(p)
-      setAccounts(a)
+      setProfile(nextProfile)
+      setAccounts(nextAccounts)
       try {
-        const activity = await transactionService.getTransactions(user.id, { limit: 6 })
+        const activity = await transactionService.getTransactions(user.id, { limit: 40 })
         if (active) setRows(activity)
       } catch {
-        if (active) setError('We could not load recent activity.')
+        if (active) setError('We could not load transactions from the ledger.')
       }
-    }).catch(() => setError('We could not load your member information.')).finally(() => { if (active) setLoading(false) })
+    }).catch(() => { if (active) setError('We could not load your accounts.') }).finally(() => { if (active) setLoading(false) })
     return () => { active = false }
   }, [user])
 
   useEffect(() => {
-    if (!user || loading) return
-    void checkActivation().then(setGateResult)
-  }, [user, loading, checkActivation])
+    if (!user || loading || error) return
+    void checkActivation().then((result) => {
+      setActivated(result.activated)
+      setFee(result.fee)
+    })
+  }, [user, loading, error, checkActivation])
 
-  const display = (value: unknown) => hidden ? '••••••' : money(value)
-  const feeLine = gateResult.fee != null
-    ? `An activation fee of ${money(gateResult.fee)} is required before transfers and certain services become available.`
-    : 'An activation fee is required before transfers and certain services become available.'
-  const memberName = [profile?.firstName || user?.firstName, profile?.lastName].filter(Boolean).join(' ')
+  const recent = rows.slice(0, 5)
+  const transfers = rows.filter(row => row.entryType === 'transfer').slice(0, 5)
+  const deposits = rows.filter(row => row.entryType === 'deposit').slice(0, 5)
+  const memberName = [profile?.firstName || user?.firstName, profile?.lastName || user?.lastName].filter(Boolean).join(' ')
 
-  const requestMovement = () => {
-    setNotice('')
-    if (gateResult.activated) {
-      setNotice('Transfer and withdraw are not available yet. This prototype does not move money.')
-      return
-    }
-    setGateOpen(true)
-  }
+  if (authLoading || (user && loading)) return <main className="flex min-h-screen items-center justify-center bg-[#f6f7fb] text-sm text-slate-500">Loading your member portal...</main>
+  if (!user) return <main className="p-8"><Link to={ROUTES.LOGIN}>Sign in</Link></main>
 
-  // New features use the same activation gate as Transfer/Withdraw. The status is re-checked on click.
-  const openFeature = async (key: FeatureKey) => {
-    setNotice('')
-    const result = await checkActivation()
-    setGateResult(result)
-    if (!result.activated) { setGateOpen(true); return }
-    setFeature(key)
-  }
+  return <PortalShell title="Account overview" eyebrow={memberName || 'Member'}>
+    <div className="space-y-5">
+      {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
 
-  const quickActions: { key: FeatureKey; label: string; subtext: string; icon: React.FC<{ className?: string }> }[] = [
-    { key: 'ach', label: 'ACH Transfer', subtext: 'Send to another bank', icon: Building2 },
-    { key: 'mobile', label: 'Mobile Deposit', subtext: 'Snap a check', icon: Smartphone },
-    { key: 'check', label: 'Check Deposit', subtext: 'Upload check images', icon: FileText },
-    { key: 'card', label: 'Virtual Card', subtext: 'View your card', icon: CreditCard },
-  ]
+      <section className="rounded-xl border border-slate-200 bg-white p-5">
+        <p className="text-xs font-semibold uppercase tracking-[.14em] text-[#C9A227]">Available balance</p>
+        {error ? <p className="mt-2 text-sm text-slate-500">Balance is hidden because account records did not load.</p> : accounts.length ? <p className="mt-2 text-3xl font-semibold tabular-nums text-[#0504AA]">{money(total)}</p> : <p className="mt-2 text-sm text-slate-500">No accounts are on file for this member.</p>}
+        <p className="mt-2 text-xs text-slate-500">{accounts.length ? 'Sum of balances returned for your accounts. Nothing on this page moves money.' : 'Balances appear here only when the database returns an account.'}</p>
+        {activated === false && <p className="mt-3 text-sm text-slate-600">Activation is not complete.{fee != null ? ` The recorded fee is ${money(fee)}.` : ''} <Link to={ROUTES.ACTIVATION} className="font-semibold text-[#0504AA] hover:text-[#C9A227]">View activation</Link></p>}
+      </section>
 
-  const services: ServiceItem[] = [
-    { label: 'Transfer', subtext: 'Requires activation', icon: Send, gated: true },
-    { label: 'Withdraw', subtext: 'Requires activation', icon: WalletCards, gated: true },
-    { label: 'ACH Transfer', subtext: 'Requires activation', icon: Building2, gated: true, feature: 'ach' },
-    { label: 'Mobile Deposit', subtext: 'Requires activation', icon: Smartphone, gated: true, feature: 'mobile' },
-    { label: 'Check Deposit', subtext: 'Requires activation', icon: FileText, gated: true, feature: 'check' },
-    { label: 'Mobile Debit', subtext: 'Requires activation', icon: CreditCard, gated: true },
-    { label: 'Virtual Card', subtext: 'Requires activation', icon: WalletCards, gated: true, feature: 'card' },
-    { label: 'Support', subtext: 'Message the team', icon: Headphones, to: ROUTES.SUPPORT },
-    { label: 'Accounts', subtext: 'Open details', icon: Landmark, to: ROUTES.ACCOUNTS },
-    { label: 'Activity', subtext: 'Full history', icon: Receipt, to: ROUTES.TRANSACTIONS },
-  ]
-
-  if (authLoading || loading) return <main className="flex min-h-screen items-center justify-center bg-[#f6f7fb] text-sm text-slate-500">Loading your member portal...</main>
-  if (!user) return <main className="p-8"><Link to={ROUTES.LOGIN}>Sign in to member banking</Link></main>
-
-  return <PortalShell title="Overview" eyebrow={memberName || 'Member'}>
-    <div className="mt-5 grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_292px]">
-      <div className="order-2 space-y-5 lg:order-1">
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-          <div className="relative overflow-hidden bg-gradient-to-br from-[#0504AA] via-[#06058f] to-[#0b0d2a] px-5 py-6 text-white sm:px-7 sm:py-7">
-            <div className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full border border-[#C9A227]/25" aria-hidden="true" />
-            <p className="relative mb-3 text-xs font-medium text-blue-100">{SITE_NAME}</p>
-            <div className="relative flex items-start justify-between gap-4">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[.16em] text-[#C9A227]">Total relationship balance</p>
-                <p className="mt-2 font-semibold tabular-nums tracking-tight text-3xl sm:text-4xl">{hidden ? '••••••' : money(total)}</p>
-                <p className="mt-2 text-sm text-blue-100">{accounts.length === 1 ? '1 account' : `${accounts.length} accounts`}</p>
-              </div>
-              <button type="button" onClick={() => setHidden(!hidden)} aria-pressed={hidden} className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-white hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A227]">
-                {hidden ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
-                {hidden ? 'Show' : 'Hide'}
-              </button>
+      <Panel title="Account details" action={<Link to={ROUTES.ACCOUNTS} className="text-sm font-semibold text-[#0504AA]">Open accounts</Link>}>
+        {accounts.length ? <ul className="divide-y divide-slate-100">{accounts.map(account => (
+          <li key={account.id} className="grid gap-1 px-4 py-3 sm:grid-cols-[1fr_auto] sm:items-center">
+            <div>
+              <p className="text-sm font-semibold capitalize text-[#101533]">{account.accountType}</p>
+              <p className="text-xs text-slate-500">{account.accountNumber || 'Account number not returned'} · <span className="capitalize">{account.status}</span></p>
             </div>
-          </div>
-          <div className="grid grid-cols-2 divide-x divide-y divide-slate-100 sm:grid-cols-4 sm:divide-y-0">
-            <Link to={ROUTES.ACCOUNTS} className="px-4 py-3 text-center text-sm font-semibold text-[#0504AA] hover:bg-slate-50">Accounts</Link>
-            <Link to={ROUTES.TRANSACTIONS} className="px-4 py-3 text-center text-sm font-semibold text-[#0504AA] hover:bg-slate-50">Activity</Link>
-            <button type="button" disabled={checking} onClick={requestMovement} className="px-4 py-3 text-center text-sm font-semibold text-[#0504AA] hover:bg-slate-50 disabled:opacity-60">Transfer</button>
-            <button type="button" disabled={checking} onClick={requestMovement} className="px-4 py-3 text-center text-sm font-semibold text-[#0504AA] hover:bg-slate-50 disabled:opacity-60">Withdraw</button>
-          </div>
-          {notice && <p role="status" className="border-t border-slate-100 px-5 py-3 text-sm text-slate-600">{notice}</p>}
-        </section>
+            <p className="text-sm font-semibold tabular-nums text-[#101533]">{money(account.balance)}</p>
+          </li>
+        ))}</ul> : <p className="px-4 py-6 text-sm text-slate-500">No account details were returned.</p>}
+      </Panel>
 
-        <section aria-labelledby="quick-actions-title" className="rounded-2xl border border-slate-200 bg-white p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 id="quick-actions-title" className="text-sm font-semibold text-[#101533]">Quick actions</h2>
-            <span className="h-px w-12 bg-[#C9A227]" aria-hidden="true" />
-          </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {quickActions.map(({ key, label, subtext, icon: Icon }) => (
-              <button key={key} type="button" disabled={checking} onClick={() => { void openFeature(key) }} className="group flex flex-col items-start gap-3 rounded-xl border border-slate-200 p-4 text-left transition hover:border-[#C9A227] hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0504AA] disabled:opacity-60">
-                <span className="flex size-10 items-center justify-center rounded-xl bg-[#0504AA] text-white ring-2 ring-[#C9A227]/0 transition group-hover:ring-[#C9A227]/60"><Icon className="size-5" /></span>
-                <span><span className="block text-sm font-semibold text-[#101533]">{label}</span><span className="block text-xs text-slate-500">{gateResult.activated ? subtext : 'Requires activation'}</span></span>
-              </button>
-            ))}
-          </div>
-        </section>
+      <Panel title="Recent transactions" action={<Link to={ROUTES.TRANSACTIONS} className="text-sm font-semibold text-[#0504AA]">Full history</Link>}>
+        {error ? <p className="px-4 py-6 text-sm text-slate-500">Transactions were not loaded.</p> : <ActivityList rows={recent} empty="No transactions were returned." />}
+      </Panel>
 
-        <Panel title="Accounts" action={<Link to={ROUTES.ACCOUNTS} className="text-sm font-semibold text-[#0504AA]">View all</Link>}>
-          {accounts.length ? <ul className="divide-y divide-slate-100">{accounts.map(account => (
-            <li key={account.id} className="flex items-center gap-3 px-5 py-4">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#0504AA]/8 text-[#0504AA]"><Landmark className="size-4" /></span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold capitalize text-[#101533]">{account.accountType}</p>
-                <p className="truncate text-xs text-slate-500">{account.accountNumber || 'Account'}</p>
-              </div>
-              <span className="hidden rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold capitalize text-emerald-700 sm:inline">{account.status}</span>
-              <p className="text-sm font-semibold tabular-nums text-[#101533]">{display(account.balance)}</p>
-            </li>
-          ))}</ul> : <p className="px-5 py-8 text-sm text-slate-500">No accounts are available for this member.</p>}
+      <div className="grid gap-5 lg:grid-cols-2">
+        <Panel title="Transfer history">
+          {error ? <p className="px-4 py-6 text-sm text-slate-500">Transfer history was not loaded.</p> : <ActivityList rows={transfers} empty="No transfer entries were returned." />}
         </Panel>
-
-        <Panel title="Recent activity" action={<Link to={ROUTES.TRANSACTIONS} className="text-sm font-semibold text-[#0504AA]">See all</Link>}>
-          {error ? <p className="px-5 py-6 text-sm text-red-700">{error}</p> : rows.length ? <ul className="divide-y divide-slate-100">{rows.map(row => {
-            const credit = row.direction === 'credit'
-            return <li key={row.id} className="flex items-center gap-3 px-5 py-3.5">
-              <span className={`flex size-8 shrink-0 items-center justify-center rounded-full ${credit ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>{credit ? <ArrowDownLeft className="size-3.5" /> : <ArrowUpRight className="size-3.5" />}</span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-[#101533]">{row.description}</p>
-                <p className="text-xs text-slate-500">{row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '—'} · <span className="capitalize">{row.status}</span></p>
-              </div>
-              <p className={`shrink-0 text-sm font-semibold tabular-nums ${credit ? 'text-emerald-700' : 'text-[#101533]'}`}>{credit ? '+' : '−'}{display(row.displayAmount)}</p>
-            </li>
-          })}</ul> : <p className="px-5 py-8 text-sm text-slate-500">No recent activity is available.</p>}
+        <Panel title="Deposit history">
+          {error ? <p className="px-4 py-6 text-sm text-slate-500">Deposit history was not loaded.</p> : <ActivityList rows={deposits} empty="No deposit entries were returned." />}
         </Panel>
       </div>
 
-      <aside className="order-1 space-y-5 lg:order-2">
-        {!gateResult.activated && <section className="rounded-2xl border border-[#C9A227]/40 bg-white p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-[.16em] text-[#C9A227]">Activation required</p>
-          <h2 className="mt-2 text-base font-semibold leading-6 text-[#101533]">Activate your account to unlock transfers and select services.</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600">{feeLine}</p>
-          {gateResult.ratePercent != null && <p className="mt-2 text-sm text-slate-500">Calculated at {gateResult.ratePercent}% of available balance.</p>}
-          <div className="mt-4 grid gap-2">
-            <Link to={ROUTES.ACTIVATION} className="rounded-lg bg-[#0504AA] px-3 py-2.5 text-center text-sm font-semibold text-white">View activation details</Link>
-            <Link to={ROUTES.SUPPORT} className="rounded-lg border border-slate-200 px-3 py-2.5 text-center text-sm font-semibold text-[#0504AA]">Message support</Link>
-          </div>
-        </section>}
+      <section className="rounded-xl border border-slate-200 bg-white p-5">
+        <h2 className="text-sm font-semibold text-[#101533]">Profile and support</h2>
+        <div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold">
+          <Link to={ROUTES.PROFILE} className="rounded-lg border border-slate-200 px-3 py-2 text-[#0504AA] hover:border-[#C9A227]">Profile</Link>
+          <Link to={ROUTES.SETTINGS} className="rounded-lg border border-slate-200 px-3 py-2 text-[#0504AA] hover:border-[#C9A227]">Security and password</Link>
+          <Link to={ROUTES.SUPPORT} className="rounded-lg border border-slate-200 px-3 py-2 text-[#0504AA] hover:border-[#C9A227]">Support</Link>
+        </div>
+      </section>
 
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
-            <h2 className="text-sm font-semibold">Services</h2>
-            <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500"><Bell className="size-3.5 text-[#0504AA]" />{unreadCount}</span>
-          </div>
-          <ul className="divide-y divide-slate-100">
-            {services.map(({ label, subtext, icon: Icon, to, gated, feature: featureKey }) => {
-              const body = <span className="flex items-center gap-3 px-4 py-3">
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#0504AA]/8 text-[#0504AA]"><Icon className="size-4" /></span>
-                <span className="min-w-0"><span className="block text-sm font-semibold text-[#101533]">{label}</span><span className="block text-xs text-slate-500">{subtext}</span></span>
-              </span>
-              return <li key={label}>{to
-                ? <Link to={to} className="block hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0504AA]">{body}</Link>
-                : <button type="button" onClick={featureKey ? () => { void openFeature(featureKey) } : gated ? requestMovement : undefined} disabled={checking} className="block w-full text-left hover:bg-slate-50 focus:outline-none focus-visible:bg-slate-50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0504AA] disabled:opacity-60">{body}</button>}</li>
-            })}
-          </ul>
-        </section>
-      </aside>
+      <section className="rounded-xl border border-dashed border-slate-300 bg-white p-5">
+        <h2 className="text-sm font-semibold text-[#101533]">Coming soon</h2>
+        <p className="mt-1 text-sm text-slate-500">These are not available. Submitting a request here does not create a transfer, deposit, card, or receipt.</p>
+        <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+          {COMING_SOON.map(item => <li key={item} className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">{item} · Coming soon</li>)}
+        </ul>
+      </section>
     </div>
-
-    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white px-2 pb-[max(0.4rem,env(safe-area-inset-bottom))] pt-1.5 md:hidden" aria-label="Mobile banking navigation">
-      <div className="mx-auto grid max-w-md grid-cols-4">
-        <Link to={ROUTES.DASHBOARD} className="flex flex-col items-center gap-1 py-2 text-[11px] font-semibold text-[#0504AA]"><Landmark className="size-4" />Overview</Link>
-        <Link to={ROUTES.ACCOUNTS} className="flex flex-col items-center gap-1 py-2 text-[11px] font-semibold text-slate-500"><WalletCards className="size-4" />Accounts</Link>
-        <button type="button" onClick={requestMovement} className="flex flex-col items-center gap-1 py-2 text-[11px] font-semibold text-slate-500"><Send className="size-4" />Transfer</button>
-        <Link to={ROUTES.TRANSACTIONS} className="flex flex-col items-center gap-1 py-2 text-[11px] font-semibold text-slate-500"><Menu className="size-4" />Activity</Link>
-      </div>
-    </nav>
-    <div className="mb-16 mt-6 flex items-center gap-2 text-xs text-slate-400 md:mb-0"><ShieldCheck className="size-3.5 text-[#0504AA]" />Member information stays in your signed-in session.</div>
-    <FeatureDialog open={feature != null} title={feature ? FEATURE_META[feature].title : ''} subtitle={feature ? FEATURE_META[feature].subtitle : undefined} onClose={() => setFeature(null)}>
-      {feature === 'ach' && <AchTransferForm onDone={() => setFeature(null)} />}
-      {(feature === 'mobile' || feature === 'check') && <CheckDepositForm key={feature} mode={feature} onDone={() => setFeature(null)} />}
-      {feature === 'card' && <VirtualCardPanel holder={memberName} onDone={() => setFeature(null)} />}
-    </FeatureDialog>
-    <ActivationRequiredModal open={gateOpen} fee={gateResult.fee} ratePercent={gateResult.ratePercent} onClose={() => setGateOpen(false)} />
   </PortalShell>
 }
 

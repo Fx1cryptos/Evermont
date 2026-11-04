@@ -41,7 +41,7 @@ for (const r of PUBLIC_ROUTES) {
 }
 fs.writeFileSync(path.join(dist, '404.html'), page('/__not-found__'))
 // SPA shell for client-only (portal/auth/admin) routes: noindex.
-fs.writeFileSync(path.join(dist, 'app.html'), base.replace(SEO_MARKER, `${SEO_MARKER}\n  <title>Evermont Private Bank &amp; Trust</title>\n  <meta name="robots" content="noindex, nofollow" />`))
+fs.writeFileSync(path.join(dist, 'app.html'), base.replace(SEO_MARKER, `${SEO_MARKER}\n  <title>Evermont Credit Union</title>\n  <meta name="robots" content="noindex, nofollow" />`))
 
 const urls = PUBLIC_ROUTES.map(r => `  <url>\n    <loc>${SITE_URL}${r.path}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${r.path === '/' ? 'weekly' : 'monthly'}</changefreq>\n    <priority>${r.path === '/' ? '1.0' : '0.7'}</priority>\n  </url>`).join('\n')
 fs.writeFileSync(path.join(dist, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`)

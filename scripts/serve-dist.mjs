@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url'
 
 const dist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist')
 const vercel = JSON.parse(fs.readFileSync(path.resolve(dist, '..', 'vercel.json'), 'utf8'))
-const privateRe = new RegExp('^' + vercel.rewrites[0].source.replace(/^\//, '/') + '(/.*)?$')
+const privatePatterns = (vercel.rewrites || []).map((rule) => new RegExp('^' + rule.source.replace(/\/:rest\*/g, '(?:/.*)?') + '$'))
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.jpeg': 'image/jpeg', '.xml': 'application/xml', '.txt': 'text/plain' }
 const port = Number(process.env.PORT || 4173)
 
@@ -16,7 +16,7 @@ const within = (file) => file.startsWith(dist + path.sep) || file === dist
 http.createServer((req, res) => {
   const url = decodeURIComponent(new URL(req.url, 'http://x').pathname).replace(/\/+$/, '') || '/'
   const send = (file, status = 200, extra = {}) => { res.writeHead(status, { 'content-type': types[path.extname(file)] || 'application/octet-stream', ...extra }); fs.createReadStream(file).pipe(res) }
-  if (privateRe.test(url)) return send(path.join(dist, 'app.html'), 200, { 'x-robots-tag': 'noindex, nofollow' })
+  if (privatePatterns.some((pattern) => pattern.test(url))) return send(path.join(dist, 'app.html'), 200, { 'x-robots-tag': 'noindex, nofollow' })
   const direct = path.join(dist, url)
   if (!within(direct)) { res.writeHead(400); return res.end() }
   if (fs.existsSync(direct) && fs.statSync(direct).isFile()) return send(direct)

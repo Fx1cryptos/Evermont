@@ -13,6 +13,24 @@ export const validateEmail = (email: string): ValidationError[] => {
   return errors
 }
 
+/** Member-facing rule for new passwords. */
+export const STRONG_PASSWORD_MESSAGE = 'Use at least 8 characters, including an uppercase letter, a lowercase letter, and a number.'
+
+/** Returns a member-facing message, or null when the password meets the rule. */
+export const strongPasswordIssue = (password: string): string | null => {
+  if (!password) return 'Password is required.'
+  if (password.length < 8 || !/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/\d/.test(password)) {
+    return STRONG_PASSWORD_MESSAGE
+  }
+  return null
+}
+
+export const emailIssue = (email: string): string | null => {
+  if (!email.trim()) return 'Email is required.'
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return 'Enter a valid email address.'
+  return null
+}
+
 export const validatePassword = (password: string): ValidationError[] => {
   const errors: ValidationError[] = []
   
