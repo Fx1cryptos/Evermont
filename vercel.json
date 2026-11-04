@@ -11,6 +11,46 @@
       "destination": "/app"
     },
     {
+      "source": "/services/ach",
+      "destination": "/app"
+    },
+    {
+      "source": "/services/mobile-deposit",
+      "destination": "/app"
+    },
+    {
+      "source": "/services/check-deposit",
+      "destination": "/app"
+    },
+    {
+      "source": "/services/wire",
+      "destination": "/app"
+    },
+    {
+      "source": "/services/transfer",
+      "destination": "/app"
+    },
+    {
+      "source": "/services/bill-pay",
+      "destination": "/app"
+    },
+    {
+      "source": "/services/virtual-card",
+      "destination": "/app"
+    },
+    {
+      "source": "/services/digital-assets-trade",
+      "destination": "/app"
+    },
+    {
+      "source": "/statements",
+      "destination": "/app"
+    },
+    {
+      "source": "/alerts",
+      "destination": "/app"
+    },
+    {
       "source": "/(login|sign-in|register|signup|forgot-password|reset-password|auth/callback|dashboard|accounts|activation|transactions|insights|profile|settings|support|admin)",
       "destination": "/app"
     },
@@ -22,6 +62,15 @@
   "headers": [
     {
       "source": "/auth/callback",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/services/(ach|mobile-deposit|check-deposit|wire)",
       "headers": [
         {
           "key": "X-Robots-Tag",

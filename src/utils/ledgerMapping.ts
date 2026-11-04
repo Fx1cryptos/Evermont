@@ -82,10 +82,12 @@ export function classifyLedgerEntry(row: LedgerRowInput): { direction: LedgerDir
   const amount = asLedgerDecimal(row.amount)
 
   let direction: LedgerDirection | null = null
-  if (CREDIT_ENTRY_TYPES.has(entryType)) direction = 'credit'
-  else if (DEBIT_ENTRY_TYPES.has(entryType)) direction = 'debit'
-  else if (isPositiveLedgerAmount(credit) && !isPositiveLedgerAmount(debit)) direction = 'credit'
+  // Posted debit/credit columns decide the sign first. A transfer or wire
+  // with only a credit is money in; only a debit is money out.
+  if (isPositiveLedgerAmount(credit) && !isPositiveLedgerAmount(debit)) direction = 'credit'
   else if (isPositiveLedgerAmount(debit) && !isPositiveLedgerAmount(credit)) direction = 'debit'
+  else if (CREDIT_ENTRY_TYPES.has(entryType) || entryType === 'credit' || entryType === 'inheritance') direction = 'credit'
+  else if (DEBIT_ENTRY_TYPES.has(entryType) || entryType === 'debit' || entryType === 'payment') direction = 'debit'
   else if (CREDIT_CATEGORIES.has(category)) direction = 'credit'
   else if (DEBIT_CATEGORIES.has(category)) direction = 'debit'
 

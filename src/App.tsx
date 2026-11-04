@@ -21,6 +21,9 @@ import { SettingsPage } from '@/pages/SettingsPage'
 import { SupportPage } from '@/pages/SupportPage'
 import { SupportThreadPage } from '@/pages/SupportThreadPage'
 import { ServicePage } from '@/pages/ServicePage'
+import { MemberBankingServicePage } from '@/pages/member/MemberBankingServicePage'
+import { IntegrationEntryPage } from '@/pages/member/IntegrationEntryPage'
+import { AlertsPage } from '@/pages/member/AlertsPage'
 import { ContentPage } from '@/pages/public/ContentPage'
 import { NotFoundPage } from '@/pages/public/NotFoundPage'
 import { PAGES } from '@/pages/public/content'
@@ -46,6 +49,16 @@ export const AppRoutes: React.FC = () => (
   <Routes>
     <Route path="/" element={<HomePage />} />
     {Object.keys(PAGES).map(path => <Route key={path} path={path} element={<ContentPage />} />)}
+    <Route path="/services/ach" element={<Private title="ACH Transfer"><MemberBankingServicePage service="ach" /></Private>} />
+    <Route path="/services/mobile-deposit" element={<Private title="Mobile Deposit"><MemberBankingServicePage service="mobile" /></Private>} />
+    <Route path="/services/check-deposit" element={<Private title="Check Deposit"><MemberBankingServicePage service="check" /></Private>} />
+    <Route path="/services/wire" element={<Private title="Wire Transfer"><MemberBankingServicePage service="wire" /></Private>} />
+    <Route path="/services/transfer" element={<Private title="Transfer"><IntegrationEntryPage title="Transfer" path="/services/transfer" /></Private>} />
+    <Route path="/services/bill-pay" element={<Private title="Bill Pay"><IntegrationEntryPage title="Bill Pay" path="/services/bill-pay" /></Private>} />
+    <Route path="/services/virtual-card" element={<Private title="Virtual Card"><IntegrationEntryPage title="Virtual Card" path="/services/virtual-card" /></Private>} />
+    <Route path="/services/digital-assets-trade" element={<Private title="Digital Assets"><IntegrationEntryPage title="Buy & Sell Digital Assets" path="/services/digital-assets-trade" /></Private>} />
+    <Route path="/statements" element={<Private title="Statements"><IntegrationEntryPage title="Statements" path="/statements" gated={false} /></Private>} />
+    <Route path="/alerts" element={<Private title="Alerts"><AlertsPage /></Private>} />
     <Route path="/services/:service" element={<ServicePage />} />
 
     <Route path="/sign-in" element={<Navigate to={ROUTES.LOGIN} replace />} />
