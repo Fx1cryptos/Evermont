@@ -9,7 +9,7 @@ export const SITE_TAGLINE_SECOND = 'Built on Integrity. Guided by Excellence.'
 export const SITE_URL = 'https://evermontcredit.online'
 export const SUPPORT_EMAIL = 'support@evermontcredit.online'
 export const INFO_EMAIL = 'info@evermontcredit.online'
-export const LOGO_PATH = '/images/evermont-logo.svg'
+export const LOGO_PATH = '/images/evermont-logo.jpeg'
 export const OG_IMAGE = `${SITE_URL}/images/evermont-logo.jpeg`
 export const DISCLAIMER = 'Prototype for demonstration. Not a chartered bank. Not FDIC or NCUA insured. No real money movement.'
 
