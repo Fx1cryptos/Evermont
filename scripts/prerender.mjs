@@ -22,8 +22,11 @@ for (const route of prerenderPaths) {
     .replace('</head>', `${head}\n</head>`)
     .replace('<div id="root"></div>', `<div id="root">${html}</div>`)
 
-  if (!page.includes(`<title`) || !page.includes('rel="canonical"')) {
+  if (!page.includes('<title') || !page.includes('rel="canonical"') || !page.includes('property="og:title"')) {
     throw new Error(`Prerendered head is incomplete for ${route}`)
+  }
+  if (!page.includes('content="index,follow"') || page.includes('noindex')) {
+    throw new Error(`Prerendered robots tag is not indexable for ${route}`)
   }
 
   const file = route === '/' ? templatePath : path.join(root, 'dist', `${route.slice(1)}.html`)

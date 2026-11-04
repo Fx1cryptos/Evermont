@@ -58,7 +58,7 @@ export const Register: React.FC = () => {
 
   return (
     <>
-      <SEO title="Open an Account" description="Start your membership with Evermont Credit Union. Open a checking or savings account and access modern private-wealth banking tools." path="/register" />
+      <SEO title="Open an Account" description="Start your membership with Evermont Credit Union. Open a checking or savings account and access modern private-wealth banking tools." path="/register" noIndex />
     <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md rounded-lg border border-evermont-border bg-white p-8 shadow-md">
         <div className="mb-7 text-center">

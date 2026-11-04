@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
-import { footerNav, LOGIN_URL, LOGO_PATH, publicNav, SITE_NAME, SUPPORT_EMAIL } from '@/content/publicPages'
+import { footerNav, legalNav, LOGIN_URL, LOGO_PATH, publicNav, SITE_NAME, SUPPORT_EMAIL, SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_TEL } from '@/content/publicPages'
 
 const primaryBtn = 'inline-flex items-center justify-center rounded-full bg-[#0504AA] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#0807c8]'
 const secondaryBtn = 'inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold text-[#0504AA] transition hover:bg-[#f4f6ff]'
@@ -68,18 +68,22 @@ export const PublicChrome: React.FC<React.PropsWithChildren> = ({ children }) =>
             <img src={LOGO_PATH} alt="" className="h-14 w-14 object-contain" />
             <p className="mt-5 font-serif text-2xl text-[#101533]">Where private wealth is protected.</p>
             <p className="mt-3 max-w-sm text-sm leading-6 text-slate-600">Built on integrity. Guided by excellence.</p>
-            <a href={`mailto:${SUPPORT_EMAIL}`} className="mt-5 inline-block text-sm font-semibold text-[#0504AA] underline-offset-4 hover:underline">{SUPPORT_EMAIL}</a>
+            <a href={SUPPORT_PHONE_TEL} className="mt-5 inline-block text-sm font-semibold text-[#0504AA] underline-offset-4 hover:underline">{SUPPORT_PHONE_DISPLAY}</a>
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="mt-2 block text-sm font-semibold text-[#0504AA] underline-offset-4 hover:underline">{SUPPORT_EMAIL}</a>
           </div>
           <nav aria-label="Footer" className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
             <Link to="/" className="font-semibold text-[#101533] hover:text-[#0504AA]">Home</Link>
             {footerNav.map((item) => (
               <Link key={item.href} to={item.href} className="text-slate-600 hover:text-[#0504AA]">{item.label}</Link>
             ))}
+            {legalNav.map((item) => (
+              <Link key={item.href} to={item.href} className="text-slate-600 hover:text-[#0504AA]">{item.label}</Link>
+            ))}
             <a href={LOGIN_URL} className="text-slate-600 hover:text-[#0504AA]">Sign In</a>
           </nav>
         </div>
         <div className="border-t border-slate-200/80">
-          <p className="mx-auto max-w-6xl px-5 py-6 text-xs leading-5 text-slate-500 lg:px-8">© 2026 Evermont Credit Union. This website describes services in general terms and does not publish rates, fees, insurance, or licensing claims.</p>
+          <p className="mx-auto max-w-6xl px-5 py-6 text-xs leading-5 text-slate-500 lg:px-8">Copyright© 2026 | Evermont Bank | All rights reserved.</p>
         </div>
       </footer>
     </div>

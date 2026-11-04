@@ -1,6 +1,9 @@
 export const SITE_NAME = 'Evermont Credit Union'
 export const SITE_URL = 'https://evermontcredit.online'
 export const SUPPORT_EMAIL = 'support@evermontcredit.online'
+export const SUPPORT_PHONE_DISPLAY = '(302) 626-7525'
+export const SUPPORT_PHONE_TEL = 'tel:+13026267525'
+export const SUPPORT_PHONE_SCHEMA = '+1-302-626-7525'
 export const LOGIN_URL = 'https://v0-evermont.vercel.app/login'
 export const REGISTER_URL = 'https://v0-evermont.vercel.app/register'
 export const LOGO_PATH = '/images/evermont-logo.jpeg'
@@ -19,6 +22,12 @@ export const publicNav = [
 export const footerNav = [
   ...publicNav,
   { label: 'Open an Account', href: '/open-account' },
+] as const
+
+export const legalNav = [
+  { label: 'Privacy Policy', href: '/privacy' },
+  { label: 'Terms of Service', href: '/terms' },
+  { label: 'Accessibility', href: '/accessibility' },
 ] as const
 
 export type PageSeo = {
@@ -74,12 +83,27 @@ export const publicPages: PageSeo[] = [
   {
     path: '/contact',
     title: 'Contact | Evermont Credit Union',
-    description: 'Contact Evermont Credit Union at support@evermontcredit.online. Do not send passwords or full account numbers by email.',
+    description: 'Contact Evermont Credit Union at (302) 626-7525 or support@evermontcredit.online. Do not send passwords or full account numbers.',
   },
   {
     path: '/open-account',
     title: 'Open an Account | Evermont Credit Union',
     description: 'Open an Evermont account by continuing to member portal registration. This page does not submit an application.',
+  },
+  {
+    path: '/privacy',
+    title: 'Privacy Policy | Evermont Credit Union',
+    description: 'How Evermont treats questions sent from this public website. Contact support if you need a clarification. This page does not state a regulatory certification.',
+  },
+  {
+    path: '/terms',
+    title: 'Terms of Service | Evermont Credit Union',
+    description: 'Terms for using the Evermont public website. Reading a page does not open an account or set a rate. Contact support with questions.',
+  },
+  {
+    path: '/accessibility',
+    title: 'Accessibility | Evermont Credit Union',
+    description: 'Evermont’s commitment to readable, keyboard-friendly public pages. Contact support if you find a barrier.',
   },
 ]
 

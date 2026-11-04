@@ -23,6 +23,9 @@
     { "source": "/security", "destination": "/security.html" },
     { "source": "/contact", "destination": "/contact.html" },
     { "source": "/open-account", "destination": "/open-account.html" },
+    { "source": "/privacy", "destination": "/privacy.html" },
+    { "source": "/terms", "destination": "/terms.html" },
+    { "source": "/accessibility", "destination": "/accessibility.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
