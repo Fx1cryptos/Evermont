@@ -25,7 +25,9 @@ const ActivityList: React.FC<{ rows: LedgerActivity[]; empty: string }> = ({ row
   rows.length ? <ul className="divide-y divide-slate-100">{rows.map(row => (
     <li key={row.id} className="flex items-start justify-between gap-3 px-4 py-3">
       <div className="min-w-0">
-        <p className="truncate text-sm font-medium text-[#101533]">{row.description}</p>
+        <p className="flex flex-wrap items-center gap-2 truncate text-sm font-medium text-[#101533]">
+          <span className="truncate">{row.description}</span>
+        </p>
         <p className="text-xs text-slate-500">{row.createdAt ? new Date(row.createdAt).toLocaleString() : 'Date not returned'} · <span className="capitalize">{row.entryType || row.status}</span></p>
       </div>
       <p className="shrink-0 text-sm font-semibold tabular-nums text-[#101533]">{row.direction === 'credit' ? '+' : '−'}{money(row.displayAmount)}</p>

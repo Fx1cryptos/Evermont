@@ -112,7 +112,9 @@ export const TransactionsPage: React.FC = () => {
               <div className="grid gap-2 lg:grid-cols-[140px_1.4fr_.8fr_.8fr_.7fr_140px] lg:items-center">
                 <p className="text-sm text-slate-500">{row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '—'}</p>
                 <div>
-                  <p className="font-semibold">{row.description || 'Ledger entry'}</p>
+                  <p className="flex flex-wrap items-center gap-2 font-semibold">
+                    <span>{row.description || 'Ledger entry'}</span>
+                  </p>
                   <p className="mt-1 text-xs text-slate-400">{row.referenceId || 'Reference unavailable'}</p>
                   <p className="mt-1 text-xs text-slate-400 lg:hidden">{row.category || 'General'} · {account?.accountNumber || account?.accountType || 'Account'}</p>
                 </div>

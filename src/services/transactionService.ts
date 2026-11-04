@@ -52,44 +52,51 @@ const applyWindow = (rows: LedgerActivity[], filters: TransactionFilters) => {
 
 export const transactionService = {
   /**
-   * Member activity is read from public.ledger_entries.
-   * There is no demo transaction list: an empty ledger stays empty.
+   * Only posted ledger entries are returned in member-facing transaction history.
    */
   async getTransactions(userId: string, filters: TransactionFilters = {}): Promise<LedgerActivity[]> {
     if (!userId || !isSupabaseConfigured) return []
 
     try {
-      let query = supabase
+      let ledgerQuery = supabase
         .from('ledger_entries')
         .select(LEDGER_ENTRY_COLUMNS)
         .eq('member_id', userId)
-        .order('created_at', { ascending: false })
-        .order('id', { ascending: false })
 
-      if (filters.accountId) query = query.eq('account_id', filters.accountId)
-      if (filters.status) query = query.eq('status', filters.status)
-      if (filters.startDate) query = query.gte('created_at', filters.startDate.toISOString())
-      if (filters.endDate) query = query.lte('created_at', filters.endDate.toISOString())
-
-      // Direction depends on entry_type and the posted columns, so a type
-      // filter is applied after mapping. Unfiltered pages can be windowed in SQL.
-      if (!filters.type && filters.limit && filters.limit > 0) {
-        const offset = filters.offset && filters.offset > 0 ? filters.offset : 0
-        query = query.range(offset, offset + filters.limit - 1)
+      if (filters.accountId) {
+        ledgerQuery = ledgerQuery.eq('account_id', filters.accountId)
+      }
+      if (filters.status) {
+        ledgerQuery = ledgerQuery.eq('status', filters.status)
+      }
+      if (filters.startDate) {
+        const start = filters.startDate.toISOString()
+        ledgerQuery = ledgerQuery.gte('created_at', start)
+      }
+      if (filters.endDate) {
+        const end = filters.endDate.toISOString()
+        ledgerQuery = ledgerQuery.lte('created_at', end)
       }
 
-      const { data, error } = await query
-      if (error) {
-        console.error('Failed to fetch ledger entries')
+      const { data: ledgerData, error: ledgerError } = await ledgerQuery
+
+      if (ledgerError) {
+        console.error('Failed to fetch ledger activity')
         throw new Error('Unable to load transaction history.')
       }
 
-      let rows = ((data || []) as Parameters<typeof mapLedgerRow>[0][]).map((row) => toActivity(mapLedgerRow(row)))
-      if (filters.type) rows = rows.filter((row) => row.direction === filters.type)
-      return filters.type ? applyWindow(rows, filters) : rows
+      let rows = ((ledgerData || []) as Parameters<typeof mapLedgerRow>[0][]).map(row => toActivity(mapLedgerRow(row)))
+
+      rows.sort((a, b) => {
+        const dateOrder = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        return dateOrder || b.id.localeCompare(a.id)
+      })
+
+      if (filters.type) rows = rows.filter(row => row.direction === filters.type)
+      return applyWindow(rows, filters)
     } catch (error) {
       if (error instanceof Error && error.message === 'Unable to load transaction history.') throw error
-      console.error('Error fetching ledger entries')
+      console.error('Error fetching transaction history')
       throw new Error('Unable to load transaction history.')
     }
   },
