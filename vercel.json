@@ -5,41 +5,6 @@
   "outputDirectory": "dist",
   "cleanUrls": true,
   "trailingSlash": false,
-  "redirects": [
-    {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "host",
-          "value": "www.evermontcredit.online"
-        }
-      ],
-      "destination": "https://evermontcredit.online/:path*",
-      "permanent": true
-    },
-    {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "host",
-          "value": "v0-evermont.vercel.app"
-        }
-      ],
-      "destination": "https://evermontcredit.online/:path*",
-      "permanent": true
-    },
-    {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "host",
-          "value": "v0-evermont-credit.vercel.app"
-        }
-      ],
-      "destination": "https://evermontcredit.online/:path*",
-      "permanent": true
-    }
-  ],
   "rewrites": [
     {
       "source": "/(login|sign-in|register|signup|forgot-password|reset-password|dashboard|accounts|activation|transactions|insights|profile|settings|support|admin)",

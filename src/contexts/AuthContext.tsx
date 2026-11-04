@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { AuthContextType, User } from '@/types'
-import { supabase } from '@/lib/supabase'
+import { mapSignInError, SIGN_IN_EMAIL_REQUIRED } from '@/lib/authErrors'
+import { isSupabaseConfigured, supabase } from '@/lib/supabase'
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
@@ -120,16 +121,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null)
     try {
       const email = identifier.trim()
-      if (!email.includes('@')) {
-        throw new Error('Sign in with the email on the account, not the member name.')
+      if (!email.includes('@')) throw new Error(SIGN_IN_EMAIL_REQUIRED)
+      if (!isSupabaseConfigured) {
+        throw new Error('Sign-in is temporarily unavailable. Please try again later.')
       }
 
       const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) throw new Error('Incorrect email or password')
+      if (error) throw error
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Login failed'
-      setError(message)
-      throw err
+      const mapped = mapSignInError(err)
+      setError(mapped.message)
+      throw mapped
     }
   }
 
