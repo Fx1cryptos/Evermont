@@ -27,7 +27,6 @@ const ActivityList: React.FC<{ rows: LedgerActivity[]; empty: string }> = ({ row
       <div className="min-w-0">
         <p className="flex flex-wrap items-center gap-2 truncate text-sm font-medium text-[#101533]">
           <span className="truncate">{row.description}</span>
-          {row.isDemo && <span className="shrink-0 rounded bg-amber-100 px-2 py-0.5 text-[10px] font-bold tracking-wide text-amber-800">DEMO</span>}
         </p>
         <p className="text-xs text-slate-500">{row.createdAt ? new Date(row.createdAt).toLocaleString() : 'Date not returned'} · <span className="capitalize">{row.entryType || row.status}</span></p>
       </div>
