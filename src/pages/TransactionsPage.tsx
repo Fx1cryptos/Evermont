@@ -96,7 +96,6 @@ export const TransactionsPage: React.FC = () => {
         <option value="withdrawals">Withdrawals / Debits</option>
       </select>
     </div>
-    <p className="mt-3 text-xs text-slate-500">Entries marked DEMO are illustrative records only. They are not posted transactions and do not change account balances.</p>
     {error && <p role="alert" className="mt-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</p>}
     <section className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       {loading ? <p className="p-8 text-slate-500">Loading your activity...</p> : error ? null : !filtered.length ? <p className="p-8 text-slate-500">{emptyMessage}</p> : <>
@@ -115,7 +114,6 @@ export const TransactionsPage: React.FC = () => {
                 <div>
                   <p className="flex flex-wrap items-center gap-2 font-semibold">
                     <span>{row.description || 'Ledger entry'}</span>
-                    {row.isDemo && <span className="rounded bg-amber-100 px-2 py-0.5 text-[10px] font-bold tracking-wide text-amber-800">DEMO</span>}
                   </p>
                   <p className="mt-1 text-xs text-slate-400">{row.referenceId || 'Reference unavailable'}</p>
                   <p className="mt-1 text-xs text-slate-400 lg:hidden">{row.category || 'General'} · {account?.accountNumber || account?.accountType || 'Account'}</p>
@@ -131,13 +129,12 @@ export const TransactionsPage: React.FC = () => {
                 </div>
               </div>
               {open && <dl id={detailId} className="mt-4 grid gap-3 rounded-xl bg-slate-50 p-4 text-sm sm:grid-cols-2">
-                {row.isDemo && <div className="sm:col-span-2"><dt className="text-xs uppercase tracking-wide text-amber-700">Record type</dt><dd className="mt-1 font-semibold text-amber-800">DEMO — illustrative only; not a posted transaction</dd></div>}
                 <div><dt className="text-xs uppercase tracking-wide text-slate-400">Entry type</dt><dd className="mt-1 capitalize text-slate-700">{row.entryType || '—'}</dd></div>
                 <div><dt className="text-xs uppercase tracking-wide text-slate-400">Reference</dt><dd className="mt-1 text-slate-700">{row.referenceId || '—'}</dd></div>
                 <div><dt className="text-xs uppercase tracking-wide text-slate-400">Amount</dt><dd className="mt-1 text-slate-700">{posted(row.amount)}</dd></div>
                 <div><dt className="text-xs uppercase tracking-wide text-slate-400">Debit</dt><dd className="mt-1 text-slate-700">{posted(row.debit)}</dd></div>
                 <div><dt className="text-xs uppercase tracking-wide text-slate-400">Credit</dt><dd className="mt-1 text-slate-700">{posted(row.credit)}</dd></div>
-                <div><dt className="text-xs uppercase tracking-wide text-slate-400">Balance after</dt><dd className="mt-1 text-slate-700">{posted(row.isDemo ? null : row.balanceAfter)}</dd></div>
+                <div><dt className="text-xs uppercase tracking-wide text-slate-400">Balance after</dt><dd className="mt-1 text-slate-700">{posted(row.balanceAfter)}</dd></div>
                 <div><dt className="text-xs uppercase tracking-wide text-slate-400">Posted</dt><dd className="mt-1 text-slate-700">{row.createdAt ? new Date(row.createdAt).toLocaleString() : '—'}</dd></div>
                 <div><dt className="text-xs uppercase tracking-wide text-slate-400">Status</dt><dd className="mt-1 capitalize text-slate-700">{row.status || '—'}</dd></div>
               </dl>}
