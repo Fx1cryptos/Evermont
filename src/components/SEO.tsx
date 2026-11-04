@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet-async'
-import { canonicalUrl, LOGO_PATH, SITE_NAME, SITE_URL, SUPPORT_EMAIL } from '@/content/publicPages'
+import { canonicalUrl, LOGO_PATH, SITE_NAME, SITE_URL, SUPPORT_EMAIL, SUPPORT_PHONE_SCHEMA } from '@/content/publicPages'
 
 type SEOProps = {
   title: string
@@ -19,6 +19,7 @@ export const SEO: React.FC<SEOProps> = ({ title, description, path = '/', noInde
     url: `${SITE_URL}/`,
     logo: `${SITE_URL}${LOGO_PATH}`,
     email: SUPPORT_EMAIL,
+    telephone: SUPPORT_PHONE_SCHEMA,
     description,
     sameAs: [
       'https://www.instagram.com/evermontcreditunion',
@@ -42,8 +43,8 @@ export const SEO: React.FC<SEOProps> = ({ title, description, path = '/', noInde
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={`${SITE_URL}${LOGO_PATH}`} />
       <link rel="canonical" href={url} />
+      <meta name="robots" content={noIndex ? 'noindex, nofollow' : 'index,follow'} />
       {jsonLd && <script type="application/ld+json">{JSON.stringify(organization)}</script>}
-      {noIndex && <meta name="robots" content="noindex, nofollow" />}
     </Helmet>
   )
 }

@@ -9,6 +9,9 @@ Allow: /retirement
 Allow: /security
 Allow: /contact
 Allow: /open-account
+Allow: /privacy
+Allow: /terms
+Allow: /accessibility
 Disallow: /login
 Disallow: /register
 Disallow: /dashboard
