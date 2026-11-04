@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage'
 import { MemberDetailPage } from '@/pages/admin/MemberDetailPage'
 import { AccountHistoryPage } from '@/pages/admin/AccountHistoryPage'
@@ -41,9 +41,19 @@ const AdminPage: React.FC<React.PropsWithChildren> = ({ children }) => {
 
 const PublicPage: React.FC<React.PropsWithChildren> = ({ children }) => <>{children}</>
 
+const RouteAnalytics: React.FC = () => {
+  const location = useLocation()
+  useEffect(() => {
+    const analyticsWindow = window as Window & { gtag?: (...args: unknown[]) => void }
+    analyticsWindow.gtag?.('event', 'page_view', { page_path: `${location.pathname}${location.search}`, page_location: window.location.href, page_title: document.title })
+  }, [location.pathname, location.search])
+  return null
+}
+
 export const App: React.FC = () => {
   return (
     <BrowserRouter>
+      <RouteAnalytics />
       <Routes>
         <Route path="/" element={<PublicPage><HomePage /></PublicPage>} />
         <Route path={ROUTES.LOGIN} element={<Login />} />
