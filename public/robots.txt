@@ -14,7 +14,9 @@ Disallow: /register
 Disallow: /dashboard
 Disallow: /account
 Disallow: /admin
-Disallow: /open-checking
-Disallow: /banking/
+Disallow: /activation
+Disallow: /transactions
+Disallow: /profile
+Disallow: /settings
 
 Sitemap: https://evermontcredit.online/sitemap.xml
