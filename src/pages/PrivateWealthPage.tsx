@@ -1,4 +1,6 @@
-import { PublicDocument } from '@/components/PageBanner'
+import { PageMeta } from '@/components/PageMeta'
+import { PublicChrome } from '@/components/PublicChrome'
+import { LOGO_PATH, pageByPath } from '@/content/publicPages'
 
 const sections = [
   ['Wealth-service overview', 'Evermont describes a private-wealth relationship as personal, discreet, and paced. This page is an introduction. It is not an offer of a managed portfolio.'],
@@ -8,8 +10,24 @@ const sections = [
   ['Privacy and confidentiality', 'Do not email passwords or full account numbers. Sign in only on the member portal. This page does not claim a privacy certification.'],
 ]
 
+const seo = pageByPath('/private-wealth')!
+
 export const PrivateWealthPage: React.FC = () => (
-  <PublicDocument path="/private-wealth" eyebrow="Private Wealth" title="A private-wealth conversation, not a regulated advisory offer." lede="Evermont does not provide regulated investment advice, brokerage, fiduciary, or wealth-management services on this website." imageAlt="Evening skyline across calm water in blue and gold light" actions={[{ href: '/contact', label: 'Request a conversation' }, { href: '/services', label: 'Explore Our Services' }]}>
+  <PublicChrome>
+    <PageMeta title={seo.title} description={seo.description} path={seo.path} image={seo.image} />
+    <main id="main">
+      <section className="grid min-h-[28rem] lg:grid-cols-2">
+        <div className="flex items-center justify-center bg-[#0504AA] px-8 py-16">
+          <img src={LOGO_PATH} alt="Evermont Credit Union" className="h-36 w-auto object-contain sm:h-44" />
+        </div>
+        <div className="relative flex min-h-80 items-end">
+          <img src={seo.image} alt="Dark navy wood-panelled advisory room" className="absolute inset-0 h-full w-full object-cover" />
+          <div className="relative bg-gradient-to-t from-[#050418]/85 to-transparent p-8 sm:p-12">
+            <h1 className="font-serif text-3xl leading-tight text-white sm:text-4xl">Evermont Private Wealth: A Legacy of Trust, A Future of Prosperity</h1>
+            <p className="mt-4 max-w-xl text-sm leading-7 text-blue-50">This is a brand statement. Evermont does not provide regulated investment advice, brokerage, fiduciary, or wealth-management services on this website.</p>
+          </div>
+        </div>
+      </section>
     <section className="bg-white">
       <div className="mx-auto grid max-w-6xl gap-8 px-5 py-20 lg:px-8">
         {sections.map(([title, body]) => (
@@ -20,7 +38,8 @@ export const PrivateWealthPage: React.FC = () => (
         ))}
       </div>
     </section>
-  </PublicDocument>
+    </main>
+  </PublicChrome>
 )
 
 export default PrivateWealthPage

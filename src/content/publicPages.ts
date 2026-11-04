@@ -55,10 +55,10 @@ export type PageSeo = {
 }
 
 export const publicPages: PageSeo[] = [
-  { path: '/', title: 'Evermont Credit Union | Where Private Wealth Is Protected', description: 'Evermont Credit Union. Where private wealth is protected. Explore personal banking, private wealth information, and how to reach the team.', image: '/images/banners/home.webp', jsonLd: true },
-  { path: '/about', title: 'About Us | Evermont Credit Union', description: 'A more thoughtful approach to private wealth banking. Read Evermont’s mission, vision, values, and independent story.', image: '/images/banners/about.webp', jsonLd: true },
+  { path: '/', title: 'Evermont Credit Union | Where Private Wealth Is Protected', description: 'Evermont Credit Union. Where private wealth is protected. Explore personal banking, private wealth information, and how to reach the team.', image: '/images/banners/facade.webp', jsonLd: true },
+  { path: '/about', title: 'About Us | Evermont Credit Union', description: 'A more thoughtful approach to private wealth banking. Read Evermont’s mission, vision, values, and independent story.', image: '/images/banners/about-frame.webp', jsonLd: true },
   { path: '/personal-banking', title: 'Personal Banking | Evermont Credit Union', description: 'Personal banking categories at Evermont, with a clear note of what is available now and what is still planned.', image: '/images/banners/personal.webp' },
-  { path: '/private-wealth', title: 'Private Wealth | Evermont Credit Union', description: 'Evermont’s private-wealth approach to long-term goals, privacy, and personal service. This page does not offer regulated investment advice.', image: '/images/banners/wealth.webp' },
+  { path: '/private-wealth', title: 'Private Wealth | Evermont Credit Union', description: 'Evermont Private Wealth: a legacy of trust and a future of prosperity. This page does not offer regulated investment, advisory, or fiduciary services.', image: '/images/banners/advisory.webp' },
   { path: '/services', title: 'Services | Evermont Credit Union', description: 'A directory of Evermont services, each with a short description, availability status, and a link to learn more.', image: '/images/banners/services.webp' },
   { path: '/resources', title: 'Resources | Evermont Credit Union', description: 'Financial education on savings, budgeting, planning basics, and online security, plus answers to common questions.', image: '/images/banners/resources.webp' },
   { path: '/contact', title: 'Contact Us | Evermont Credit Union', description: 'Contact Evermont Credit Union by phone, email, or mail. The enquiry form opens your email app. It does not send the message itself.', image: '/images/banners/contact.webp', jsonLd: true },

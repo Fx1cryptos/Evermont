@@ -1,8 +1,7 @@
 import { Link } from 'react-router-dom'
-import { PageBanner } from '@/components/PageBanner'
 import { PageMeta } from '@/components/PageMeta'
 import { PublicChrome } from '@/components/PublicChrome'
-import { pageByPath } from '@/content/publicPages'
+import { LOGO_PATH, pageByPath } from '@/content/publicPages'
 
 const seo = pageByPath('/about')!
 
@@ -30,7 +29,21 @@ export const AboutPage: React.FC = () => (
   <PublicChrome>
     <PageMeta title={seo.title} description={seo.description} path={seo.path} image={seo.image} jsonLd />
     <main id="main">
-      <PageBanner image={seo.image} alt="Quiet library reading room with oak tables and soft daylight" eyebrow="About Us" title="A More Thoughtful Approach to Private Wealth Banking" lede="Evermont Credit Union is built around a commitment to financial responsibility, thoughtful service, and a more personal approach to wealth management. Our vision is to create a professional financial-services experience where individuals and families can approach their financial goals with clarity, confidence, and care." actions={[{ href: '/services', label: 'Explore Our Services' }, { href: '/contact', label: 'Contact Our Team' }]} />
+      <section className="bg-[#f7f5ef] px-4 py-8 sm:px-8">
+        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-sm bg-[#0504AA] text-white">
+          <img src={seo.image} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover" />
+          <div className="relative mx-auto flex max-w-3xl flex-col items-center px-8 py-16 text-center sm:px-16 sm:py-20">
+            <img src={LOGO_PATH} alt="Evermont Credit Union" className="h-24 w-auto object-contain" />
+            <p className="mt-8 text-sm font-semibold uppercase tracking-[0.2em] text-[#C9A227]">About Us</p>
+            <h1 className="mt-4 font-serif text-4xl leading-tight sm:text-5xl">A More Thoughtful Approach to Private Wealth Banking</h1>
+            <p className="mt-6 text-base leading-8 text-blue-50">Evermont Credit Union is built around a commitment to financial responsibility, thoughtful service, and a more personal approach to wealth management. Our vision is to create a professional financial-services experience where individuals and families can approach their financial goals with clarity, confidence, and care.</p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Link to="/services" className="inline-flex items-center justify-center rounded-full bg-[#C9A227] px-6 py-3.5 text-sm font-semibold text-[#101533]">Explore Our Services</Link>
+              <Link to="/contact" className="inline-flex items-center justify-center rounded-full border border-white/50 px-6 py-3.5 text-sm font-semibold text-white">Contact Our Team</Link>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <section className="bg-white" aria-labelledby="story">
         <div className="mx-auto grid max-w-6xl gap-10 px-5 py-20 lg:grid-cols-[.8fr_1.2fr] lg:px-8">

@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { PageMeta } from '@/components/PageMeta'
-import { PageBanner } from '@/components/PageBanner'
 import { PublicChrome } from '@/components/PublicChrome'
 import { pageByPath } from '@/content/publicPages'
 
@@ -19,7 +18,20 @@ export const HomePage: React.FC = () => (
   <PublicChrome>
     <PageMeta title={seo.title} description={seo.description} path={seo.path} image={seo.image} jsonLd />
     <main id="main">
-      <PageBanner image={seo.image} alt="Stone colonnade in warm evening light under a deep blue sky" eyebrow="Evermont Credit Union" title="Where Private Wealth Is Protected." lede="Built on integrity. Guided by excellence. This public site explains the relationship. Account opening and sign-in continue in the member portal." actions={[{ href: '/services', label: 'Explore Our Services' }, { href: '/contact', label: 'Contact Our Team' }]} />
+      <section className="bg-white">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-16 lg:grid-cols-2 lg:px-8 lg:py-24">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#6E5610]">Evermont Credit Union</p>
+            <h1 className="mt-4 font-serif text-5xl leading-tight text-[#101533] sm:text-6xl">Where Private Wealth Is Protected.</h1>
+            <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">Built on integrity. Guided by excellence. This public site explains the relationship. Account opening and sign-in continue in the member portal.</p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Link to="/services" className="inline-flex items-center justify-center rounded-full bg-[#C9A227] px-6 py-3.5 text-sm font-semibold text-[#101533]">Explore Our Services</Link>
+              <Link to="/contact" className="inline-flex items-center justify-center rounded-full bg-[#0504AA] px-6 py-3.5 text-sm font-semibold text-white">Contact Our Team</Link>
+            </div>
+          </div>
+          <img src={seo.image} alt="Modern stone and white building facade with a blank royal-blue sign panel" className="h-auto w-full rounded-3xl object-cover" />
+        </div>
+      </section>
       <section className="bg-white">
         <div className="mx-auto grid max-w-6xl gap-10 px-5 py-20 lg:grid-cols-[1fr_1fr] lg:px-8">
           <div>
