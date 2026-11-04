@@ -2,6 +2,9 @@ import { Transaction } from '@/types'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
 import { LEDGER_ENTRY_COLUMNS, LedgerDirection, mapLedgerRow, MappedLedgerEntry } from '@/utils/ledgerMapping'
 
+// demo_ledger_entries intentionally has no balance_after or updated_at columns.
+const DEMO_LEDGER_ENTRY_COLUMNS = 'id,account_id,member_id,reference_id,entry_type,amount,debit,credit,description,category,status,created_at'
+
 export interface TransactionFilters {
   accountId?: string
   type?: LedgerDirection
@@ -69,7 +72,7 @@ export const transactionService = {
 
       let demoQuery = supabase
         .from('demo_ledger_entries')
-        .select(LEDGER_ENTRY_COLUMNS)
+        .select(DEMO_LEDGER_ENTRY_COLUMNS)
         .eq('member_id', userId)
         .eq('is_demo', true)
 
