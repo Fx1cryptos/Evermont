@@ -22,5 +22,11 @@ Disallow: /services/ach
 Disallow: /services/mobile-deposit
 Disallow: /services/check-deposit
 Disallow: /services/wire
+Disallow: /services/transfer
+Disallow: /services/bill-pay
+Disallow: /services/virtual-card
+Disallow: /services/digital-assets-trade
+Disallow: /statements
+Disallow: /alerts
 
 Sitemap: https://evermontcredit.online/sitemap.xml

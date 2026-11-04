@@ -27,10 +27,30 @@ export const BANKING_SERVICES = {
 
 export type BankingServiceKey = keyof typeof BANKING_SERVICES
 
-export const BANKING_SERVICE_PATHS = Object.values(BANKING_SERVICES).map((service) => service.path)
+export const GATED_FEATURES = [
+  { key: 'transfer', title: 'Transfer', path: '/services/transfer', description: 'Move money between your accounts.' },
+  { key: 'ach', title: 'ACH Transfer', path: '/services/ach', description: 'Send a request to another U.S. bank.' },
+  { key: 'bill-pay', title: 'Bill Pay', path: '/services/bill-pay', description: 'Prepare a bill payment request.' },
+  { key: 'mobile', title: 'Mobile Deposit', path: '/services/mobile-deposit', description: 'Prepare a deposit with check images.' },
+  { key: 'check', title: 'Check Deposit', path: '/services/check-deposit', description: 'Prepare a deposit to one of your accounts.' },
+  { key: 'wire', title: 'Wire Transfer', path: '/services/wire', description: 'Prepare a wire request.' },
+  { key: 'virtual-card', title: 'Virtual Card', path: '/services/virtual-card', description: 'Card access is not connected yet.' },
+  { key: 'digital-assets', title: 'Buy & Sell Digital Assets', path: '/services/digital-assets-trade', description: 'Trading is not connected yet.' },
+] as const
 
-export function bankingServiceForPath(path: string): (typeof BANKING_SERVICES)[BankingServiceKey] | null {
-  return Object.values(BANKING_SERVICES).find((service) => service.path === path) ?? null
+export const LINK_FEATURES = [
+  { key: 'statements', title: 'Statements', path: '/statements', description: 'Statements returned for your accounts.' },
+  { key: 'alerts', title: 'Alerts & Notifications', path: '/alerts', description: 'Messages stored for your account.' },
+  { key: 'support', title: 'Support', path: '/support', description: 'Message the support team.' },
+  { key: 'profile', title: 'Profile & Security', path: '/profile', description: 'Your profile and password settings.' },
+] as const
+
+export const BANKING_SERVICE_PATHS = [...Object.values(BANKING_SERVICES).map((service) => service.path), ...GATED_FEATURES.map((feature) => feature.path)]
+
+export function bankingServiceForPath(path: string): { title: string; path: string } | null {
+  const form = Object.values(BANKING_SERVICES).find((service) => service.path === path)
+  if (form) return form
+  return GATED_FEATURES.find((feature) => feature.path === path) ?? null
 }
 
 export const ACTIVATION_REQUIRED_TITLE = 'Account Activation Required'
