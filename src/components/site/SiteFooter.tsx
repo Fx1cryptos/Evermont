@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { ShieldCheck } from 'lucide-react'
-import { DISCLAIMER, LOGO_PATH, SITE_NAME, SUPPORT_EMAIL } from '@/config/site'
+import { DISCLAIMER, LOGO_PATH, SITE_NAME, SITE_TAGLINE, SITE_TAGLINE_SECOND, SUPPORT_EMAIL } from '@/config/site'
 
 const columns = [
   { heading: 'Banking', links: [['Checking', '/services/checking'], ['Savings', '/services/savings'], ['Credit Cards', '/credit-cards'], ['Digital Assets', '/services/digital-assets']] },
@@ -16,7 +16,8 @@ export const SiteFooter: React.FC = () => (
       <div className="grid gap-10 border-b border-slate-200 pb-10 md:grid-cols-[1.2fr_repeat(4,1fr)]">
         <div>
           <img src={LOGO_PATH} alt={`${SITE_NAME} logo`} width={48} height={48} className="h-12 w-12 rounded-xl object-contain" />
-          <p className="mt-4 max-w-xs text-sm leading-6 text-slate-500">Private wealth, thoughtfully protected.</p>
+          <p className="mt-4 max-w-xs text-sm leading-6 text-slate-500">{SITE_TAGLINE}</p>
+          <p className="mt-1 max-w-xs text-sm leading-6 text-slate-500">{SITE_TAGLINE_SECOND}</p>
           <a href={`mailto:${SUPPORT_EMAIL}`} className="mt-3 inline-block text-sm font-semibold text-[#0504AA] hover:underline">{SUPPORT_EMAIL}</a>
         </div>
         {columns.map(col => (

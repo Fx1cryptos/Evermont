@@ -1,8 +1,11 @@
 /** Single source of truth for brand + domain. Rename the brand here. */
-export const SITE_NAME = 'Evermont Private Bank & Trust'
+export const SITE_NAME = 'Evermont Credit Union'
 /** Short form for tight spaces such as logo text. */
 export const SITE_SHORT_NAME = 'Evermont'
-export const SITE_TAGLINE = 'Private Wealth & Digital Banking'
+/** How the credit union is positioned. Not a claim of a banking charter. */
+export const SITE_POSITIONING = 'Secured Private Wealth Bank'
+export const SITE_TAGLINE = 'Where Private Wealth Is Protected.'
+export const SITE_TAGLINE_SECOND = 'Built on Integrity. Guided by Excellence.'
 export const SITE_URL = 'https://evermontcredit.online'
 export const SUPPORT_EMAIL = 'support@evermontcredit.online'
 export const INFO_EMAIL = 'info@evermontcredit.online'
@@ -40,4 +43,4 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
 export const routeMeta = (path: string) => PUBLIC_ROUTES.find(r => r.path === path)
 
 /** Paths that must never be indexed. Mirrored in public/robots.txt and vercel.json. */
-export const PRIVATE_PREFIXES = ['/login', '/sign-in', '/register', '/signup', '/forgot-password', '/reset-password', '/dashboard', '/accounts', '/activation', '/transactions', '/insights', '/profile', '/settings', '/support', '/admin']
+export const PRIVATE_PREFIXES = ['/login', '/sign-in', '/register', '/signup', '/forgot-password', '/reset-password', '/auth/callback', '/dashboard', '/accounts', '/activation', '/transactions', '/insights', '/profile', '/settings', '/support', '/admin']

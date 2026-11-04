@@ -8,6 +8,7 @@ Disallow: /register
 Disallow: /signup
 Disallow: /forgot-password
 Disallow: /reset-password
+Disallow: /auth/callback
 Disallow: /dashboard
 Disallow: /accounts
 Disallow: /activation

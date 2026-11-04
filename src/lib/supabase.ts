@@ -1,4 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
+import { authLink } from '@/lib/authCallback'
+import { authStorage } from '@/lib/authStorage'
+
+// Capture the email or recovery redirect before the client removes it from the URL.
+void authLink
 
 /** Intended Supabase project. Public client keys for any other project are ignored. */
 export const INTENDED_SUPABASE_REF = 'gdodqiwjcezdznzroupw'
@@ -57,6 +62,7 @@ export const supabase = createClient(
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
+      storage: authStorage,
     },
   },
 )
