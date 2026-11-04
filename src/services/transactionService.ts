@@ -2,9 +2,6 @@ import { Transaction } from '@/types'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
 import { LEDGER_ENTRY_COLUMNS, LedgerDirection, mapLedgerRow, MappedLedgerEntry } from '@/utils/ledgerMapping'
 
-// demo_ledger_entries intentionally has no balance_after or updated_at columns.
-const DEMO_LEDGER_ENTRY_COLUMNS = 'id,account_id,member_id,reference_id,entry_type,amount,debit,credit,description,category,status,created_at'
-
 export interface TransactionFilters {
   accountId?: string
   type?: LedgerDirection
@@ -25,10 +22,9 @@ export interface LedgerActivity extends Transaction {
   balanceAfter: string | null
   direction: LedgerDirection
   displayAmount: string
-  isDemo: boolean
 }
 
-const toActivity = (entry: MappedLedgerEntry, isDemo = false): LedgerActivity => ({
+const toActivity = (entry: MappedLedgerEntry): LedgerActivity => ({
   id: entry.id,
   accountId: entry.accountId,
   memberId: entry.memberId,
@@ -45,9 +41,7 @@ const toActivity = (entry: MappedLedgerEntry, isDemo = false): LedgerActivity =>
   category: entry.category,
   debit: entry.debit,
   credit: entry.credit,
-  // Demo activity is illustrative only and must never imply a posted account balance.
-  balanceAfter: isDemo ? null : entry.balanceAfter,
-  isDemo,
+  balanceAfter: entry.balanceAfter,
 })
 
 const applyWindow = (rows: LedgerActivity[], filters: TransactionFilters) => {
@@ -58,8 +52,7 @@ const applyWindow = (rows: LedgerActivity[], filters: TransactionFilters) => {
 
 export const transactionService = {
   /**
-   * Member activity combines the posted ledger with explicitly flagged demo
-   * activity. Demo rows are display-only and never contribute to account balances.
+   * Only posted ledger entries are returned in member-facing transaction history.
    */
   async getTransactions(userId: string, filters: TransactionFilters = {}): Promise<LedgerActivity[]> {
     if (!userId || !isSupabaseConfigured) return []
@@ -70,45 +63,29 @@ export const transactionService = {
         .select(LEDGER_ENTRY_COLUMNS)
         .eq('member_id', userId)
 
-      let demoQuery = supabase
-        .from('demo_ledger_entries')
-        .select(DEMO_LEDGER_ENTRY_COLUMNS)
-        .eq('member_id', userId)
-        .eq('is_demo', true)
-
       if (filters.accountId) {
         ledgerQuery = ledgerQuery.eq('account_id', filters.accountId)
-        demoQuery = demoQuery.eq('account_id', filters.accountId)
       }
       if (filters.status) {
         ledgerQuery = ledgerQuery.eq('status', filters.status)
-        demoQuery = demoQuery.eq('status', filters.status)
       }
       if (filters.startDate) {
         const start = filters.startDate.toISOString()
         ledgerQuery = ledgerQuery.gte('created_at', start)
-        demoQuery = demoQuery.gte('created_at', start)
       }
       if (filters.endDate) {
         const end = filters.endDate.toISOString()
         ledgerQuery = ledgerQuery.lte('created_at', end)
-        demoQuery = demoQuery.lte('created_at', end)
       }
 
-      const [{ data: ledgerData, error: ledgerError }, { data: demoData, error: demoError }] = await Promise.all([
-        ledgerQuery,
-        demoQuery,
-      ])
+      const { data: ledgerData, error: ledgerError } = await ledgerQuery
 
-      if (ledgerError || demoError) {
+      if (ledgerError) {
         console.error('Failed to fetch ledger activity')
         throw new Error('Unable to load transaction history.')
       }
 
-      let rows = [
-        ...((ledgerData || []) as Parameters<typeof mapLedgerRow>[0][]).map(row => toActivity(mapLedgerRow(row))),
-        ...((demoData || []) as Parameters<typeof mapLedgerRow>[0][]).map(row => toActivity(mapLedgerRow(row), true)),
-      ]
+      let rows = ((ledgerData || []) as Parameters<typeof mapLedgerRow>[0][]).map(row => toActivity(mapLedgerRow(row)))
 
       rows.sort((a, b) => {
         const dateOrder = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
