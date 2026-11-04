@@ -1,34 +1,169 @@
-import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { ArrowRight, Check, LockKeyhole, Mail, ShieldCheck } from 'lucide-react'
-import { PublicChrome } from '@/components/PublicChrome'
 import { PageMeta } from '@/components/PageMeta'
+import { OpenAccountLink, PublicChrome, SignInLink } from '@/components/PublicChrome'
+import { publicPages, REGISTER_URL, SUPPORT_EMAIL } from '@/content/publicPages'
 
-const pageContent: Record<string, { title: string; description: string; eyebrow: string; intro: string; benefits: string[]; body: string }> = {
-  '/security': { title: 'Security & Privacy | Evermont Credit Union', description: 'Learn how Evermont approaches account security, privacy, and member support.', eyebrow: 'Security & privacy', intro: 'Thoughtful protection for what matters.', body: 'Evermont combines careful service practices, secure technology, and clear communication to help members manage their financial lives with confidence. We do not make promises beyond what we can verify; if you need help with an account concern, contact our support team directly.', benefits: ['Layered account protection and secure sign-in practices', 'Privacy-minded handling of member information', 'Human support when you need to ask a question'] },
-  '/contact': { title: 'Contact Evermont Credit Union', description: 'Contact Evermont Credit Union for support, questions, and account guidance.', eyebrow: 'We are here to help', intro: 'A clear path to the right conversation.', body: 'For general questions, account guidance, or support, email our team. Please do not send passwords, full account numbers, or other sensitive information by email.', benefits: ['Support email: support@evermontcredit.online', 'Clear guidance for products and account questions', 'A direct path for member support'] },
-  '/open-account': { title: 'Open an Account | Evermont Credit Union', description: 'Start your Evermont Credit Union account opening journey.', eyebrow: 'Begin with Evermont', intro: 'A considered first step toward what comes next.', body: 'Start your account opening journey through our existing secure application flow. If you have questions before beginning, our support team can help you understand the next step.', benefits: ['Begin through the existing account application flow', 'Explore checking and savings options', 'Contact support when you need personal guidance'] },
-  '/mission': { title: 'Mission and Values | Evermont Credit Union', description: 'Learn about Evermont values: integrity, clarity, privacy, and thoughtful service.', eyebrow: 'Our mission', intro: 'Built on integrity. Guided by excellence.', body: 'Evermont is a prototype digital banking platform focused on clear information, careful privacy practices, and member-centered experiences. We are building toward a more thoughtful way to understand financial products and next steps.', benefits: ['Clarity before complexity', 'Privacy-minded service design', 'Progress built around real goals'] },
-  '/membership': { title: 'Membership | Evermont Credit Union', description: 'Learn how to explore Evermont membership and account options.', eyebrow: 'Membership', intro: 'A relationship designed around your goals.', body: 'Explore the available account experience and contact support with questions. Eligibility, availability, and any financial terms should be confirmed through the secure application flow before you make a decision.', benefits: ['Explore available account options', 'Ask questions before applying', 'Use secure member access after registration'] },
-  '/faq': { title: 'Frequently Asked Questions | Evermont', description: 'Answers to common questions about Evermont services, security, and member access.', eyebrow: 'Helpful answers', intro: 'Clear answers for the next step.', body: 'Evermont is a prototype platform. Product availability, eligibility, terms, and financial requirements are not implied by this informational site and must be confirmed through the appropriate support or application channel.', benefits: ['How do I open an account? Start with Open an Account.', 'How do I sign in? Use the separate member portal.', 'How do I get help? Email support without sending sensitive data.'] },
-  '/privacy': { title: 'Privacy Policy | Evermont', description: 'Read Evermont privacy information and data-handling guidance.', eyebrow: 'Privacy', intro: 'Your information deserves careful handling.', body: 'Do not send passwords, security codes, full account numbers, or other sensitive financial information through ordinary email. The production privacy notice and retention practices must be confirmed before this prototype is used for real financial services.', benefits: ['Data minimization by design', 'No passwords collected by this public site', 'Support requests should exclude sensitive information'] },
-  '/terms': { title: 'Terms and Conditions | Evermont', description: 'Review Evermont website terms and prototype limitations.', eyebrow: 'Terms', intro: 'Know what this website represents.', body: 'This website is a prototype informational experience. It does not by itself create an account, approve a loan, promise a rate, or represent that Evermont is licensed, insured, or regulated. Confirm applicable terms through verified documentation before relying on any service.', benefits: ['Informational content only unless clearly stated', 'No guarantee of product availability', 'Contact support with questions before acting'] },
-  '/disclosures': { title: 'Disclosures | Evermont', description: 'Review Evermont product and prototype disclosures.', eyebrow: 'Disclosures', intro: 'Important context, stated clearly.', body: 'Evermont is a fictional prototype and should not be represented as a chartered, licensed, insured, or regulated financial institution without independent verification. Product descriptions are educational and do not constitute financial advice or an offer.', benefits: ['No invented rates or returns', 'No unverified regulatory claims', 'Confirm all terms before making decisions'] },
-  '/accessibility': { title: 'Accessibility Statement | Evermont', description: 'Learn about Evermont accessibility commitments.', eyebrow: 'Accessibility', intro: 'Designed for more people.', body: 'We aim to provide readable content, keyboard-friendly controls, responsive layouts, and meaningful labels. If you encounter an accessibility barrier, contact support with the page and issue so it can be reviewed.', benefits: ['Responsive mobile-first layouts', 'Semantic navigation and labels', 'Support for reported barriers'] },
-  '/fraud-prevention': { title: 'Fraud Prevention | Evermont', description: 'Learn practical steps to protect your account and information.', eyebrow: 'Stay alert', intro: 'Security starts with simple habits.', body: 'Never share a password, one-time code, or recovery link. Evermont support will not ask you to disclose secrets through an unverified channel. If something seems unusual, stop and contact support using a trusted address.', benefits: ['Use unique passwords', 'Verify unexpected requests independently', 'Report suspicious activity promptly'] },
+type Info = {
+  title: string
+  description: string
+  eyebrow: string
+  headline: string
+  lede: string
+  points: string[]
 }
+
+const pages: Record<string, Info> = {
+  '/security': {
+    title: publicPages.find((page) => page.path === '/security')!.title,
+    description: publicPages.find((page) => page.path === '/security')!.description,
+    eyebrow: 'Security',
+    headline: 'Practices we can actually stand behind.',
+    lede: 'Evermont sign-in happens on the separate member portal. This public website does not show balances, and it does not ask you to email a password.',
+    points: [
+      'Sign in only at the member portal linked from this site.',
+      'Do not email passwords, one-time codes, full account numbers, or recovery links.',
+      'If a message asks for those secrets, stop and write to the support address published here.',
+      'This page does not claim a certification, an insurance program, or a guarantee.',
+    ],
+  },
+  '/contact': {
+    title: publicPages.find((page) => page.path === '/contact')!.title,
+    description: publicPages.find((page) => page.path === '/contact')!.description,
+    eyebrow: 'Contact',
+    headline: 'Write to the address we already publish.',
+    lede: 'For questions about services or next steps, email Evermont support. This page does not list a phone number or a street address.',
+    points: [
+      `Support email: ${SUPPORT_EMAIL}`,
+      'Leave passwords, security codes, and full account numbers out of the message.',
+      'Account opening and sign-in continue on the member portal.',
+    ],
+  },
+  '/open-account': {
+    title: publicPages.find((page) => page.path === '/open-account')!.title,
+    description: publicPages.find((page) => page.path === '/open-account')!.description,
+    eyebrow: 'Open an account',
+    headline: 'Start in the member portal.',
+    lede: 'This page explains the path. It does not collect an application, create a login, or submit your information. Registration continues on the Evermont member portal.',
+    points: [
+      'Choose Continue to registration to open the member portal registration page.',
+      'If you already have access, use Sign In instead.',
+      'Questions before you begin can go to support. Do not include secrets in that email.',
+    ],
+  },
+  '/mission': {
+    title: 'Mission | Evermont Credit Union',
+    description: 'Evermont Credit Union is guided by integrity, clarity, and member service.',
+    eyebrow: 'Mission',
+    headline: 'Built on integrity. Guided by excellence.',
+    lede: 'The public site exists to explain services plainly and to point you toward the member portal or support.',
+    points: ['Say what is known.', 'Leave unpublished terms unpublished.', 'Give people a direct way to ask.'],
+  },
+  '/membership': {
+    title: 'Membership | Evermont Credit Union',
+    description: 'Explore Evermont membership by continuing to the member portal or contacting support.',
+    eyebrow: 'Membership',
+    headline: 'Membership continues in the portal.',
+    lede: 'Eligibility is not decided on this page. Register or sign in through the member portal, or ask support before you apply.',
+    points: ['Read the service pages first.', 'Use the member portal to register or sign in.', 'Confirm any requirement with support.'],
+  },
+  '/faq': {
+    title: 'Questions | Evermont Credit Union',
+    description: 'Short answers about Evermont account opening, sign-in, and support.',
+    eyebrow: 'Questions',
+    headline: 'Short answers.',
+    lede: 'Open an account from the public Open an Account page. Sign in on the member portal. Email support without sending sensitive secrets.',
+    points: ['Account opening is completed in the member portal.', 'Sign-in is on the member portal.', 'Support email is support@evermontcredit.online.'],
+  },
+  '/privacy': {
+    title: 'Privacy | Evermont Credit Union',
+    description: 'How to handle information when you contact Evermont from this public website.',
+    eyebrow: 'Privacy',
+    headline: 'Keep secrets out of ordinary email.',
+    lede: 'Do not send passwords, security codes, or full account numbers through email. A full privacy notice for member accounts belongs with the member portal.',
+    points: ['This public site does not ask for a password.', 'Support email is for questions, not secrets.', 'Sign in only on the member portal.'],
+  },
+  '/terms': {
+    title: 'Terms | Evermont Credit Union',
+    description: 'This Evermont website explains services and does not by itself open an account or promise a rate.',
+    eyebrow: 'Terms',
+    headline: 'What this website is.',
+    lede: 'Reading a page does not open an account, approve a loan, or set a rate. Continue in the member portal or with support before you rely on a service.',
+    points: ['No rate is promised here.', 'No insurance or license is claimed here.', 'Ask support if you need a current answer.'],
+  },
+  '/disclosures': {
+    title: 'Disclosures | Evermont Credit Union',
+    description: 'Evermont public pages do not publish rates, insurance, or regulatory approvals.',
+    eyebrow: 'Disclosures',
+    headline: 'What we do not claim.',
+    lede: 'Product descriptions are informational. They are not financial advice, an offer, or a statement of insurance, charter, or regulatory status.',
+    points: ['No invented rates or returns.', 'No unverified regulatory claims.', 'Confirm terms in the member portal or with support.'],
+  },
+  '/accessibility': {
+    title: 'Accessibility | Evermont Credit Union',
+    description: 'Evermont aims for readable pages, keyboard access, and a way to report barriers.',
+    eyebrow: 'Accessibility',
+    headline: 'Tell us if a page gets in the way.',
+    lede: 'We aim for readable type, visible focus, keyboard access, and layouts that work on a phone. If a barrier remains, email support with the page address.',
+    points: ['Pages use real headings and links.', 'Menus can be closed with Escape.', 'Report a barrier to support@evermontcredit.online.'],
+  },
+  '/fraud-prevention': {
+    title: 'Fraud Prevention | Evermont Credit Union',
+    description: 'Practical steps for protecting Evermont access without sharing secrets.',
+    eyebrow: 'Fraud prevention',
+    headline: 'Stop if someone asks for a secret.',
+    lede: 'Evermont support will not ask you to email a password, a one-time code, or a recovery link. Use the member portal to sign in, and use the published support address if something looks wrong.',
+    points: ['Ignore unexpected requests for codes.', 'Do not share a recovery link.', 'Contact support from the address on this website.'],
+  },
+}
+
+const buttonClass = 'inline-flex items-center justify-center rounded-full bg-[#0504AA] px-6 py-3.5 text-sm font-semibold text-white hover:bg-[#0807c8]'
+const quietClass = 'inline-flex items-center justify-center rounded-full border border-[#0504AA]/20 bg-white px-6 py-3.5 text-sm font-semibold text-[#0504AA]'
 
 export const PublicInfoPage: React.FC = () => {
   const path = useLocation().pathname
-  const content = pageContent[path] ?? pageContent['/contact']
-  const isSecurity = path === '/security'
-  return <PublicChrome>
-    <PageMeta title={content.title} description={content.description} canonical={`https://evermontcredit.online${path}`} />
-    <main>
-      <section className="bg-white"><div className="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-28"><div className="max-w-3xl"><p className="text-sm font-bold uppercase tracking-[0.18em] text-[#C9A227]">{content.eyebrow}</p><h1 className="mt-4 text-5xl font-semibold leading-tight tracking-[-0.04em] text-[#101533] sm:text-6xl">{content.intro}</h1><p className="mt-7 max-w-2xl text-lg leading-8 text-slate-600">{content.body}</p><div className="mt-9 flex flex-wrap gap-4"><Link to={path === '/open-account' ? '/open-checking' : '/about'} className="inline-flex items-center gap-2 rounded-full bg-[#0504AA] px-6 py-3.5 text-sm font-semibold text-white">{path === '/open-account' ? 'Start an application' : 'Learn about Evermont'} <ArrowRight className="size-4" /></Link>{path === '/contact' && <a href="mailto:support@evermontcredit.online" className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-6 py-3.5 text-sm font-semibold text-[#0504AA]"><Mail className="size-4" /> Email support</a>}</div></div></div></section>
-      <section className="mx-auto max-w-7xl px-5 py-16 lg:px-8 lg:py-24"><div className="grid gap-5 md:grid-cols-3">{content.benefits.map((benefit) => <div key={benefit} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><div className="flex size-11 items-center justify-center rounded-xl bg-[#edf1ff] text-[#0504AA]">{isSecurity ? <LockKeyhole className="size-5" /> : <Check className="size-5" />}</div><p className="mt-5 font-semibold leading-7 text-[#101533]">{benefit}</p></div>)}</div></section>
-      {isSecurity && <section className="border-y border-slate-200 bg-[#101533] text-white"><div className="mx-auto flex max-w-7xl items-center gap-5 px-5 py-12 lg:px-8"><ShieldCheck className="size-8 shrink-0 text-[#C9A227]" /><p className="max-w-2xl leading-7 text-slate-300">If you notice unusual activity or have a security concern, contact Evermont support promptly. Never share your password or security codes.</p></div></section>}
-      <section className="bg-[#eef1ff]"><div className="mx-auto flex max-w-7xl flex-col gap-5 px-5 py-14 sm:flex-row sm:items-center sm:justify-between lg:px-8"><div><h2 className="text-3xl font-semibold text-[#101533]">Built on integrity. Guided by excellence.</h2><p className="mt-2 text-slate-600">Explore products and support designed around your goals.</p></div><Link to="/open-account" className="inline-flex items-center gap-2 rounded-full bg-[#0504AA] px-6 py-3.5 text-sm font-semibold text-white">Open an Account <ArrowRight className="size-4" /></Link></div></section>
-    </main>
-  </PublicChrome>
+  const content = pages[path] ?? pages['/contact']
+  const seo = publicPages.find((page) => page.path === path)
+
+  return (
+    <PublicChrome>
+      <PageMeta title={seo?.title ?? content.title} description={seo?.description ?? content.description} path={path} />
+      <main id="main">
+        <section className="border-b border-slate-200">
+          <div className="mx-auto max-w-6xl px-5 py-20 lg:px-8 lg:py-28">
+            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#6E5610]">{content.eyebrow}</p>
+            <h1 className="mt-5 max-w-3xl font-serif text-5xl leading-[1.08] text-[#101533] sm:text-6xl">{content.headline}</h1>
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">{content.lede}</p>
+            <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+              {path === '/open-account' ? (
+                <a href={REGISTER_URL} className={buttonClass}>Continue to registration</a>
+              ) : path === '/contact' ? (
+                <a href={`mailto:${SUPPORT_EMAIL}`} className={buttonClass}>Email {SUPPORT_EMAIL}</a>
+              ) : (
+                <OpenAccountLink className={buttonClass} />
+              )}
+              <SignInLink className={quietClass} />
+            </div>
+          </div>
+        </section>
+        <section className="bg-[#f8f7f4]">
+          <div className="mx-auto grid max-w-6xl gap-5 px-5 py-20 md:grid-cols-2 lg:px-8">
+            {content.points.map((point) => (
+              <article key={point} className="rounded-3xl bg-white p-7">
+                <p className="leading-7 text-[#101533]">{point}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+        {path === '/security' && (
+          <section className="bg-white">
+            <div className="mx-auto max-w-6xl px-5 py-16 lg:px-8">
+              <Link to="/contact" className="text-sm font-semibold text-[#0504AA] underline-offset-4 hover:underline">Contact support about a security concern</Link>
+            </div>
+          </section>
+        )}
+      </main>
+    </PublicChrome>
+  )
 }
+
+export default PublicInfoPage

@@ -18,7 +18,8 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['ui-sans-serif', 'system-ui', 'sans-serif'],
+        sans: ['"Avenir Next"', 'Segoe UI', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        serif: ['"Iowan Old Style"', 'Palatino', '"Palatino Linotype"', 'Georgia', 'serif'],
       },
       spacing: {
         sidebar: '280px',

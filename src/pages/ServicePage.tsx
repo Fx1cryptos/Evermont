@@ -1,41 +1,130 @@
-import React from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { ArrowRight, Check, Mail, ShieldCheck } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom'
 import { PageMeta } from '@/components/PageMeta'
+import { OpenAccountLink, PublicChrome, SignInLink } from '@/components/PublicChrome'
+import { publicPages, SUPPORT_EMAIL } from '@/content/publicPages'
 
-const logoUrl = 'https://gateway.pinata.cloud/ipfs/bafkreicrwvjqxdzit62i5e2yvk24atabo2ob3ayyxluwzb2pmyrrzq6z2i'
-const loginUrl = 'https://v0-evermont.vercel.app/login'
-const supportEmail = 'support@evermontcredit.online'
-
-type Service = { title: string; eyebrow: string; intro: string; sections: [string, string][]; cta: string; image: string; imageAlt: string }
-const serviceImages = {
-  checking: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_6693-F1PMQpBvJjuHR1rTHN1OPsNyZFKEKT.jpeg',
-  savings: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_6685-CHquMEStLBc07CvoNnekMUxNgMRmM0.jpeg',
-  cryptocurrency: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_6693-F1PMQpBvJjuHR1rTHN1OPsNyZFKEKT.jpeg',
-  loans: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_6416-swzFFvsQtBNHpPsKqKBaeSNt2kVbtV.jpeg',
-  retirement: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_6421-TLPGbzUA9qu6JQkpyUcZmbVG9lHqrt.jpeg',
-} as const
-const serviceImageAlts = { checking: 'Evermont mobile checking experience', savings: 'Evermont wealth planning conversation', cryptocurrency: 'Evermont digital banking experience', loans: 'Evermont private wealth consultation', retirement: 'Evermont retirement planning vision' } as const
-const services: Record<string, Service> = {
-  checking: { image: serviceImages.checking, imageAlt: serviceImageAlts.checking, title: 'Private checking, thoughtfully managed.', eyebrow: 'Checking accounts', intro: 'A considered home for everyday money management, payment convenience, and the confidence that comes with a relationship built around you.', sections: [['Everyday access', 'Manage the money you use most with a clear, dependable account experience and support from the Evermont team.'], ['Service built around you', 'Learn about eligibility, account access, and opening an account by registering or contacting our support team.'], ['Security as standard', 'Evermont uses layered account security and careful service practices to help protect your information.']], cta: 'Open a Checking Account' },
-  savings: { image: serviceImages.savings, imageAlt: serviceImageAlts.savings, title: 'Build toward what matters next.', eyebrow: 'Savings accounts', intro: 'Private savings accounts can give your financial plan a stronger foundation while keeping your longer-term goals in view.', sections: [['Plan with purpose', 'Set aside money for future priorities and create room for the goals that matter most to you.'], ['A clear relationship', 'Our team can help explain account access, management, eligibility, and the steps to opening an account.'], ['Thoughtful support', 'Connect with Evermont for guidance tailored to your circumstances rather than one-size-fits-all promises.']], cta: 'Open a Savings Account' },
-  cryptocurrency: { image: serviceImages.cryptocurrency, imageAlt: serviceImageAlts.cryptocurrency, title: 'A clearer perspective on digital assets.', eyebrow: 'Cryptocurrency services', intro: 'Explore the fundamentals of cryptocurrency and digital assets with information designed to help you ask better questions.', sections: [['Understand the landscape', 'Digital assets can include cryptocurrencies, tokens, and related technologies. Their features, availability, and suitability vary widely.'], ['Availability matters', 'Evermont does not represent cryptocurrency buying, selling, exchange, or custody as operational here unless confirmed directly by our team. Contact us to ask about current capabilities and eligibility.'], ['Risk disclosure', 'Cryptocurrencies can be highly volatile. You may lose some or all of the money you put into digital assets. Consider your goals and risk tolerance and seek qualified advice.']], cta: 'Ask About Crypto Services' },
-  loans: { image: serviceImages.loans, imageAlt: serviceImageAlts.loans, title: 'Borrow with clarity and confidence.', eyebrow: 'Lending services', intro: 'Start a conversation about lending with a team that takes time to understand your goals before discussing next steps.', sections: [['A personal conversation', 'Evermont can provide information about lending services and help you understand the appropriate inquiry or application path.'], ['No assumptions', 'Specific loan products, rates, terms, limits, approval decisions, and eligibility requirements are discussed only after they are confirmed for your circumstances.'], ['Prepare for the next step', 'Contact our team to learn what information may be helpful and how to continue your conversation.']], cta: 'Ask About a Loan' },
-  retirement: { image: serviceImages.retirement, imageAlt: serviceImageAlts.retirement, title: 'Make room for the future you are building.', eyebrow: 'Retirement planning', intro: 'Retirement planning is about creating a long-term view of your goals, priorities, and the decisions that can support them.', sections: [['A long-term perspective', 'A 401(k) is generally an employer-sponsored retirement plan that can help people save for retirement. Individual features vary by plan.'], ['Guidance without overpromising', 'Evermont does not claim to administer, sponsor, manage, or provide a 401(k) plan here unless confirmed directly. Contact us to discuss currently available retirement information.'], ['Start a conversation', 'Bring your questions about retirement goals and planning priorities to the Evermont team.']], cta: 'Discuss Retirement Options' },
+type Product = {
+  path: string
+  eyebrow: string
+  headline: string
+  lede: string
+  points: [string, string][]
 }
 
+const products: Record<string, Product> = {
+  '/checking': {
+    path: '/checking',
+    eyebrow: 'Checking',
+    headline: 'A clear home for everyday money.',
+    lede: 'Evermont checking is for the money you use in ordinary life. Sign-in and account opening continue in the member portal. This page does not list fees or minimums.',
+    points: [
+      ['What this page is', 'A description of the checking relationship, not an offer with unpublished terms.'],
+      ['How access works', 'Members sign in on the separate portal. This website does not display balances.'],
+      ['Questions', `Write to ${SUPPORT_EMAIL} before you rely on a detail that is not written here.`],
+    ],
+  },
+  '/savings': {
+    path: '/savings',
+    eyebrow: 'Savings',
+    headline: 'Set money aside without invented returns.',
+    lede: 'Evermont savings is a place to hold money for later priorities. Any dividend, rate, or condition is confirmed in the member portal or by support, not on this page.',
+    points: [
+      ['A longer horizon', 'Use savings when you want money kept apart from everyday spending.'],
+      ['No published yield', 'This site does not publish a yield or a promotional return.'],
+      ['Next step', 'Open an account to continue registration, or ask support what is currently available.'],
+    ],
+  },
+  '/credit-card': {
+    path: '/credit-card',
+    eyebrow: 'Credit card',
+    headline: 'A credit card relationship, stated plainly.',
+    lede: 'An Evermont credit card is a spending relationship with its own terms. Those terms, including any rewards or charges, are not published on this public page.',
+    points: [
+      ['No pricing figure', 'We do not publish card pricing or rewards here.'],
+      ['Application path', 'Account opening continues on the member portal registration page.'],
+      ['Existing cardholders', 'Sign in on the member portal to see your own account.'],
+    ],
+  },
+  '/loans': {
+    path: '/loans',
+    eyebrow: 'Loans',
+    headline: 'Lending starts as a conversation.',
+    lede: 'Personal, auto, and other borrowing questions can start here. Evermont does not publish rates, monthly payments, or approval decisions on this website.',
+    points: [
+      ['What you can do now', 'Read the approach, then continue in the member portal or email support.'],
+      ['What we will not imply', 'A page view is not an application, a prequalification, or an approval.'],
+      ['Older lending links', 'Personal, auto, and digital-asset lending links come to this page.'],
+    ],
+  },
+  '/retirement': {
+    path: '/retirement',
+    eyebrow: 'Retirement',
+    headline: 'Room to talk about a longer future.',
+    lede: 'Retirement planning is a conversation about goals and timing. This page does not say that Evermont sponsors, administers, or manages a retirement plan.',
+    points: [
+      ['Information, not a plan document', 'Employer plan features vary. Confirm any plan with the sponsor or administrator.'],
+      ['No performance claims', 'This site does not publish returns, projections, or contribution limits.'],
+      ['How to ask', `Email ${SUPPORT_EMAIL} or continue through the member portal.`],
+    ],
+  },
+  '/cryptocurrency': {
+    path: '/cryptocurrency',
+    eyebrow: 'Digital assets',
+    headline: 'A careful note on digital assets.',
+    lede: 'Digital assets can be volatile, and you can lose money. Evermont does not describe buying, selling, exchange, or custody as available unless support confirms it for you.',
+    points: [
+      ['Availability is not assumed', 'Contact support before treating any digital-asset service as offered.'],
+      ['Risk is real', 'Prices can move sharply. This page is not a recommendation.'],
+      ['Where to ask', `Email ${SUPPORT_EMAIL} for current information.`],
+    ],
+  },
+}
+
+const buttonClass = 'inline-flex items-center justify-center rounded-full bg-[#0504AA] px-6 py-3.5 text-sm font-semibold text-white hover:bg-[#0807c8]'
+const quietClass = 'inline-flex items-center justify-center rounded-full border border-[#0504AA]/20 px-6 py-3.5 text-sm font-semibold text-[#0504AA]'
+
 export const ServicePage: React.FC = () => {
-  const { service = 'checking' } = useParams()
-  const content = services[service] ?? services.checking
-  return <>
-    <PageMeta title={content.title} description={content.intro} canonical={`https://evermontcredit.online/services/${service}`} />
-    <div className="min-h-screen bg-[#f8fafc] text-[#101533]">
-    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur"><div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8"><Link to="/" className="flex items-center gap-3" aria-label="Evermont home"><img src={logoUrl} alt="Evermont Credit Union" className="h-11 w-11 object-contain" /><span className="text-lg font-bold tracking-[-0.04em]">EVERMONT</span></Link><nav className="flex items-center gap-3"><Link to="/" className="hidden rounded-full px-4 py-2.5 text-sm font-semibold text-slate-600 hover:text-[#0504AA] sm:inline">Home</Link><a href={loginUrl} className="rounded-full px-4 py-2.5 text-sm font-semibold text-[#0504AA] hover:bg-blue-50">Member Login</a><Link to="/register" className="rounded-full bg-[#0504AA] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0807c8]">Open an Account</Link></nav></div></header>
-    <main><section className="bg-white"><div className="mx-auto grid max-w-7xl gap-10 px-5 py-16 lg:grid-cols-[1fr_.9fr] lg:items-center lg:px-8 lg:py-24"><div><p className="text-sm font-bold uppercase tracking-[0.18em] text-[#C9A227]">{content.eyebrow}</p><h1 className="mt-4 max-w-3xl text-5xl font-semibold leading-[1.05] tracking-[-0.045em] sm:text-6xl">{content.title}</h1><p className="mt-7 max-w-2xl text-lg leading-8 text-slate-600">{content.intro}</p><div className="mt-9 flex flex-wrap gap-4"><Link to="/open-checking" className="inline-flex items-center gap-2 rounded-full bg-[#0504AA] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-900/15 hover:bg-[#0807c8]">{content.cta} <ArrowRight className="size-4" /></Link><a href={loginUrl} className="rounded-full border border-slate-300 px-6 py-3.5 text-sm font-semibold text-[#0504AA] hover:border-[#0504AA]">Member Login</a></div></div><figure className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-100 shadow-xl shadow-blue-950/10"><img src={content.image} alt={content.imageAlt} className="aspect-[4/3] w-full object-cover" /><figcaption className="bg-[#101533] px-5 py-3 text-sm font-medium text-white">Evermont perspective</figcaption></figure></div></section>
-      <section className="mx-auto max-w-7xl px-5 py-16 lg:px-8 lg:py-24"><div className="grid gap-5 md:grid-cols-3">{content.sections.map(([heading, body]) => <article key={heading} className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm"><div className="flex size-11 items-center justify-center rounded-xl bg-[#edf1ff] text-[#0504AA]"><Check className="size-5" /></div><h2 className="mt-5 text-xl font-semibold">{heading}</h2><p className="mt-3 text-sm leading-7 text-slate-600">{body}</p></article>)}</div><div className="mt-8 rounded-2xl border border-[#C9A227]/35 bg-[#fffaf0] p-7"><div className="flex gap-4"><ShieldCheck className="mt-1 size-5 shrink-0 text-[#8d6e0c]" /><div><h2 className="font-semibold">Have questions about availability?</h2><p className="mt-2 text-sm leading-6 text-slate-600">Contact Evermont at <a className="font-semibold text-[#0504AA] hover:underline" href={`mailto:${supportEmail}`}>{supportEmail}</a> for current, verified information.</p></div></div></div></section></main>
-    <footer className="border-t border-slate-200 bg-white"><div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between lg:px-8"><p>Where Private Wealth Is Protected.</p><a href={`mailto:${supportEmail}`} className="inline-flex items-center gap-2 font-semibold text-[#0504AA] hover:underline"><Mail className="size-4" /> Contact support</a></div>    </footer>
-    </div>
-    </>
+  const { pathname } = useLocation()
+  const content = products[pathname] ?? products['/checking']
+  const seo = publicPages.find((page) => page.path === content.path)
+
+  return (
+    <PublicChrome>
+      <PageMeta title={seo?.title ?? content.headline} description={seo?.description ?? content.lede} path={content.path} />
+      <main id="main">
+        <section className="border-b border-slate-200">
+          <div className="mx-auto max-w-6xl px-5 py-20 lg:px-8 lg:py-28">
+            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#6E5610]">{content.eyebrow}</p>
+            <h1 className="mt-5 max-w-3xl font-serif text-5xl leading-[1.08] text-[#101533] sm:text-6xl">{content.headline}</h1>
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">{content.lede}</p>
+            <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+              <OpenAccountLink className={buttonClass} />
+              <SignInLink className={quietClass} />
+            </div>
+          </div>
+        </section>
+        <section className="bg-[#f8f7f4]">
+          <div className="mx-auto grid max-w-6xl gap-5 px-5 py-20 md:grid-cols-3 lg:px-8">
+            {content.points.map(([heading, body]) => (
+              <article key={heading} className="rounded-3xl bg-white p-7">
+                <h2 className="font-serif text-2xl text-[#101533]">{heading}</h2>
+                <p className="mt-3 text-sm leading-7 text-slate-600">{body}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+        <section className="bg-white">
+          <div className="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-16 sm:flex-row sm:items-center sm:justify-between lg:px-8">
+            <p className="max-w-xl text-sm leading-7 text-slate-600">Need a person instead of a page? Contact support, or return to the full list of services.</p>
+            <div className="flex gap-5 text-sm font-semibold text-[#0504AA]">
+              <Link to="/contact" className="underline-offset-4 hover:underline">Contact</Link>
+              <Link to="/" className="underline-offset-4 hover:underline">All services</Link>
+            </div>
+          </div>
+        </section>
+      </main>
+    </PublicChrome>
+  )
 }
 
 export default ServicePage

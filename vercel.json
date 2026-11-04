@@ -2,7 +2,27 @@
   "installCommand": "npm ci",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "trailingSlash": false,
+  "redirects": [
+    { "source": "/open-checking", "destination": "/checking", "statusCode": 301 },
+    { "source": "/banking/private-checking", "destination": "/checking", "statusCode": 301 },
+    { "source": "/banking/private-savings", "destination": "/savings", "statusCode": 301 },
+    { "source": "/banking/credit-card", "destination": "/credit-card", "statusCode": 301 },
+    { "source": "/banking/retirement-401k", "destination": "/retirement", "statusCode": 301 },
+    { "source": "/loans/personal", "destination": "/loans", "statusCode": 301 },
+    { "source": "/loans/auto", "destination": "/loans", "statusCode": 301 },
+    { "source": "/banking/digital-asset-lending", "destination": "/loans", "statusCode": 301 }
+  ],
   "rewrites": [
+    { "source": "/about", "destination": "/about.html" },
+    { "source": "/checking", "destination": "/checking.html" },
+    { "source": "/savings", "destination": "/savings.html" },
+    { "source": "/credit-card", "destination": "/credit-card.html" },
+    { "source": "/loans", "destination": "/loans.html" },
+    { "source": "/retirement", "destination": "/retirement.html" },
+    { "source": "/security", "destination": "/security.html" },
+    { "source": "/contact", "destination": "/contact.html" },
+    { "source": "/open-account", "destination": "/open-account.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
