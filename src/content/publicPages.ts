@@ -56,7 +56,7 @@ export type PageSeo = {
 
 export const publicPages: PageSeo[] = [
   { path: '/', title: 'Evermont Credit Union | Where Private Wealth Is Protected', description: 'Evermont Credit Union. Where private wealth is protected. Explore personal banking, private wealth information, and how to reach the team.', image: '/images/banners/facade.webp', jsonLd: true },
-  { path: '/about', title: 'About Us | Evermont Credit Union', description: 'A more thoughtful approach to private wealth banking. Read Evermont’s mission, vision, values, and independent story.', image: '/images/banners/about-frame.webp', jsonLd: true },
+  { path: '/about', title: 'About Us | Evermont Credit Union', description: 'Evermont is a financial technology platform with private-wealth style service. Read the mission, values, and what the public site is.', image: '/images/banners/about-frame.webp', jsonLd: true },
   { path: '/personal-banking', title: 'Personal Banking | Evermont Credit Union', description: 'Personal banking categories at Evermont, with a clear note of what is available now and what is still planned.', image: '/images/banners/personal.webp' },
   { path: '/private-wealth', title: 'Private Wealth | Evermont Credit Union', description: 'Evermont Private Wealth: a legacy of trust and a future of prosperity. This page does not offer regulated investment, advisory, or fiduciary services.', image: '/images/banners/advisory.webp' },
   { path: '/services', title: 'Services | Evermont Credit Union', description: 'A directory of Evermont services, each with a short description, availability status, and a link to learn more.', image: '/images/banners/services.webp' },
@@ -69,10 +69,10 @@ export const publicPages: PageSeo[] = [
   { path: '/retirement', title: 'Retirement | Evermont Credit Union', description: 'Retirement information from Evermont. This page does not claim to sponsor or administer a retirement plan.', image: '/images/banners/wealth.webp' },
   { path: '/open-account', title: 'Open an Account | Evermont Credit Union', description: 'Open an Evermont account by continuing to member portal registration. This page does not submit an application.', image: '/images/banners/contact.webp' },
   { path: '/security', title: 'Security and Privacy | Evermont Credit Union', description: 'Account security, privacy habits, fraud awareness, and how to report a concern. Evermont does not promise absolute security.', image: '/images/banners/security.webp' },
-  { path: '/privacy', title: 'Privacy Policy | Evermont Credit Union', description: 'How Evermont treats questions sent from this public website. Contact support for clarification. This page states no regulatory certification.', image: '/images/banners/security.webp' },
+  { path: '/privacy', title: 'Privacy Policy | Evermont Credit Union', description: 'How Evermont treats questions sent from this public website. Contact support for clarification.', image: '/images/banners/security.webp' },
   { path: '/terms', title: 'Terms and Conditions | Evermont Credit Union', description: 'Terms for using the Evermont public website. Reading a page does not open an account or set a rate.', image: '/images/banners/about.webp' },
   { path: '/accessibility', title: 'Accessibility | Evermont Credit Union', description: 'Evermont’s commitment to readable, keyboard-friendly public pages. Contact support if you find a barrier.', image: '/images/banners/resources.webp' },
-  { path: '/disclosures', title: 'Disclosures | Evermont Credit Union', description: 'What the Evermont public website does not claim: rates, insurance, a charter, or regulatory approval.', image: '/images/banners/about.webp' },
+  { path: '/disclosures', title: 'Disclosures | Evermont Credit Union', description: 'What the Evermont public website does not publish: rates, fees, or a claim of official status.', image: '/images/banners/about.webp' },
   { path: '/cryptocurrency', title: 'Digital Assets | Evermont Credit Union', description: 'A careful note on digital assets. Evermont does not describe buying, selling, or custody as available unless support confirms it.', image: '/images/banners/wealth.webp' },
 ]
 

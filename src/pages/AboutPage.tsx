@@ -36,7 +36,7 @@ export const AboutPage: React.FC = () => (
             <img src={LOGO_PATH} alt="Evermont Credit Union" className="h-24 w-auto object-contain" />
             <p className="mt-8 text-sm font-semibold uppercase tracking-[0.2em] text-[#C9A227]">About Us</p>
             <h1 className="mt-4 font-serif text-4xl leading-tight sm:text-5xl">A More Thoughtful Approach to Private Wealth Banking</h1>
-            <p className="mt-6 text-base leading-8 text-blue-50">Evermont Credit Union is built around a commitment to financial responsibility, thoughtful service, and a more personal approach to wealth management. Our vision is to create a professional financial-services experience where individuals and families can approach their financial goals with clarity, confidence, and care.</p>
+            <p className="mt-6 text-base leading-8 text-blue-50">Evermont is a financial technology platform with a private-wealth style of service: discreet, responsible, and clear about the next step.</p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link to="/services" className="inline-flex items-center justify-center rounded-full bg-[#C9A227] px-6 py-3.5 text-sm font-semibold text-[#101533]">Explore Our Services</Link>
               <Link to="/contact" className="inline-flex items-center justify-center rounded-full border border-white/50 px-6 py-3.5 text-sm font-semibold text-white">Contact Our Team</Link>
@@ -45,13 +45,33 @@ export const AboutPage: React.FC = () => (
         </div>
       </section>
 
-      <section className="bg-white" aria-labelledby="story">
+      <section className="bg-white" aria-labelledby="what-we-are">
+        <div className="mx-auto max-w-6xl px-5 py-16 lg:px-8">
+          <h2 id="what-we-are" className="font-serif text-4xl text-[#101533]">What we are</h2>
+          <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-600">Evermont is a financial technology platform. The public site presents services in a private-wealth style and connects people to the member portal. It does not publish rates, fees, or a claim of official status.</p>
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              ['Integrity', 'Say what is known, and leave unpublished claims off the page.'],
+              ['Excellence', 'Prefer a clear page over a crowded one.'],
+              ['Member service', 'Make the portal, the phone, and the support email easy to find.'],
+              ['Discretion', 'Keep the public site free of balances, secrets, and unnecessary detail.'],
+            ].map(([title, text]) => (
+              <article key={title} className="rounded-3xl border border-slate-200 p-6">
+                <h3 className="font-serif text-2xl text-[#0504AA]">{title}</h3>
+                <p className="mt-3 text-sm leading-7 text-slate-600">{text}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-[#f8f7f4]" aria-labelledby="story">
         <div className="mx-auto grid max-w-6xl gap-10 px-5 py-20 lg:grid-cols-[.8fr_1.2fr] lg:px-8">
           <h2 id="story" className="font-serif text-4xl text-[#101533]">Our Story</h2>
           <div className="space-y-5 text-base leading-8 text-slate-600">
-            <p>Evermont was established around an independent vision: a private-wealth brand that treats financial trust as something to be earned in ordinary conversations, not asserted with a slogan.</p>
-            <p>The aim is responsible financial service, long-term relationships, privacy, professionalism, and communication that states what is available. Modern tools belong in that picture only when they are actually connected.</p>
-            <p>The public website explains that vision. It does not invent a founding date, a roster of leaders, or an institutional affiliation.</p>
+            <p>Evermont was established around an independent vision: a financial technology platform that treats trust as something earned in ordinary conversations, not asserted with a slogan.</p>
+            <p>The aim is responsible service, long-term relationships, discretion, and communication that states what is available. Digital tools belong in that picture only when they are actually connected.</p>
+            <p>The public website explains that vision. It does not invent a founding date, a roster of leaders, or an affiliation with another organization.</p>
           </div>
         </div>
       </section>

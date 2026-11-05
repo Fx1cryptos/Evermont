@@ -46,5 +46,5 @@ export const StatusPill: React.FC<{ status: string }> = ({ status }) => {
 }
 
 export const PortalNote: React.FC = () => (
-  <p className="text-sm leading-7 text-slate-600">Member sign-in stays on the separate portal. <MemberLoginLink className="font-semibold text-[#0504AA] underline-offset-4 hover:underline" /></p>
+  <p className="text-sm leading-7 text-slate-600">Sign-in stays on the separate portal. <MemberLoginLink className="font-semibold text-[#0504AA] underline-offset-4 hover:underline" /></p>
 )
