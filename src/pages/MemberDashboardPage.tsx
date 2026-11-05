@@ -13,8 +13,6 @@ import { useActivationGate } from '@/hooks/useActivationGate'
 import type { Account, Profile } from '@/types'
 
 const money = (value: unknown) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value) || 0)
-const ILLUSTRATIVE_FEE_RATE_PERCENT = 0.812
-const ILLUSTRATIVE_FEE_RATE = ILLUSTRATIVE_FEE_RATE_PERCENT / 100
 
 const Panel: React.FC<{ title: string; action?: React.ReactNode; children: React.ReactNode }> = ({ title, action, children }) => (
   <section className="rounded-xl border border-slate-200 bg-white">
@@ -146,11 +144,6 @@ export const MemberDashboardPage: React.FC = () => {
         </div>
         {error ? <p className="mt-3 text-sm text-blue-100">Balance is hidden because account records did not load.</p> : accounts.length ? <p className="mt-3 text-4xl font-semibold tabular-nums tracking-tight sm:text-5xl">{shown(total)}</p> : <p className="mt-3 text-sm text-blue-100">No accounts are on file for this member.</p>}
         <p className="mt-3 max-w-xl text-sm leading-6 text-blue-100">{accounts.length ? `Sum of ${accounts.length === 1 ? 'the balance' : 'the balances'} returned for your account${accounts.length === 1 ? '' : 's'}. This page does not move money.` : 'A balance appears only when the database returns an account.'}</p>
-      </section>
-
-      <section className="rounded-2xl border border-[#C9A227]/40 bg-white p-5 shadow-sm" aria-labelledby="fee-calculation-title">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-[#C9A227]">Informational only</p><h2 id="fee-calculation-title" className="mt-1 text-lg font-semibold text-[#101533]">Illustrative fee calculation</h2><p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">This estimate is calculated from the account balance returned by Supabase. It is not a payment demand, amount due, or account status.</p></div><div className="rounded-xl bg-[#f6f7fb] px-4 py-3 sm:min-w-[220px]"><p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Calculated amount</p><p className="mt-1 text-2xl font-semibold tabular-nums text-[#0504AA]">{shown(Math.round(total * ILLUSTRATIVE_FEE_RATE * 100) / 100)}</p></div></div>
-        <dl className="mt-5 grid gap-3 border-t border-slate-100 pt-4 text-sm sm:grid-cols-2"><div><dt className="text-slate-500">Account balance</dt><dd className="mt-1 font-semibold tabular-nums text-[#101533]">{shown(total)}</dd></div><div><dt className="text-slate-500">Illustrative calculation rate</dt><dd className="mt-1 font-semibold tabular-nums text-[#101533]">{ILLUSTRATIVE_FEE_RATE_PERCENT.toFixed(3)}%</dd></div></dl>
       </section>
 
       <section aria-labelledby="account-summary-title">
