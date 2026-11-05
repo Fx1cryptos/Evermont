@@ -4,15 +4,11 @@ import { EVERMONT_COLORS as C } from '@/constants/design'
 import { ROUTES } from '@/constants/routes'
 import { ACTIVATE_ACCOUNT_LABEL, ACTIVATION_REQUIRED_BODY, ACTIVATION_REQUIRED_TITLE, bankingServiceForPath } from '@/lib/bankingServices'
 
-const money = (value: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)
-
 export const ActivationRequiredModal: React.FC<{
   open: boolean
-  fee?: number | null
-  ratePercent?: number | null
   nextPath?: string
   onClose: () => void
-}> = ({ open, fee, ratePercent, nextPath, onClose }) => {
+}> = ({ open, nextPath, onClose }) => {
   const navigate = useNavigate()
   useEffect(() => {
     if (!open) return
@@ -35,13 +31,6 @@ export const ActivationRequiredModal: React.FC<{
           {ACTIVATION_REQUIRED_TITLE}
         </h2>
         <p className="mt-3 text-center text-sm leading-6 text-slate-600">{ACTIVATION_REQUIRED_BODY}</p>
-        <div className="mt-5 rounded-xl bg-[#f7f8fc] p-4 text-center">
-          <p className="text-xs font-bold uppercase tracking-[.16em] text-[#C9A227]">Activation fee</p>
-          <p className="mt-1 text-2xl font-semibold" style={{ color: C.blue }}>
-            {fee != null ? money(fee) : 'Unavailable, please contact support'}
-          </p>
-          {ratePercent != null && <p className="mt-1 text-xs text-slate-500">Calculated at {ratePercent}% of available balance.</p>}
-        </div>
         <button type="button" onClick={() => { onClose(); navigate(activationUrl) }} className="mt-5 w-full rounded-xl px-4 py-2.5 font-semibold text-white" style={{ background: C.blue }}>
           {ACTIVATE_ACCOUNT_LABEL}
         </button>
