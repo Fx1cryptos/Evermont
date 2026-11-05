@@ -6,7 +6,7 @@ const products: Record<string, { eyebrow: string; title: string; lede: string; a
   '/checking': {
     eyebrow: 'Checking',
     title: 'A clear home for everyday money.',
-    lede: 'Evermont checking is described here in general terms. Sign-in and account opening continue in the member portal. Fees and minimums are not published on this page.',
+    lede: 'Checking is a clear place for everyday money. Sign-in and account opening continue in the member portal. This page does not publish terms or charges.',
     alt: 'Empty marble hall with blue glass and gold details',
     points: [['What this page is', 'A description, not an offer with unpublished terms.'], ['Access', 'Members sign in on the separate portal. Balances are not shown here.'], ['Questions', `Write to ${SUPPORT_EMAIL} before you rely on a detail that is not written here.`]],
   },

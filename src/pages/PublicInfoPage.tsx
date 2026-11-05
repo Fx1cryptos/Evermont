@@ -15,7 +15,7 @@ const pages: Record<string, Info> = {
       ['Account security practices', 'Use a unique password for the member portal. Do not reuse it in email. Sign out on a shared device.'],
       ['Privacy principles', 'This public site does not ask you to type a password. Do not send secrets to the support email.'],
       ['Data protection', 'Information you choose to send by email or phone should be limited to the question itself. Leave account numbers out.'],
-      ['Secure login', 'Member Login on this site goes to the separate portal. Do not follow a login link from an unexpected message.'],
+      ['Secure login', 'Sign In on this site goes to the separate portal. Do not follow a login link from an unexpected message.'],
       ['Fraud awareness', 'Stop if someone asks for a one-time code, a password, or a recovery link. Evermont will not ask for those by email.'],
       ['Your part', 'Check the address bar before you sign in. If something feels wrong, do not continue.'],
       ['How to report it', `Call ${SUPPORT_PHONE_DISPLAY} or email ${SUPPORT_EMAIL}. Describe what you saw. Do not include the secret you were asked for.`],
@@ -36,7 +36,7 @@ const pages: Record<string, Info> = {
   '/terms': {
     eyebrow: 'Terms and Conditions',
     title: 'How to read this website.',
-    lede: 'These terms explain the public site. They do not open an account, set a price, or state a license or insurance status.',
+    lede: 'These terms explain the public site. They do not open an account or set a price.',
     alt: 'Quiet library reading room with oak tables',
     sections: [
       ['Using the pages', 'You may read them to understand how Evermont describes services and how to reach support or the member portal.'],
@@ -59,11 +59,11 @@ const pages: Record<string, Info> = {
   '/disclosures': {
     eyebrow: 'Disclosures',
     title: 'What this website does not claim.',
-    lede: 'Product descriptions are informational. They are not financial advice, an offer, or a statement of insurance, charter, or regulatory status.',
+    lede: 'Product descriptions are informational. They are not financial advice or an offer, and they do not state an official status.',
     alt: 'Quiet library reading room with oak tables',
     sections: [
       ['No invented numbers', 'Rates, yields, fees, customer counts, and years in operation are not stated as facts on these pages.'],
-      ['No regulatory identity', 'Nothing here asserts a license, deposit insurance, or an affiliation with another institution.'],
+      ['No official status', 'Nothing here asserts an official approval or an affiliation with another organization.'],
       ['Confirm before you act', `Use the member portal for account steps, or ask ${SUPPORT_EMAIL} when a detail is missing.`],
     ],
   },
@@ -75,7 +75,7 @@ const pages: Record<string, Info> = {
     action: { href: REGISTER_URL, label: 'Continue to registration', external: true },
     sections: [
       ['What happens next', 'Continue to registration opens the member portal. You complete the process there.'],
-      ['If you already have access', 'Use Member Login in the header instead of starting again.'],
+      ['If you already have access', 'Use Sign In in the header instead of starting again.'],
       ['Questions first', `Call ${SUPPORT_PHONE_DISPLAY} or email ${SUPPORT_EMAIL}. Leave secrets out of the email.`],
     ],
   },

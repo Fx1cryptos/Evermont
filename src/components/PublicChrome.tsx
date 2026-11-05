@@ -5,9 +5,17 @@ import { legalNav, LOGIN_URL, LOGO_PATH, MAILING_ADDRESS, publicNav, quickLinks,
 
 const loginClass = 'inline-flex items-center justify-center rounded-full bg-[#0504AA] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0807c8]'
 
-export const MemberLoginLink: React.FC<{ className?: string }> = ({ className = loginClass }) => (
-  <a href={LOGIN_URL} className={className}>Member Login</a>
+const openAccountClass = 'inline-flex items-center justify-center rounded-full bg-[#C9A227] px-4 py-2.5 text-sm font-semibold text-[#101533] hover:bg-[#d4b43a]'
+
+export const SignInLink: React.FC<{ className?: string }> = ({ className = 'inline-flex items-center justify-center rounded-full px-4 py-2.5 text-sm font-semibold text-[#0504AA] hover:bg-[#f4f6ff]' }) => (
+  <a href={LOGIN_URL} className={className}>Sign In</a>
 )
+
+export const OpenAccountButton: React.FC<{ className?: string }> = ({ className = openAccountClass }) => (
+  <Link to="/open-account" className={className}>Open an Account</Link>
+)
+
+export const MemberLoginLink = SignInLink
 
 export const ContactSupportButton: React.FC = () => (
   <a href={`mailto:${SUPPORT_EMAIL}`} className={loginClass}>Contact Support</a>
@@ -41,7 +49,7 @@ export const PublicChrome: React.FC<React.PropsWithChildren> = ({ children }) =>
               <Link key={item.href} to={item.href} aria-current={current(item.href) ? 'page' : undefined} className={current(item.href) ? 'text-[#0504AA] underline decoration-[#C9A227] decoration-2 underline-offset-8' : 'hover:text-[#0504AA]'}>{item.label}</Link>
             ))}
           </nav>
-          <div className="hidden xl:block"><MemberLoginLink /></div>
+          <div className="hidden items-center gap-2 xl:flex"><SignInLink /><OpenAccountButton /></div>
           <button type="button" className="inline-flex size-11 items-center justify-center rounded-full border border-slate-200 text-[#0504AA] xl:hidden" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-controls="mobile-navigation" aria-label={open ? 'Close menu' : 'Open menu'}>
             {open ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
@@ -51,7 +59,10 @@ export const PublicChrome: React.FC<React.PropsWithChildren> = ({ children }) =>
             {publicNav.map((item) => (
               <Link key={item.href} to={item.href} onClick={() => setOpen(false)} aria-current={current(item.href) ? 'page' : undefined} className={`block rounded-xl px-3 py-3 text-base font-semibold ${current(item.href) ? 'bg-[#f4f6ff] text-[#0504AA]' : 'text-[#101533] hover:bg-[#f4f6ff]'}`}>{item.label}</Link>
             ))}
-            <MemberLoginLink className={`${loginClass} mt-3 w-full`} />
+            <div className="mt-3 grid gap-2">
+              <OpenAccountButton className={`${openAccountClass} w-full`} />
+              <SignInLink className="inline-flex w-full items-center justify-center rounded-full border border-[#0504AA]/20 px-4 py-3 text-sm font-semibold text-[#0504AA]" />
+            </div>
           </nav>
         )}
       </header>
