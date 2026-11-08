@@ -6,6 +6,7 @@ export const ROUTES = {
   RESET_PASSWORD: '/reset-password',
   DASHBOARD: '/dashboard',
   ACCOUNTS: '/accounts',
+  BENEFICIARIES: '/beneficiaries',
   ACTIVATION: '/activation',
   TRANSACTIONS: '/transactions',
   INSIGHTS: '/insights',
