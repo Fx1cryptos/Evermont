@@ -104,6 +104,8 @@ export const MemberDashboardPage: React.FC = () => {
   const recent = rows.slice(0, 8)
   const transfers = rows.filter((row) => isTransferActivity(row)).slice(0, 8)
   const deposits = rows.filter((row) => isDepositActivity(row)).slice(0, 8)
+  const depositTotal = rows.filter((row) => isDepositActivity(row)).reduce((sum, row) => sum + Number(row.displayAmount || 0), 0)
+  const withdrawalTotal = rows.filter((row) => row.direction === 'debit' && !isTransferActivity(row)).reduce((sum, row) => sum + Number(row.displayAmount || 0), 0)
   const memberName = [profile?.firstName || user?.firstName, profile?.lastName || user?.lastName].filter(Boolean).join(' ')
   const shown = (value: unknown) => hidden ? '••••••' : money(value)
 
@@ -138,6 +140,10 @@ export const MemberDashboardPage: React.FC = () => {
         </div>
         {error ? <p className="mt-3 text-sm text-blue-100">Balance is hidden because account records did not load.</p> : accounts.length ? <p className="mt-3 text-4xl font-semibold tabular-nums tracking-tight sm:text-5xl">{shown(total)}</p> : <p className="mt-3 text-sm text-blue-100">No accounts are on file for this member.</p>}
         <p className="mt-3 max-w-xl text-sm leading-6 text-blue-100">{accounts.length ? `Sum of ${accounts.length === 1 ? 'the balance' : 'the balances'} returned for your account${accounts.length === 1 ? '' : 's'}. This page does not move money.` : 'A balance appears only when the database returns an account.'}</p>
+      </section>
+
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Account summary">
+        {[{ label: 'Total balance', value: shown(total), detail: `${accounts.length} account${accounts.length === 1 ? '' : 's'}`, accent: true }, { label: 'Account status', value: accounts[0]?.status || 'Not returned', detail: 'Verified from account record' }, { label: 'Total deposits', value: shown(depositTotal), detail: `${rows.filter((row) => isDepositActivity(row)).length} posted entries` }, { label: 'Total withdrawals', value: shown(withdrawalTotal), detail: 'Posted debit activity' }].map(card => <article key={card.label} className={`rounded-2xl border p-4 shadow-sm ${card.accent ? 'border-[#0504AA] bg-[#0504AA] text-white' : 'border-slate-200 bg-white'}`}><p className={`text-xs font-semibold uppercase tracking-[.14em] ${card.accent ? 'text-blue-100' : 'text-slate-500'}`}>{card.label}</p><p className={`mt-3 truncate text-2xl font-semibold tabular-nums ${card.accent ? 'text-white' : 'text-[#101533]'}`}>{card.value}</p><p className={`mt-2 text-xs ${card.accent ? 'text-blue-100' : 'text-slate-500'}`}>{card.detail}</p></article>)}
       </section>
 
       <section aria-labelledby="account-summary-title">

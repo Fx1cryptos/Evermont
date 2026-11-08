@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Headphones, LayoutDashboard, LogOut, Menu, Receipt, Settings, ShieldCheck, UserRound, WalletCards, X } from 'lucide-react'
+import { Bell, Headphones, LayoutDashboard, LogOut, Menu, Receipt, Search, ShieldCheck, UserRound, WalletCards, X } from 'lucide-react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
 import { LOGO_PATH, SITE_NAME, SITE_POSITIONING, SITE_TAGLINE, SITE_TAGLINE_SECOND, SUPPORT_EMAIL } from '@/config/site'
@@ -7,12 +7,12 @@ import { useAuth } from '@/contexts/AuthContext'
 
 const navigation = [
   { label: 'Overview', to: ROUTES.DASHBOARD, icon: LayoutDashboard },
-  { label: 'Accounts', to: ROUTES.ACCOUNTS, icon: WalletCards },
+  { label: 'My Accounts', to: ROUTES.ACCOUNTS, icon: WalletCards },
   { label: 'Transactions', to: ROUTES.TRANSACTIONS, icon: Receipt },
+  { label: 'Statements', to: '/statements', icon: Receipt },
   { label: 'Activation', to: ROUTES.ACTIVATION, icon: ShieldCheck },
-  { label: 'Profile', to: ROUTES.PROFILE, icon: UserRound },
-  { label: 'Security', to: ROUTES.SETTINGS, icon: Settings },
-  { label: 'Support', to: ROUTES.SUPPORT, icon: Headphones },
+  { label: 'Profile & Security', to: ROUTES.PROFILE, icon: UserRound },
+  { label: 'Help & Support', to: ROUTES.SUPPORT, icon: Headphones },
 ]
 
 const navClass = ({ isActive }: { isActive: boolean }) => `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold ${isActive ? 'bg-[#0504AA] text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-[#0504AA]'}`
@@ -58,7 +58,8 @@ export const PortalShell: React.FC<React.PropsWithChildren<{ title: string; eyeb
             <h1 className="text-lg font-semibold tracking-tight text-[#101533] sm:text-xl">{title}</h1>
           </div>
         </div>
-        <button type="button" onClick={() => void handleSignOut()} className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 lg:hidden">Log out</button>
+        <div className="hidden max-w-xs flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 md:flex"><Search className="size-4 text-slate-400" aria-hidden="true" /><input className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400" aria-label="Search member portal" placeholder="Search portal" /></div>
+        <div className="flex items-center gap-2"><Link to="/alerts" className="relative rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="Notifications"><Bell className="size-5" aria-hidden="true" /></Link><span className="hidden items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 sm:flex"><span className="size-1.5 rounded-full bg-emerald-500" />Secure</span><button type="button" onClick={() => void handleSignOut()} className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 lg:hidden">Log out</button></div>
       </div>
     </header>
     {open && <div className="fixed inset-0 z-50 bg-slate-950/40 lg:hidden" onClick={() => setOpen(false)}>
