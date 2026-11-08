@@ -71,11 +71,8 @@ export const MemberDashboardPage: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const total = useMemo(() => accounts.reduce((sum, account) => sum + Number(account.balance), 0), [accounts])
-  const { check: checkActivation, checking } = useActivationGate(user?.id, total)
+  const { check: checkActivation, checking } = useActivationGate(user?.id)
   const navigate = useNavigate()
-  const [activated, setActivated] = useState<boolean | null>(null)
-  const [fee, setFee] = useState<number | null>(null)
-  const [ratePercent, setRatePercent] = useState<number | null>(null)
   const [pendingService, setPendingService] = useState<string | null>(null)
   const [gatePath, setGatePath] = useState<string | null>(null)
   const [serviceError, setServiceError] = useState('')
@@ -100,10 +97,7 @@ export const MemberDashboardPage: React.FC = () => {
 
   useEffect(() => {
     if (!user || loading || error) return
-    void checkActivation().then((result) => {
-      setActivated(result.activated)
-      setFee(result.fee)
-      setRatePercent(result.ratePercent)
+    void checkActivation().then(() => {
     }).catch(() => setServiceError('We could not verify activation.'))
   }, [user, loading, error, checkActivation])
 
@@ -118,9 +112,6 @@ export const MemberDashboardPage: React.FC = () => {
     setPendingService(key)
     try {
       const result = await checkActivation()
-      setActivated(result.activated)
-      setFee(result.fee)
-      setRatePercent(result.ratePercent)
       if (!result.activated) {
         setGatePath(path)
         return
@@ -147,7 +138,6 @@ export const MemberDashboardPage: React.FC = () => {
         </div>
         {error ? <p className="mt-3 text-sm text-blue-100">Balance is hidden because account records did not load.</p> : accounts.length ? <p className="mt-3 text-4xl font-semibold tabular-nums tracking-tight sm:text-5xl">{shown(total)}</p> : <p className="mt-3 text-sm text-blue-100">No accounts are on file for this member.</p>}
         <p className="mt-3 max-w-xl text-sm leading-6 text-blue-100">{accounts.length ? `Sum of ${accounts.length === 1 ? 'the balance' : 'the balances'} returned for your account${accounts.length === 1 ? '' : 's'}. This page does not move money.` : 'A balance appears only when the database returns an account.'}</p>
-        {activated === false && <p className="mt-4 rounded-xl bg-white/10 px-4 py-3 text-sm leading-6">Your account is not activated.{fee != null ? ` The recorded activation fee is ${money(fee)}.` : ''} <Link to={ROUTES.ACTIVATION} className="font-semibold text-[#C9A227]">View activation</Link></p>}
       </section>
 
       <section aria-labelledby="account-summary-title">
@@ -216,7 +206,7 @@ export const MemberDashboardPage: React.FC = () => {
           <a href="mailto:support@evermontcredit.online" className="rounded-lg border border-slate-200 px-3 py-2 text-[#0504AA] hover:border-[#C9A227]">Contact support</a>
         </div>
       </section>
-      <ActivationRequiredModal open={gatePath != null} nextPath={gatePath || undefined} fee={fee} ratePercent={ratePercent} onClose={() => setGatePath(null)} />
+      <ActivationRequiredModal open={gatePath != null} nextPath={gatePath || undefined} onClose={() => setGatePath(null)} />
     </div>
   </PortalShell>
 }

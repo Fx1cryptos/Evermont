@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PortalShell } from '@/components/member/PortalShell'
 import { FileField, ReviewList, TextField } from '@/components/member/banking/ServiceFields'
@@ -20,10 +20,8 @@ export const MemberBankingServicePage: React.FC<{ service: BankingServiceKey }> 
   const [accounts, setAccounts] = useState<Account[]>([])
   const [accountsError, setAccountsError] = useState('')
   const [accountsLoading, setAccountsLoading] = useState(true)
-  const total = useMemo(() => accounts.reduce((sum, account) => sum + Number(account.balance || 0), 0), [accounts])
-  const { check } = useActivationGate(user?.id, total)
+  const { check } = useActivationGate(user?.id)
   const [gate, setGate] = useState<'loading' | 'error' | 'closed' | 'open'>('loading')
-  const [fee, setFee] = useState<number | null>(null)
 
   useEffect(() => {
     if (!user) return
@@ -44,7 +42,6 @@ export const MemberBankingServicePage: React.FC<{ service: BankingServiceKey }> 
     setGate('loading')
     check().then((result) => {
       if (!active) return
-      setFee(result.fee)
       setGate(result.activated ? 'open' : 'closed')
     }).catch(() => { if (active) setGate('error') })
     return () => { active = false }
@@ -65,7 +62,6 @@ export const MemberBankingServicePage: React.FC<{ service: BankingServiceKey }> 
           <section className="rounded-2xl border border-[#C9A227] bg-white p-6" aria-labelledby="activation-required-title">
             <h2 id="activation-required-title" className="text-xl font-semibold text-[#0504AA]">{ACTIVATION_REQUIRED_TITLE}</h2>
             <p className="mt-3 text-sm leading-6 text-slate-600">{ACTIVATION_REQUIRED_BODY}</p>
-            {fee != null && <p className="mt-3 text-sm text-slate-600">Recorded activation fee: {money(fee)}.</p>}
             <Link to={`${ROUTES.ACTIVATION}?next=${encodeURIComponent(meta.path)}`} className="mt-5 inline-flex rounded-xl bg-[#0504AA] px-4 py-2.5 text-sm font-semibold text-white">{ACTIVATE_ACCOUNT_LABEL}</Link>
           </section>
         )}

@@ -10,19 +10,15 @@ import { ROUTES } from '@/constants/routes'
 /** Signed-in entry for a feature that has no banking backend. */
 export const IntegrationEntryPage: React.FC<{ title: string; path: string; gated?: boolean }> = ({ title, path, gated = true }) => {
   const { user, loading: authLoading } = useAuth()
-  const [balance, setBalance] = useState(0)
   const [ready, setReady] = useState(false)
-  const { check } = useActivationGate(user?.id, balance)
+  const { check } = useActivationGate(user?.id)
   const [gate, setGate] = useState<'loading' | 'error' | 'closed' | 'open'>('loading')
-  const [fee, setFee] = useState<number | null>(null)
 
   useEffect(() => {
     if (!user) return
     let active = true
-    accountService.getAccounts(user.id).then(async (accounts) => {
+    accountService.getAccounts(user.id).then(async () => {
       if (!active) return
-      const total = accounts.reduce((sum, account) => sum + Number(account.balance || 0), 0)
-      setBalance(total)
       setReady(true)
     }).catch(() => { if (active) setGate('error') })
     return () => { active = false }
@@ -37,7 +33,6 @@ export const IntegrationEntryPage: React.FC<{ title: string; path: string; gated
     let active = true
     check().then((result) => {
       if (!active) return
-      setFee(result.fee)
       setGate(result.activated ? 'open' : 'closed')
     }).catch(() => { if (active) setGate('error') })
     return () => { active = false }
@@ -56,7 +51,6 @@ export const IntegrationEntryPage: React.FC<{ title: string; path: string; gated
           <section className="rounded-2xl border border-[#C9A227] bg-white p-6" aria-labelledby="activation-required-title">
             <h2 id="activation-required-title" className="text-xl font-semibold text-[#0504AA]">{ACTIVATION_REQUIRED_TITLE}</h2>
             <p className="mt-3 text-sm leading-6 text-slate-600">{ACTIVATION_REQUIRED_BODY}</p>
-            {fee != null && <p className="mt-3 text-sm text-slate-600">Recorded activation fee: {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(fee)}.</p>}
             <Link to={`${ROUTES.ACTIVATION}?next=${encodeURIComponent(path)}`} className="mt-5 inline-flex rounded-xl bg-[#0504AA] px-4 py-2.5 text-sm font-semibold text-white">{ACTIVATE_ACCOUNT_LABEL}</Link>
           </section>
         )}
