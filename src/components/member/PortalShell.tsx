@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext'
 const navigation = [
   { label: 'Overview', to: ROUTES.DASHBOARD, icon: LayoutDashboard },
   { label: 'My Accounts', to: ROUTES.ACCOUNTS, icon: WalletCards },
+  { label: 'Beneficiaries', to: ROUTES.BENEFICIARIES, icon: UserRound },
   { label: 'Transactions', to: ROUTES.TRANSACTIONS, icon: Receipt },
   { label: 'Statements', to: '/statements', icon: Receipt },
   { label: 'Activation', to: ROUTES.ACTIVATION, icon: ShieldCheck },

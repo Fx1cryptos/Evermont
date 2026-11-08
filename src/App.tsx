@@ -16,6 +16,7 @@ import { TransactionsPage } from '@/pages/TransactionsPage'
 import { FinancialInsightsPage } from '@/pages/FinancialInsightsPage'
 import { ProfilePage } from '@/pages/ProfilePage'
 import { AccountsPage } from '@/pages/AccountsPage'
+import { BeneficiariesPage } from '@/pages/BeneficiariesPage'
 import { ActivationPage } from '@/pages/ActivationPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { SupportPage } from '@/pages/SupportPage'
@@ -71,6 +72,7 @@ export const AppRoutes: React.FC = () => (
 
     <Route path={ROUTES.DASHBOARD} element={<Private title="Dashboard"><MemberDashboardPage /></Private>} />
     <Route path={ROUTES.ACCOUNTS} element={<Private title="My Accounts"><AccountsPage /></Private>} />
+ <Route path={ROUTES.BENEFICIARIES} element={<Private title="Beneficiaries"><BeneficiariesPage /></Private>} />
     <Route path={ROUTES.ACTIVATION} element={<Private title="Activation"><ActivationPage /></Private>} />
     <Route path={ROUTES.SETTINGS} element={<Private title="Settings"><SettingsPage /></Private>} />
     <Route path={ROUTES.TRANSACTIONS} element={<Private title="Transactions"><TransactionsPage /></Private>} />
