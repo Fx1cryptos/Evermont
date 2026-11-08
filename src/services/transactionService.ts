@@ -14,6 +14,7 @@ export interface TransactionFilters {
 
 export interface LedgerActivity extends Transaction {
   memberId: string
+  isSample?: boolean
   referenceId: string
   entryType: string
   category: string
@@ -42,6 +43,7 @@ const toActivity = (entry: MappedLedgerEntry): LedgerActivity => ({
   debit: entry.debit,
   credit: entry.credit,
   balanceAfter: entry.balanceAfter,
+  isSample: false,
 })
 
 const TRANSACTION_COLUMNS = 'id,user_id,account_id,amount,description,status,created_at,direction'
@@ -188,6 +190,23 @@ export const transactionService = {
       console.error('Error fetching ledger entries')
       throw new Error('Unable to load transaction history.')
     }
+  },
+
+  /** Sample records are read-only and intentionally kept separate from genuine member activity. */
+  async getSampleTransactions(userId: string, accountIds: string[]): Promise<LedgerActivity[]> {
+    if (!userId || !accountIds.length || !isSupabaseConfigured) return []
+    const { data, error } = await supabase
+      .from('demo_ledger_entries')
+      .select(LEDGER_ENTRY_COLUMNS)
+      .eq('member_id', userId)
+      .in('account_id', accountIds)
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
+    if (error) {
+      console.error('Failed to fetch sample ledger entries')
+      throw new Error('Unable to load sample transaction history.')
+    }
+    return ((data || []) as Parameters<typeof mapLedgerRow>[0][]).map((row) => ({ ...toActivity(mapLedgerRow(row)), isSample: true }))
   },
 
   async getTransactionById(transactionId: string, userId: string): Promise<LedgerActivity | null> {
