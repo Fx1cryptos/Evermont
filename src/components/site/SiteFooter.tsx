@@ -1,7 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { ShieldCheck } from 'lucide-react'
-import { DISCLAIMER, LOGO_PATH, SITE_NAME, SITE_TAGLINE, SITE_TAGLINE_SECOND, SUPPORT_EMAIL } from '@/config/site'
+import { LOGO_PATH, SITE_NAME, SITE_TAGLINE, SITE_TAGLINE_SECOND, SUPPORT_EMAIL } from '@/config/site'
 
 const columns = [
   { heading: 'Banking', links: [['Checking', '/services/checking'], ['Savings', '/services/savings'], ['Credit Cards', '/credit-cards'], ['Digital Assets', '/services/digital-assets']] },
@@ -31,7 +30,6 @@ export const SiteFooter: React.FC = () => (
       </div>
       <div className="flex flex-col gap-3 pt-6 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
         <p>© {new Date().getFullYear()} {SITE_NAME}. All rights reserved.</p>
-        <p className="flex items-center gap-2 font-semibold text-[#101533]"><ShieldCheck className="size-4 text-[#C9A227]" aria-hidden="true" />{DISCLAIMER}</p>
       </div>
     </div>
   </footer>
