@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Bell, Building2, CreditCard, Eye, EyeOff, FileText, Headphones, Landmark, Receipt, Send, Smartphone, UserRound, WalletCards } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, Bell, Building2, CreditCard, Eye, EyeOff, FileText, Headphones, Landmark, Receipt, Send, Smartphone, UserRound, WalletCards } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { PortalShell } from '@/components/member/PortalShell'
 import { ActivationRequiredModal } from '@/components/member/ActivationRequiredModal'
@@ -16,9 +16,10 @@ const money = (value: unknown) => new Intl.NumberFormat('en-US', { style: 'curre
 const SAMPLE_MEMBER_ID = '96167e4c-024d-47ba-9f43-dce4f8cf599a'
 const SAMPLE_ACCOUNT_ID = 'ee99d49d-f2df-4326-bb76-cc2801fc8448'
 const BENEFICIARY_STORAGE_KEY = 'evermont-dashboard-beneficiary'
+const formatActivityDate = (value: string | null) => value ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(value)) : 'Date not returned'
 
 const Panel: React.FC<{ title: string; action?: React.ReactNode; children: React.ReactNode }> = ({ title, action, children }) => (
-  <section className="rounded-xl border border-slate-200 bg-white">
+  <section className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-900/[0.03]">
     <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
       <h2 className="text-sm font-semibold text-[#101533]">{title}</h2>
       {action}
@@ -31,15 +32,10 @@ const ActivityList: React.FC<{ rows: LedgerActivity[]; empty: string }> = ({ row
   rows.length ? <ul className="divide-y divide-slate-100">{rows.map(row => {
     const credit = row.direction === 'credit'
     return (
-      <li key={row.id} className="grid gap-2 px-4 py-3 sm:grid-cols-[1fr_auto] sm:items-center">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2"><p className="truncate text-sm font-medium text-[#101533]">{row.description || 'Ledger entry'}</p>{row.isSample && <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700">Sample</span>}</div>
-          <p className="mt-1 text-xs text-slate-500">{row.createdAt ? new Date(row.createdAt).toLocaleString() : 'Date not returned'} · <span className="capitalize">{row.entryType || row.category || row.direction}</span>{row.referenceId ? ` · ${row.referenceId}` : ''}</p>
-        </div>
-        <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end">
-          <p className={`text-sm font-semibold tabular-nums ${credit ? 'text-emerald-700' : 'text-rose-800'}`}>{credit ? '+' : '−'}{money(row.displayAmount)}</p>
-          <p className="text-xs capitalize text-slate-500">{row.status || 'Status not returned'}</p>
-        </div>
+      <li key={row.id} className="grid gap-3 px-4 py-3.5 sm:grid-cols-[auto_1fr_auto] sm:items-center">
+        <span className={`flex size-9 items-center justify-center rounded-full ${credit ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`} aria-label={credit ? 'Credit' : 'Debit'}>{credit ? <ArrowUpRight className="size-4" aria-hidden="true" /> : <ArrowDownLeft className="size-4" aria-hidden="true" />}</span>
+        <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><p className="truncate text-sm font-semibold text-[#101533]">{row.description || 'Ledger entry'}</p>{row.isSample && <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700">Sample</span>}</div><p className="mt-1 text-xs text-slate-500">{formatActivityDate(row.createdAt)} · <span className="capitalize">{row.entryType || row.category || row.direction}</span>{row.referenceId ? ` · ${row.referenceId}` : ''}</p></div>
+        <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end"><p className={`text-sm font-semibold tabular-nums ${credit ? 'text-emerald-700' : 'text-rose-800'}`}>{credit ? '+' : '−'}{money(row.displayAmount)}</p><span className={`rounded-full px-2 py-1 text-[11px] font-semibold capitalize ${row.status === 'completed' || row.status === 'posted' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>{row.status || 'Status not returned'}</span></div>
       </li>
     )
   })}</ul> : (
@@ -212,17 +208,18 @@ export const MemberDashboardPage: React.FC = () => {
         </ul>
       </section>
 
-      <Panel title="Recent activity" action={<Link to={ROUTES.TRANSACTIONS} className="text-sm font-semibold text-[#0504AA]">Full history</Link>}>
-        {error ? <p className="px-4 py-6 text-sm text-slate-500">Activity was not loaded.</p> : <ActivityList rows={recent} empty="Posted ledger entries and transactions will appear here." />}
-      </Panel>
-
-      <div className="grid gap-5 lg:grid-cols-2">
-        <Panel title="Transfer history">
-          {error ? <p className="px-4 py-6 text-sm text-slate-500">Transfer history was not loaded.</p> : <ActivityList rows={transfers} empty="No transfer entries were returned." />}
+      <div className="grid gap-5 xl:grid-cols-[1.35fr_1fr] xl:items-start">
+        <Panel title="Recent activity" action={<Link to={ROUTES.TRANSACTIONS} className="text-sm font-semibold text-[#0504AA]">Full history</Link>}>
+          {error ? <p className="px-4 py-6 text-sm text-slate-500">Activity was not loaded.</p> : <ActivityList rows={recent} empty="Posted ledger entries and transactions will appear here." />}
         </Panel>
-        <Panel title="Deposit history">
-          {error ? <p className="px-4 py-6 text-sm text-slate-500">Deposit history was not loaded.</p> : <ActivityList rows={deposits} empty="No deposit entries were returned." />}
-        </Panel>
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-1">
+          <Panel title="Transfer history">
+            {error ? <p className="px-4 py-6 text-sm text-slate-500">Transfer history was not loaded.</p> : <ActivityList rows={transfers} empty="No transfer entries were returned." />}
+          </Panel>
+          <Panel title="Deposit history">
+            {error ? <p className="px-4 py-6 text-sm text-slate-500">Deposit history was not loaded.</p> : <ActivityList rows={deposits} empty="No deposit entries were returned." />}
+          </Panel>
+        </div>
       </div>
 
       <section className="sticky bottom-4 z-10 rounded-2xl border border-[#C9A227]/40 bg-white/95 p-5 shadow-lg shadow-slate-900/10 backdrop-blur" aria-labelledby="beneficiary-title">
