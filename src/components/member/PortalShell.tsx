@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Bell, Headphones, LayoutDashboard, LogOut, Menu, Receipt, Search, ShieldCheck, UserRound, WalletCards, X } from 'lucide-react'
+import { Bell, CreditCard, FileText, Headphones, LayoutDashboard, LogOut, Menu, Receipt, Search, Send, ShieldCheck, UserRound, WalletCards, X } from 'lucide-react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
 import { LOGO_PATH, SITE_NAME, SITE_POSITIONING, SITE_TAGLINE, SITE_TAGLINE_SECOND, SUPPORT_EMAIL } from '@/config/site'
@@ -8,9 +8,12 @@ import { useAuth } from '@/contexts/AuthContext'
 const navigation = [
   { label: 'Overview', to: ROUTES.DASHBOARD, icon: LayoutDashboard },
   { label: 'My Accounts', to: ROUTES.ACCOUNTS, icon: WalletCards },
+  { label: 'Transfers & Payments', to: '/services/transfer', icon: Send },
   { label: 'Beneficiaries', to: ROUTES.BENEFICIARIES, icon: UserRound },
-  { label: 'Transactions', to: ROUTES.TRANSACTIONS, icon: Receipt },
-  { label: 'Statements', to: '/statements', icon: Receipt },
+  { label: 'Transaction History', to: ROUTES.TRANSACTIONS, icon: Receipt },
+  { label: 'Statements', to: '/statements', icon: FileText },
+  { label: 'Cards', to: '/services/virtual-card', icon: CreditCard },
+  { label: 'Notifications', to: '/alerts', icon: Bell },
   { label: 'Activation', to: ROUTES.ACTIVATION, icon: ShieldCheck },
   { label: 'Profile & Security', to: ROUTES.PROFILE, icon: UserRound },
   { label: 'Help & Support', to: ROUTES.SUPPORT, icon: Headphones },
