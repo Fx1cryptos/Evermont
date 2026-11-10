@@ -133,7 +133,6 @@ export const transactionService = {
         .eq('member_id', userId)
         .order('created_at', { ascending: false })
         .order('id', { ascending: false })
-      const accountIdsQuery = supabase.from('accounts').select('id').eq('user_id', userId)
       const transactionQuery = supabase
         .from('transactions')
         .select(TRANSACTION_COLUMNS)
@@ -159,9 +158,8 @@ export const transactionService = {
         transactionQuery.lte('created_at', end)
       }
 
-      const [ledgerResult, accountResult, transactionResult] = await Promise.all([
+      const [ledgerResult, transactionResult] = await Promise.all([
         ledgerByMember,
-        filters.accountId ? Promise.resolve({ data: [{ id: filters.accountId }], error: null }) : accountIdsQuery,
         transactionQuery,
       ])
       if (ledgerResult.error) {
@@ -169,18 +167,7 @@ export const transactionService = {
         throw new Error('Unable to load transaction history.')
       }
 
-      const accountIds = ((accountResult.data || []) as Array<{ id?: string }>).map((row) => row.id).filter((id): id is string => Boolean(id))
-      let ledgerRows = ((ledgerResult.data || []) as Parameters<typeof mapLedgerRow>[0][])
-      if (!filters.accountId && accountIds.length) {
-        const byAccount = await supabase
-          .from('ledger_entries')
-          .select(LEDGER_ENTRY_COLUMNS)
-          .in('account_id', accountIds)
-          .order('created_at', { ascending: false })
-        if (!byAccount.error && byAccount.data) ledgerRows = ledgerRows.concat(byAccount.data as Parameters<typeof mapLedgerRow>[0][])
-      }
-
-      const ledger = ledgerRows.map((row) => toActivity(mapLedgerRow(row)))
+      const ledger = ((ledgerResult.data || []) as Parameters<typeof mapLedgerRow>[0][]).map((row) => toActivity(mapLedgerRow(row)))
       const transactions = transactionResult.error ? [] : ((transactionResult.data || []) as Parameters<typeof mapTransactionRow>[0][]).map(mapTransactionRow)
       let rows = mergeActivity(ledger, transactions)
       if (filters.type) rows = rows.filter((row) => row.direction === filters.type)
