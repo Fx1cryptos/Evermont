@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { SiteHeader } from '@/components/site/SiteHeader'
 import { SiteFooter } from '@/components/site/SiteFooter'
 import { Seo } from '@/components/Seo'
-import { DISCLAIMER, LOGO_PATH, OG_IMAGE, SITE_NAME, SITE_URL, SUPPORT_EMAIL, routeMeta } from '@/config/site'
+import { LOGO_PATH, OG_IMAGE, SITE_NAME, SITE_URL, SUPPORT_EMAIL, routeMeta } from '@/config/site'
 import {
   ArrowRight,
   Car,
@@ -80,12 +80,6 @@ export const HomePage: React.FC = () => {
       </main>
 
       <SiteFooter />
-      <aside className="fixed inset-x-0 bottom-0 z-50 border-t border-[#C9A227]/40 bg-[#0504AA]/95 px-4 py-2.5 text-center text-xs font-medium text-white shadow-[0_-4px_18px_rgba(5,4,170,0.16)] backdrop-blur-sm" aria-label="Security notice">
-        <div className="mx-auto flex max-w-7xl items-center justify-center gap-2">
-          <ShieldCheck className="size-3.5 shrink-0 text-[#f1d56f]" aria-hidden="true" />
-          <span>{DISCLAIMER}</span>
-        </div>
-      </aside>
     </div>
   )
 }

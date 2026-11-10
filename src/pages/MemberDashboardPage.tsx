@@ -124,7 +124,6 @@ export const MemberDashboardPage: React.FC = () => {
   const deposits = rows.filter((row) => isDepositActivity(row)).slice(0, 8)
   const depositTotal = rows.filter((row) => isDepositActivity(row)).reduce((sum, row) => sum + Number(row.displayAmount || 0), 0)
   const withdrawalTotal = rows.filter((row) => row.direction === 'debit' && !isTransferActivity(row)).reduce((sum, row) => sum + Number(row.displayAmount || 0), 0)
-  const memberName = [profile?.firstName || user?.firstName, profile?.lastName || user?.lastName].filter(Boolean).join(' ')
   const shown = (value: unknown) => hidden ? '••••••' : money(value)
 
   const openService = async (path: string, key: string) => {
@@ -147,7 +146,9 @@ export const MemberDashboardPage: React.FC = () => {
   if (authLoading || (user && loading)) return <main className="flex min-h-screen items-center justify-center bg-[#f6f7fb] text-sm text-slate-500">Loading your member portal...</main>
   if (!user) return <main className="p-8"><Link to={ROUTES.LOGIN}>Sign in</Link></main>
 
-  return <PortalShell title="Account overview" eyebrow={memberName || 'Member'}>
+  const firstName = profile?.firstName || user.firstName || 'Member'
+
+  return <PortalShell title={`Hello, ${firstName}`} eyebrow="Account overview">
     <div className="space-y-5">
       {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
 
@@ -161,7 +162,7 @@ export const MemberDashboardPage: React.FC = () => {
       </section>
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Account summary">
-        {[{ label: 'Total balance', value: shown(total), detail: `${accounts.length} account${accounts.length === 1 ? '' : 's'}`, accent: true }, { label: 'Account status', value: accounts[0]?.status || 'Not returned', detail: 'Verified from account record' }, { label: 'Total deposits', value: shown(depositTotal), detail: `${rows.filter((row) => isDepositActivity(row)).length} posted entries` }, { label: 'Total withdrawals', value: shown(withdrawalTotal), detail: 'Posted debit activity' }].map(card => <article key={card.label} className={`rounded-2xl border p-4 shadow-sm ${card.accent ? 'border-[#0504AA] bg-[#0504AA] text-white' : 'border-slate-200 bg-white'}`}><p className={`text-xs font-semibold uppercase tracking-[.14em] ${card.accent ? 'text-blue-100' : 'text-slate-500'}`}>{card.label}</p><p className={`mt-3 truncate text-2xl font-semibold tabular-nums ${card.accent ? 'text-white' : 'text-[#101533]'}`}>{card.value}</p><p className={`mt-2 text-xs ${card.accent ? 'text-blue-100' : 'text-slate-500'}`}>{card.detail}</p></article>)}
+        {[{ label: 'Account status', value: accounts[0]?.status || 'Not returned', detail: 'Verified from account record' }, { label: 'Total deposits', value: shown(depositTotal), detail: `${rows.filter((row) => isDepositActivity(row)).length} posted entries` }, { label: 'Total withdrawals', value: shown(withdrawalTotal), detail: 'Posted debit activity' }].map(card => <article key={card.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><p className="text-xs font-semibold uppercase tracking-[.14em] text-slate-500">{card.label}</p><p className="mt-3 truncate text-2xl font-semibold tabular-nums text-[#101533]">{card.value}</p><p className="mt-2 text-xs text-slate-500">{card.detail}</p></article>)}
       </section>
 
       <section aria-labelledby="account-summary-title">
