@@ -4,8 +4,8 @@ export const SUPPORT_EMAIL = 'support@evermontcredit.online'
 export const SUPPORT_PHONE_DISPLAY = '(302) 626-7525'
 export const SUPPORT_PHONE_TEL = 'tel:+13026267525'
 export const SUPPORT_PHONE_SCHEMA = '+1-302-626-7525'
-export const LOGIN_URL = 'https://v0-evermont.vercel.app/login'
-export const REGISTER_URL = 'https://v0-evermont.vercel.app/register'
+export const LOGIN_URL = 'https://v0-evermont-credit.vercel.app'
+export const REGISTER_URL = 'https://v0-evermont-credit.vercel.app/register'
 export const LOGO_PATH = '/images/evermont-logo.jpeg'
 export const MAILING_ADDRESS = ['Evermont Credit Union', 'PO Box 2147', 'South Burlington, VT 05407-2147'] as const
 

@@ -31,10 +31,7 @@ export const SEO: React.FC<SEOProps> = ({ title, description, path = '/', image,
       postalCode: '05407-2147',
       addressCountry: 'US',
     },
-    sameAs: [
-      'https://www.instagram.com/evermontcreditunion',
-      'https://www.facebook.com/share/1GupMnFfkt/',
-    ],
+    sameAs: ['https://x.com/evermont_credit?s=11'],
   }
 
   return (

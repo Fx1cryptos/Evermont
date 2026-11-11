@@ -33,32 +33,32 @@ export const ContactPage: React.FC = () => {
           <address className="space-y-4 text-sm not-italic leading-7 text-slate-700">
             {MAILING_ADDRESS.map((line) => <p key={line}>{line}</p>)}
             <p>Mailing address only. No branch address is listed.</p>
-            <p><a className="font-semibold text-[#0504AA] hover:underline" href={SUPPORT_PHONE_TEL}>{SUPPORT_PHONE_DISPLAY}</a></p>
-            <p><a className="font-semibold text-[#0504AA] hover:underline" href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a></p>
+            <p><a className="font-semibold text-[#080A9F] hover:underline" href={SUPPORT_PHONE_TEL}>{SUPPORT_PHONE_DISPLAY}</a></p>
+            <p><a className="font-semibold text-[#080A9F] hover:underline" href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a></p>
             <p>Do not include passwords or full account numbers. Hours and a response time are not published.</p>
           </address>
           <form onSubmit={onSubmit} noValidate className="space-y-5 rounded-3xl border border-slate-200 p-6 sm:p-8">
             <p className="text-sm leading-6 text-slate-600">Required fields are marked. Submitting opens a pre-filled email. You will not see a success message on this page.</p>
-            <label className="block text-sm font-semibold text-[#101533]">Name
+            <label className="block text-sm font-semibold text-[#07143D]">Name
               <input name="name" autoComplete="name" aria-invalid={Boolean(errors.name)} aria-describedby={errors.name ? 'name-error' : undefined} className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-3 font-normal" />
               {errors.name && <span id="name-error" className="mt-1 block font-normal text-red-700">{errors.name}</span>}
             </label>
-            <label className="block text-sm font-semibold text-[#101533]">Email
+            <label className="block text-sm font-semibold text-[#07143D]">Email
               <input name="email" type="email" autoComplete="email" aria-invalid={Boolean(errors.email)} aria-describedby={errors.email ? 'email-error' : undefined} className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-3 font-normal" />
               {errors.email && <span id="email-error" className="mt-1 block font-normal text-red-700">{errors.email}</span>}
             </label>
-            <label className="block text-sm font-semibold text-[#101533]">Enquiry category
+            <label className="block text-sm font-semibold text-[#07143D]">Enquiry category
               <select name="category" defaultValue="" aria-invalid={Boolean(errors.category)} aria-describedby={errors.category ? 'category-error' : undefined} className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-3 font-normal">
                 <option value="" disabled>Choose one</option>
                 {categories.map((category) => <option key={category}>{category}</option>)}
               </select>
               {errors.category && <span id="category-error" className="mt-1 block font-normal text-red-700">{errors.category}</span>}
             </label>
-            <label className="block text-sm font-semibold text-[#101533]">Message
+            <label className="block text-sm font-semibold text-[#07143D]">Message
               <textarea name="message" rows={5} aria-invalid={Boolean(errors.message)} aria-describedby={errors.message ? 'message-error' : undefined} className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-3 font-normal" />
               {errors.message && <span id="message-error" className="mt-1 block font-normal text-red-700">{errors.message}</span>}
             </label>
-            <button type="submit" className="rounded-full bg-[#0504AA] px-6 py-3.5 text-sm font-semibold text-white">Open email</button>
+            <button type="submit" className="rounded-full bg-[#080A9F] px-6 py-3.5 text-sm font-semibold text-white">Open email</button>
           </form>
         </div>
       </section>

@@ -15,18 +15,18 @@ const cards = [
 
 export const ServicesDirectoryPage: React.FC = () => (
   <PublicDocument path="/services" eyebrow="Services" title="A directory of what you can read, and what is not live." lede="Each card has a status. Planned or unavailable services are not presented as operating products." imageAlt="Conference table with a closed notebook, a glass of water, and a small gold object against a blue wall" actions={[{ href: '/contact', label: 'Contact Our Team' }]}>
-    <section className="bg-[#f8f7f4]">
+    <section className="bg-[#F5F7FB]">
       <div className="mx-auto grid max-w-6xl gap-5 px-5 py-20 md:grid-cols-2 lg:px-8">
         {cards.map((card) => {
           const Icon = card.icon
           return (
             <article key={card.title} className="flex h-full flex-col rounded-3xl bg-white p-7">
-              <Icon className="size-6 text-[#0504AA]" aria-hidden="true" />
-              <h2 className="mt-4 font-serif text-2xl text-[#101533]">{card.title}</h2>
+              <Icon className="size-6 text-[#080A9F]" aria-hidden="true" />
+              <h2 className="mt-4 font-serif text-2xl text-[#07143D]">{card.title}</h2>
               <p className="mt-3 flex-1 text-sm leading-7 text-slate-600">{card.description}</p>
               <div className="mt-5 flex items-center justify-between gap-4">
                 <StatusPill status={card.status} />
-                <Link to={card.href} className="text-sm font-semibold text-[#0504AA] underline-offset-4 hover:underline">Learn More</Link>
+                <Link to={card.href} className="text-sm font-semibold text-[#080A9F] underline-offset-4 hover:underline">Learn More</Link>
               </div>
             </article>
           )
