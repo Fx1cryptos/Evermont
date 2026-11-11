@@ -4,6 +4,7 @@ import { PortalShell } from '@/components/member/PortalShell'
 import { useAuth } from '@/contexts/AuthContext'
 import { accountService } from '@/services/accountService'
 import { LedgerActivity, transactionService } from '@/services/transactionService'
+import { maskAccount } from '@/lib/bankingServices'
 import type { Account } from '@/types'
 
 type ActivityType = 'all' | 'deposits' | 'withdrawals'
@@ -146,14 +147,14 @@ export const TransactionsPage: React.FC = () => {
                 <div>
                   <p className="font-semibold">{row.description || 'Ledger entry'}</p>
                   <p className="mt-1 text-xs text-slate-400">{row.referenceId || 'Reference unavailable'}</p>
-                  <p className="mt-1 text-xs text-slate-400 lg:hidden">{row.category || 'General'} · {account?.accountNumber || account?.accountType || 'Account'}</p>
+                  <p className="mt-1 text-xs text-slate-400 lg:hidden">{row.category || 'General'} · {account?.accountNumber ? maskAccount(account.accountNumber) : account?.accountType || 'Account'}</p>
                 </div>
                 <p className="hidden text-sm capitalize text-slate-600 lg:block">{row.category || 'General'}</p>
-                <p className="hidden text-sm text-slate-600 lg:block">{account?.accountNumber || account?.accountType || 'Account'}</p>
+                <p className="hidden text-sm text-slate-600 lg:block">{account?.accountNumber ? maskAccount(account.accountNumber) : account?.accountType || 'Account'}</p>
                 <p className="text-xs font-semibold capitalize text-slate-500 lg:text-sm">{row.status || '—'}</p>
                 <div className="flex items-center justify-between gap-3 lg:block lg:text-right">
                   <p className={`text-lg font-semibold ${credit ? 'text-emerald-700' : 'text-slate-900'}`}>{credit ? '+' : '−'}{money(row.displayAmount)}</p>
-                  <button type="button" aria-expanded={open} aria-controls={detailId} onClick={() => setOpenId(open ? null : row.id)} className="text-xs font-semibold text-[#0504AA] lg:mt-1">
+                  <button type="button" aria-expanded={open} aria-controls={detailId} onClick={() => setOpenId(open ? null : row.id)} className="text-xs font-semibold text-[#080A9F] lg:mt-1">
                     {open ? 'Hide details' : 'View details'}
                   </button>
                 </div>
@@ -174,15 +175,15 @@ export const TransactionsPage: React.FC = () => {
         <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-5 py-3 text-sm text-slate-500">
           <p>Showing {safePage * PAGE_SIZE + 1}–{safePage * PAGE_SIZE + visible.length} of {filtered.length}</p>
           <div className="flex gap-2">
-            <button type="button" onClick={() => setPage(current => Math.max(0, current - 1))} disabled={safePage === 0} className="rounded-lg border border-slate-200 px-3 py-1.5 font-semibold text-[#0504AA] disabled:opacity-40">Previous</button>
-            <button type="button" onClick={() => setPage(current => Math.min(pageCount - 1, current + 1))} disabled={safePage >= pageCount - 1} className="rounded-lg border border-slate-200 px-3 py-1.5 font-semibold text-[#0504AA] disabled:opacity-40">Next</button>
+            <button type="button" onClick={() => setPage(current => Math.max(0, current - 1))} disabled={safePage === 0} className="rounded-lg border border-slate-200 px-3 py-1.5 font-semibold text-[#080A9F] disabled:opacity-40">Previous</button>
+            <button type="button" onClick={() => setPage(current => Math.min(pageCount - 1, current + 1))} disabled={safePage >= pageCount - 1} className="rounded-lg border border-slate-200 px-3 py-1.5 font-semibold text-[#080A9F] disabled:opacity-40">Next</button>
           </div>
         </div>
       </>}
     </section>
     <section className="mt-6 overflow-hidden rounded-2xl border border-amber-200 bg-white shadow-sm" aria-labelledby="sample-history-title">
       <div className="border-b border-amber-100 bg-amber-50 px-5 py-4"><p className="text-xs font-bold uppercase tracking-[.16em] text-amber-700">Clearly separated sample data</p><h2 id="sample-history-title" className="mt-1 text-lg font-semibold text-amber-950">Sample Transaction History</h2><p className="mt-1 text-sm text-amber-900/75">Read-only sample records returned for the authenticated member and account. These entries are excluded from balances, statements, and verified financial history.</p></div>
-      {sampleLoading ? <p className="p-6 text-sm text-slate-500">Loading sample transactions...</p> : sampleError ? <p role="alert" className="p-6 text-sm text-red-700">{sampleError}</p> : !visibleSamples.length ? <p className="p-6 text-sm text-slate-500">No sample transactions match the current filters.</p> : <><div className="divide-y divide-slate-100">{visibleSamples.map(row => <div key={`sample-${row.id}`} className="grid gap-2 px-5 py-4 sm:grid-cols-[150px_1fr_150px_130px] sm:items-center"><div><p className="text-sm text-slate-500">{row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '—'}</p><p className="mt-1 text-xs text-slate-400">{row.referenceId || 'Reference unavailable'}</p></div><div><p className="font-semibold text-[#101533]">{row.description || 'Sample ledger entry'}</p><p className="mt-1 text-xs capitalize text-slate-500">{row.entryType || row.category || 'Transaction'}</p></div><p className="text-sm capitalize text-slate-600">{row.status || 'Sample'}</p><p className={`text-lg font-semibold sm:text-right ${row.direction === 'credit' ? 'text-emerald-700' : 'text-slate-900'}`}>{row.direction === 'credit' ? '+' : '−'}{money(row.displayAmount)}</p></div>)}</div><div className="flex items-center justify-between border-t border-slate-100 px-5 py-3 text-sm text-slate-500"><span>{filteredSamples.length} sample record{filteredSamples.length === 1 ? '' : 's'}</span><div className="flex gap-2"><button type="button" onClick={() => setSamplePage(current => Math.max(0, current - 1))} disabled={safeSamplePage === 0} className="rounded-lg border border-slate-200 px-3 py-1.5 font-semibold text-[#0504AA] disabled:opacity-40">Previous</button><button type="button" onClick={() => setSamplePage(current => Math.min(samplePageCount - 1, current + 1))} disabled={safeSamplePage >= samplePageCount - 1} className="rounded-lg border border-slate-200 px-3 py-1.5 font-semibold text-[#0504AA] disabled:opacity-40">Next</button></div></div></>}
+      {sampleLoading ? <p className="p-6 text-sm text-slate-500">Loading sample transactions...</p> : sampleError ? <p role="alert" className="p-6 text-sm text-red-700">{sampleError}</p> : !visibleSamples.length ? <p className="p-6 text-sm text-slate-500">No sample transactions match the current filters.</p> : <><div className="divide-y divide-slate-100">{visibleSamples.map(row => <div key={`sample-${row.id}`} className="grid gap-2 px-5 py-4 sm:grid-cols-[150px_1fr_150px_130px] sm:items-center"><div><p className="text-sm text-slate-500">{row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '—'}</p><p className="mt-1 text-xs text-slate-400">{row.referenceId || 'Reference unavailable'}</p></div><div><p className="font-semibold text-[#172033]">{row.description || 'Sample ledger entry'}</p><p className="mt-1 text-xs capitalize text-slate-500">{row.entryType || row.category || 'Transaction'}</p></div><p className="text-sm capitalize text-slate-600">{row.status || 'Sample'}</p><p className={`text-lg font-semibold sm:text-right ${row.direction === 'credit' ? 'text-emerald-700' : 'text-slate-900'}`}>{row.direction === 'credit' ? '+' : '−'}{money(row.displayAmount)}</p></div>)}</div><div className="flex items-center justify-between border-t border-slate-100 px-5 py-3 text-sm text-slate-500"><span>{filteredSamples.length} sample record{filteredSamples.length === 1 ? '' : 's'}</span><div className="flex gap-2"><button type="button" onClick={() => setSamplePage(current => Math.max(0, current - 1))} disabled={safeSamplePage === 0} className="rounded-lg border border-slate-200 px-3 py-1.5 font-semibold text-[#080A9F] disabled:opacity-40">Previous</button><button type="button" onClick={() => setSamplePage(current => Math.min(samplePageCount - 1, current + 1))} disabled={safeSamplePage >= samplePageCount - 1} className="rounded-lg border border-slate-200 px-3 py-1.5 font-semibold text-[#080A9F] disabled:opacity-40">Next</button></div></div></>}
     </section>
   </PortalShell>
 }
