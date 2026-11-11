@@ -8,7 +8,7 @@ const loginClass = 'inline-flex items-center justify-center rounded-full bg-[#08
 
 const openAccountClass = 'inline-flex items-center justify-center rounded-full bg-[#C8A43D] px-4 py-2.5 text-sm font-semibold text-[#07143D] transition hover:bg-[#DEC46D]'
 
-const installClass = 'inline-flex items-center justify-center gap-2 rounded-full border border-[#C8A43D]/70 px-4 py-2.5 text-sm font-semibold text-[#07143D] transition hover:bg-[#FBF8EF]'
+const installClass = 'inline-flex items-center justify-center gap-2 rounded-full border border-[#C8A43D]/70 px-4 py-2.5 text-sm font-semibold text-[#07143D] transition hover:bg-[#F5F7FB]'
 
 export const SignInLink: React.FC<{ className?: string }> = ({ className = 'inline-flex items-center justify-center rounded-full px-4 py-2.5 text-sm font-semibold text-[#080A9F] hover:bg-[#F5F7FB]' }) => (
   <a href={LOGIN_URL} className={className}>Member Login</a>
@@ -30,6 +30,11 @@ export const PublicChrome: React.FC<React.PropsWithChildren> = ({ children }) =>
   const current = (href: string) => (href === '/' ? pathname === '/' : pathname === href)
 
   useEffect(() => {
+    document.documentElement.classList.toggle('evermont-mobile-navigation-open', open)
+    return () => document.documentElement.classList.remove('evermont-mobile-navigation-open')
+  }, [open])
+
+  useEffect(() => {
     if (!open) return
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setOpen(false)
@@ -42,29 +47,29 @@ export const PublicChrome: React.FC<React.PropsWithChildren> = ({ children }) =>
     <div className="min-h-screen bg-white text-[#07143D]">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-full focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-[#080A9F]">Skip to content</a>
       <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 lg:px-6">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 lg:px-6">
           <Link to="/" className="flex min-w-0 items-center gap-3" aria-label="Evermont Credit Union home">
             <img src={LOGO_PATH} alt="" className="h-12 w-12 rounded-lg object-cover" />
-            <span className="hidden font-serif text-lg tracking-tight text-[#07143D] sm:inline">{SITE_NAME}</span>
+            <span className="hidden whitespace-nowrap font-serif text-lg tracking-tight text-[#07143D] sm:inline">{SITE_NAME}</span>
           </Link>
-          <nav className="hidden items-center gap-4 text-sm font-medium text-slate-600 2xl:flex" aria-label="Primary">
+          <nav className="hidden items-center gap-3 text-xs font-medium text-slate-600 xl:flex" aria-label="Primary">
             {publicNav.map((item) => (
-              <Link key={item.href} to={item.href} aria-current={current(item.href) ? 'page' : undefined} className={current(item.href) ? 'text-[#080A9F] underline decoration-[#C8A43D] decoration-2 underline-offset-8' : 'hover:text-[#080A9F]'}>{item.label}</Link>
+              <Link key={item.href} to={item.href} aria-current={current(item.href) ? 'page' : undefined} className={`whitespace-nowrap ${current(item.href) ? 'text-[#080A9F] underline decoration-[#C8A43D] decoration-2 underline-offset-8' : 'hover:text-[#080A9F]'}`}>{item.label}</Link>
             ))}
           </nav>
-          <div className="hidden items-center gap-2 2xl:flex"><button type="button" onClick={requestEvermontInstall} className={installClass}><ArrowDownToLine className="size-4" /> Install</button><SignInLink /><OpenAccountButton /></div>
-          <button type="button" className="inline-flex size-11 items-center justify-center rounded-full border border-slate-200 text-[#080A9F] 2xl:hidden" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-controls="mobile-navigation" aria-label={open ? 'Close menu' : 'Open menu'}>
+          <div className="hidden shrink-0 items-center gap-2 xl:flex"><button type="button" onClick={requestEvermontInstall} className={installClass}><ArrowDownToLine className="size-4" /> Install</button><SignInLink /><OpenAccountButton /></div>
+          <button type="button" className="inline-flex size-11 items-center justify-center rounded-full border border-slate-200 text-[#080A9F] xl:hidden" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-controls="mobile-navigation" aria-label={open ? 'Close menu' : 'Open menu'}>
             {open ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
         </div>
         {open && (
-          <nav id="mobile-navigation" className="border-t border-slate-100 bg-white px-4 py-4 2xl:hidden" aria-label="Mobile">
+          <nav id="mobile-navigation" className="border-t border-slate-100 bg-white px-4 py-3 xl:hidden" aria-label="Mobile">
             {publicNav.map((item) => (
-              <Link key={item.href} to={item.href} onClick={() => setOpen(false)} aria-current={current(item.href) ? 'page' : undefined} className={`block rounded-xl px-3 py-3 text-base font-semibold ${current(item.href) ? 'bg-[#f4f6ff] text-[#080A9F]' : 'text-[#07143D] hover:bg-[#f4f6ff]'}`}>{item.label}</Link>
+              <Link key={item.href} to={item.href} onClick={() => setOpen(false)} aria-current={current(item.href) ? 'page' : undefined} className={`block rounded-xl px-3 py-2 text-base font-semibold ${current(item.href) ? 'bg-[#F5F7FB] text-[#080A9F]' : 'text-[#07143D] hover:bg-[#F5F7FB]'}`}>{item.label}</Link>
             ))}
             <div className="mt-3 grid gap-2">
               <OpenAccountButton className={`${openAccountClass} w-full`} />
-              <SignInLink className="inline-flex w-full items-center justify-center rounded-full border border-[#080A9F]/20 px-4 py-3 text-sm font-semibold text-[#080A9F]" />
+              <SignInLink className="inline-flex w-full items-center justify-center rounded-full border border-[#080A9F]/20 px-4 py-2.5 text-sm font-semibold text-[#080A9F]" />
               <button type="button" onClick={() => { setOpen(false); requestEvermontInstall() }} className={`${installClass} w-full`}><ArrowDownToLine className="size-4" /> Install Evermont</button>
             </div>
           </nav>

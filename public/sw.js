@@ -1,4 +1,4 @@
-const CACHE_NAME = 'evermont-public-v1'
+const CACHE_NAME = 'evermont-public-v2'
 const PUBLIC_PATHS = new Set([
   '/', '/about', '/personal-banking', '/private-wealth', '/services', '/resources', '/contact',
   '/checking', '/savings', '/credit-card', '/loans', '/retirement', '/cryptocurrency',
@@ -6,6 +6,7 @@ const PUBLIC_PATHS = new Set([
 ])
 const SHELL_ASSETS = [
   '/', '/manifest.json', '/images/evermont-logo.jpeg',
+  '/images/banners/home.webp', '/images/banners/personal.webp', '/images/banners/wealth.webp', '/images/banners/phone.webp',
   '/favicon.ico', '/favicon.svg', '/icons/favicon-16x16.png', '/icons/favicon-32x32.png',
   '/icons/apple-touch-icon.png', '/icons/evermont-192.png', '/icons/evermont-512.png', '/icons/evermont-maskable-512.png',
 ]
@@ -42,7 +43,7 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  if (url.pathname.startsWith('/assets/') || url.pathname.startsWith('/icons/')) {
+  if (url.pathname.startsWith('/assets/') || url.pathname.startsWith('/icons/') || url.pathname.startsWith('/images/')) {
     event.respondWith(caches.match(request).then((cached) => cached || fetch(request).then((response) => {
       if (response.ok) {
         const copy = response.clone()

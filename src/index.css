@@ -26,6 +26,10 @@ html {
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
 
+html.evermont-mobile-navigation-open [data-evermont-assistant] {
+  display: none;
+}
+
 .install-dialog {
   animation: install-dialog-in 320ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
 }
