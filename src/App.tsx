@@ -18,8 +18,8 @@ const AdminRoutes = lazy(() => import('@/routes/AdminRoutes').then(module => ({ 
 const EvermontAssistant = lazy(() => import('@/components/EvermontAssistant').then(module => ({ default: module.EvermontAssistant })))
 
 const LoadingFallback: React.FC = () => (
-  <div className="flex min-h-screen items-center justify-center bg-white px-6 text-[#101533]" role="status" aria-live="polite">
-    <div className="flex items-center gap-3 text-sm font-semibold"><span className="size-3 animate-pulse rounded-full bg-[#C9A227]" aria-hidden="true" />Loading Evermont…</div>
+  <div className="flex min-h-screen items-center justify-center bg-white px-6 text-[#07143D]" role="status" aria-live="polite">
+    <div className="flex items-center gap-3 text-sm font-semibold"><span className="size-3 animate-pulse rounded-full bg-[#C8A43D]" aria-hidden="true" />Loading Evermont…</div>
   </div>
 )
 

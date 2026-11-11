@@ -17,7 +17,7 @@ export const PrivateWealthPage: React.FC = () => (
     <PageMeta title={seo.title} description={seo.description} path={seo.path} image={seo.image} />
     <main id="main">
       <section className="grid min-h-[28rem] lg:grid-cols-2">
-        <div className="flex items-center justify-center bg-[#0504AA] px-8 py-16">
+        <div className="flex items-center justify-center bg-[#080A9F] px-8 py-16">
           <img src={LOGO_PATH} alt="Evermont Credit Union" className="h-36 w-auto object-contain sm:h-44" />
         </div>
         <div className="relative flex min-h-80 items-end">
@@ -32,7 +32,7 @@ export const PrivateWealthPage: React.FC = () => (
       <div className="mx-auto grid max-w-6xl gap-8 px-5 py-20 lg:px-8">
         {sections.map(([title, body]) => (
           <article key={title} className="max-w-3xl border-t border-slate-200 pt-8 first:border-0 first:pt-0">
-            <h2 className="font-serif text-3xl text-[#101533]">{title}</h2>
+            <h2 className="font-serif text-3xl text-[#07143D]">{title}</h2>
             <p className="mt-4 leading-8 text-slate-600">{body}</p>
           </article>
         ))}

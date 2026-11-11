@@ -91,7 +91,7 @@ export const PublicInfoPage: React.FC = () => {
         <div className="mx-auto grid max-w-6xl gap-8 px-5 py-16 lg:px-8">
           {content.sections.map(([heading, body]) => (
             <article key={heading} className="max-w-3xl">
-              <h2 className="font-serif text-3xl text-[#101533]">{heading}</h2>
+              <h2 className="font-serif text-3xl text-[#07143D]">{heading}</h2>
               <p className="mt-3 leading-8 text-slate-600">{body}</p>
             </article>
           ))}

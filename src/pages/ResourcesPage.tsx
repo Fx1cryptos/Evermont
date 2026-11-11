@@ -18,27 +18,27 @@ export const ResourcesPage: React.FC = () => (
   <PublicDocument path="/resources" eyebrow="Resources" title="Financial education, written to be read." lede="Short articles on savings, budgeting, planning basics, and online security. Nothing here is a product recommendation." imageAlt="Open blank notebook and a ceramic cup on a linen desk in warm light" actions={[{ href: '/contact', label: 'Ask a question' }]}>
     <section className="bg-white">
       <div className="mx-auto max-w-6xl px-5 py-16 lg:px-8">
-        <nav aria-label="Articles" className="flex flex-wrap gap-3 text-sm font-semibold text-[#0504AA]">
-          {articles.map((article) => <a key={article.id} href={`#${article.id}`} className="rounded-full border border-[#0504AA]/20 px-4 py-2">{article.title}</a>)}
-          <a href="#faq" className="rounded-full border border-[#0504AA]/20 px-4 py-2">FAQ</a>
+        <nav aria-label="Articles" className="flex flex-wrap gap-3 text-sm font-semibold text-[#080A9F]">
+          {articles.map((article) => <a key={article.id} href={`#${article.id}`} className="rounded-full border border-[#080A9F]/20 px-4 py-2">{article.title}</a>)}
+          <a href="#faq" className="rounded-full border border-[#080A9F]/20 px-4 py-2">FAQ</a>
         </nav>
         <div className="mt-12 grid gap-10">
           {articles.map((article) => (
             <article key={article.id} id={article.id} className="max-w-3xl scroll-mt-28">
-              <h2 className="font-serif text-3xl text-[#101533]">{article.title}</h2>
+              <h2 className="font-serif text-3xl text-[#07143D]">{article.title}</h2>
               <p className="mt-4 leading-8 text-slate-600">{article.body}</p>
             </article>
           ))}
         </div>
       </div>
     </section>
-    <section id="faq" className="scroll-mt-28 bg-[#f8f7f4]">
+    <section id="faq" className="scroll-mt-28 bg-[#F5F7FB]">
       <div className="mx-auto max-w-3xl px-5 py-16 lg:px-8">
-        <h2 className="font-serif text-3xl text-[#101533]">Questions</h2>
+        <h2 className="font-serif text-3xl text-[#07143D]">Questions</h2>
         <div className="mt-6 divide-y divide-slate-200 border-y border-slate-200">
           {faqs.map(([question, answer]) => (
             <details key={question} className="group py-5">
-              <summary className="cursor-pointer list-none font-semibold text-[#101533] [&::-webkit-details-marker]:hidden">{question}</summary>
+              <summary className="cursor-pointer list-none font-semibold text-[#07143D] [&::-webkit-details-marker]:hidden">{question}</summary>
               <p className="mt-3 leading-7 text-slate-600">{answer}</p>
             </details>
           ))}

@@ -1,9 +1,9 @@
 export const EVERMONT_COLORS = {
-  blue: '#0504AA',
+  blue: '#080A9F',
   white: '#FFFFFF',
-  gold: '#C9A227',
-  dark: '#1a1a2e',
-  light: '#f8f9fa',
+  gold: '#C8A43D',
+  dark: '#07143D',
+  light: '#F5F7FB',
   border: '#e0e0e0',
   muted: '#6b7280',
 } as const

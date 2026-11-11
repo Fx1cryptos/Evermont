@@ -56,12 +56,12 @@ export const ServicePage: React.FC = () => {
         <div className="mx-auto grid max-w-6xl gap-5 px-5 py-16 md:grid-cols-3 lg:px-8">
           {content.points.map(([heading, body]) => (
             <article key={heading} className="rounded-3xl border border-slate-200 p-7">
-              <h2 className="font-serif text-2xl text-[#101533]">{heading}</h2>
+              <h2 className="font-serif text-2xl text-[#07143D]">{heading}</h2>
               <p className="mt-3 text-sm leading-7 text-slate-600">{body}</p>
             </article>
           ))}
         </div>
-        <p className="mx-auto max-w-6xl px-5 pb-16 text-sm lg:px-8"><Link to="/services" className="font-semibold text-[#0504AA] underline-offset-4 hover:underline">Back to all services</Link></p>
+        <p className="mx-auto max-w-6xl px-5 pb-16 text-sm lg:px-8"><Link to="/services" className="font-semibold text-[#080A9F] underline-offset-4 hover:underline">Back to all services</Link></p>
       </section>
     </PublicDocument>
   )
