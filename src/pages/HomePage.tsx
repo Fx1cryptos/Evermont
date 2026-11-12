@@ -59,21 +59,6 @@ export const HomePage: React.FC = () => (
         </div>
       </section>
 
-      <section className="bg-[#07143D] text-white" aria-labelledby="home-campaign-heading">
-        <div className="mx-auto grid max-w-7xl items-center gap-10 px-5 py-16 sm:px-8 lg:grid-cols-[0.8fr_1fr] lg:gap-16 lg:px-12 lg:py-20">
-          <div className="max-w-xl">
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#E4C86F]">EVERMONT digital access</p>
-            <h2 id="home-campaign-heading" className="mt-4 font-serif text-4xl leading-tight sm:text-5xl">Bank smarter. Build greater.</h2>
-            <p className="mt-5 leading-7 text-white/75">Explore the banking, digital access, and wealth information described across this site. For account-specific services, continue to the separate member portal.</p>
-            <Link to="/services" className="mt-7 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#C8A43D] px-6 py-3 text-sm font-bold text-[#07143D] transition hover:bg-[#E4C86F]">Explore our services <ArrowRight className="size-4" /></Link>
-          </div>
-          <figure className="overflow-hidden rounded-3xl border border-white/15 bg-white shadow-[0_24px_64px_rgba(0,0,0,0.25)]">
-            <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/IMG_7715-zCUz2VlOtt4c4YjdyLcWZgV0SMeWIW.jpeg" alt="EVERMONT promotional artwork with gold service icons and a static smartphone banking interface." loading="lazy" decoding="async" className="block h-auto w-full" />
-            <figcaption className="border-t border-slate-200 px-4 py-3 text-xs leading-5 text-slate-600">The displayed balance and controls are part of a static promotional graphic, not live account information.</figcaption>
-          </figure>
-        </div>
-      </section>
-
       <section className="bg-[#F5F7FB]" aria-labelledby="offerings-heading">
         <div className="mx-auto max-w-7xl px-5 py-20 sm:px-8 lg:px-12 lg:py-24">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
