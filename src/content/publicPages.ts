@@ -41,7 +41,7 @@ export const serviceLinks = [
 
 export const legalNav = [
   { label: 'Privacy Policy', href: '/privacy' },
-  { label: 'Terms and Conditions', href: '/terms' },
+  { label: 'Terms & Conditions', href: '/terms' },
   { label: 'Accessibility', href: '/accessibility' },
   { label: 'Disclosures', href: '/disclosures' },
 ] as const
@@ -69,8 +69,8 @@ export const publicPages: PageSeo[] = [
   { path: '/retirement', title: 'Retirement | Evermont Credit Union', description: 'Retirement information from Evermont. This page does not claim to sponsor or administer a retirement plan.', image: '/images/banners/wealth.webp' },
   { path: '/open-account', title: 'Open an Account | Evermont Credit Union', description: 'Open an Evermont account by continuing to member portal registration. This page does not submit an application.', image: '/images/banners/contact.webp' },
   { path: '/security', title: 'Security and Privacy | Evermont Credit Union', description: 'Account security, privacy habits, fraud awareness, and how to report a concern. Evermont does not promise absolute security.', image: '/images/banners/security.webp' },
-  { path: '/privacy', title: 'Privacy Policy | Evermont Credit Union', description: 'How Evermont treats questions sent from this public website. Contact support for clarification.', image: '/images/banners/security.webp' },
-  { path: '/terms', title: 'Terms and Conditions | Evermont Credit Union', description: 'Terms for using the Evermont public website. Reading a page does not open an account or set a rate.', image: '/images/banners/about.webp' },
+  { path: '/privacy', title: 'Privacy Policy | Evermont Credit Union', description: 'A draft describing how personal information may be handled across EVERMONT-branded public and digital banking experiences. Subject to legal review.', image: '/images/banners/security.webp' },
+  { path: '/terms', title: 'Terms & Conditions | Evermont Credit Union', description: 'Draft terms for using EVERMONT-branded public pages and digital services, with account agreements and financial disclosures expressly distinguished. Subject to legal review.', image: '/images/banners/about.webp' },
   { path: '/accessibility', title: 'Accessibility | Evermont Credit Union', description: 'Evermont’s commitment to readable, keyboard-friendly public pages. Contact support if you find a barrier.', image: '/images/banners/resources.webp' },
   { path: '/disclosures', title: 'Disclosures | Evermont Credit Union', description: 'What the Evermont public website does not publish: rates, fees, or a claim of official status.', image: '/images/banners/about.webp' },
   { path: '/cryptocurrency', title: 'Digital Assets | Evermont Credit Union', description: 'A careful note on digital assets. Evermont does not describe buying, selling, or custody as available unless support confirms it.', image: '/images/banners/wealth.webp' },

@@ -1,6 +1,7 @@
-import { useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { PublicDocument } from '@/components/PageBanner'
 import { REGISTER_URL, SUPPORT_EMAIL, SUPPORT_PHONE_DISPLAY } from '@/content/publicPages'
+import LegalDocumentPage from '@/pages/LegalDocumentPage'
 
 type Info = { eyebrow: string; title: string; lede: string; alt: string; sections: [string, string][]; action?: { href: string; label: string; external?: boolean } }
 
@@ -19,30 +20,6 @@ const pages: Record<string, Info> = {
       ['Fraud awareness', 'Stop if someone asks for a one-time code, a password, or a recovery link. Evermont will not ask for those by email.'],
       ['Your part', 'Check the address bar before you sign in. If something feels wrong, do not continue.'],
       ['How to report it', `Call ${SUPPORT_PHONE_DISPLAY} or email ${SUPPORT_EMAIL}. Describe what you saw. Do not include the secret you were asked for.`],
-    ],
-  },
-  '/privacy': {
-    eyebrow: 'Privacy Policy',
-    title: 'A plain commitment to careful handling.',
-    lede: 'This is a general commitment for the public website. It is not a claim that a particular statute has been certified.',
-    alt: 'Closed brass padlock on dark blue linen',
-    sections: [
-      ['What this covers', 'Information you choose to send from the public site, such as an email, a phone call, or the enquiry form that opens your mail app.'],
-      ['What not to send', 'Passwords, one-time codes, full account numbers, and recovery links do not belong in ordinary email.'],
-      ['The member portal', 'Sign-in and registration continue there. This website does not display balances.'],
-      ['Questions', `Call ${SUPPORT_PHONE_DISPLAY} or email ${SUPPORT_EMAIL} if you need a clarification.`],
-    ],
-  },
-  '/terms': {
-    eyebrow: 'Terms and Conditions',
-    title: 'How to read this website.',
-    lede: 'These terms explain the public site. They do not open an account or set a price.',
-    alt: 'Quiet library reading room with oak tables',
-    sections: [
-      ['Using the pages', 'You may read them to understand how Evermont describes services and how to reach support or the member portal.'],
-      ['What a page does not do', 'Viewing a page does not open an account, approve a request, or publish a rate.'],
-      ['Descriptions', 'If a detail is not written down, do not assume it. Ask before you rely on it.'],
-      ['Questions', `Questions about these terms can go to ${SUPPORT_PHONE_DISPLAY} or ${SUPPORT_EMAIL}.`],
     ],
   },
   '/accessibility': {
@@ -83,6 +60,7 @@ const pages: Record<string, Info> = {
 
 export const PublicInfoPage: React.FC = () => {
   const path = useLocation().pathname
+  if (path === '/privacy' || path === '/terms') return <LegalDocumentPage />
   const content = pages[path] ?? pages['/disclosures']
   const docPath = pages[path] ? path : '/disclosures'
   return (
@@ -97,6 +75,18 @@ export const PublicInfoPage: React.FC = () => {
           ))}
         </div>
       </section>
+      {path === '/open-account' && (
+        <section aria-labelledby="onboarding-legal-links" className="border-t border-slate-200 bg-[#F5F7FB]">
+          <div className="mx-auto max-w-6xl px-5 py-8 lg:px-8">
+            <h2 id="onboarding-legal-links" className="font-serif text-2xl text-[#07143D]">Review before continuing</h2>
+            <p className="mt-2 text-sm leading-7 text-slate-600">Read the documents that describe privacy practices and website terms before opening the registration portal.</p>
+            <div className="mt-4 flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold">
+              <Link to="/privacy" className="rounded-sm text-[#080A9F] underline decoration-[#C8A43D] underline-offset-4 hover:text-[#07143D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#080A9F]">Privacy Policy</Link>
+              <Link to="/terms" className="rounded-sm text-[#080A9F] underline decoration-[#C8A43D] underline-offset-4 hover:text-[#07143D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#080A9F]">Terms &amp; Conditions</Link>
+            </div>
+          </div>
+        </section>
+      )}
     </PublicDocument>
   )
 }
