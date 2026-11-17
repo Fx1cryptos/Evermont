@@ -24,8 +24,7 @@ export const notificationService = {
         .range(offset, offset + limit - 1)
 
       if (error) {
-        console.warn('Failed to fetch notifications from Supabase:', error)
-        return []
+        throw error
       }
 
       return (
@@ -43,7 +42,7 @@ export const notificationService = {
       )
     } catch (error) {
       console.error('Error fetching notifications:', error)
-      return []
+      throw new Error('Failed to load notifications.')
     }
   },
 
@@ -56,14 +55,13 @@ export const notificationService = {
         .eq('read', false)
 
       if (error) {
-        console.warn('Failed to fetch unread count:', error)
-        return 0
+        throw error
       }
 
       return count || 0
     } catch (error) {
       console.error('Error fetching unread count:', error)
-      return 0
+      throw new Error('Failed to load unread notifications.')
     }
   },
 

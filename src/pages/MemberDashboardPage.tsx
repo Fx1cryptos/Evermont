@@ -1,246 +1,350 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import { ArrowDownLeft, ArrowUpRight, Bell, Building2, CreditCard, Eye, EyeOff, FileText, Headphones, Landmark, Receipt, Send, Smartphone, UserRound, WalletCards } from 'lucide-react'
-import { Link, useNavigate } from 'react-router-dom'
+import React, { useEffect, useState } from 'react'
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  ArrowUpRight as ExternalLink,
+  Bell,
+  FileText,
+  HelpCircle,
+  Receipt,
+  Send,
+  WalletCards,
+} from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { PortalShell } from '@/components/member/PortalShell'
-import { ActivationRequiredModal } from '@/components/member/ActivationRequiredModal'
 import { useAuth } from '@/contexts/AuthContext'
 import { ROUTES } from '@/constants/routes'
-import { GATED_FEATURES, LINK_FEATURES, maskAccount } from '@/lib/bankingServices'
+import { maskAccount } from '@/lib/bankingServices'
+import { useNotifications } from '@/hooks/useNotifications'
 import { accountService } from '@/services/accountService'
 import { profileService } from '@/services/profileService'
-import { isDepositActivity, isTransferActivity, mergeActivity, transactionService, type LedgerActivity } from '@/services/transactionService'
-import { useActivationGate } from '@/hooks/useActivationGate'
+import { transactionService, type LedgerActivity } from '@/services/transactionService'
 import type { Account, Profile } from '@/types'
 
-const money = (value: unknown) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value) || 0)
-const SAMPLE_MEMBER_ID = '96167e4c-024d-47ba-9f43-dce4f8cf599a'
-const SAMPLE_ACCOUNT_ID = 'ee99d49d-f2df-4326-bb76-cc2801fc8448'
-const BENEFICIARY_STORAGE_KEY = 'evermont-dashboard-beneficiary'
-const formatActivityDate = (value: string | null) => value ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(value)) : 'Date not returned'
+const formatCurrency = (value: string | number, currency: string): string => {
+  const amount = Number(value)
+  if (!Number.isFinite(amount) || String(value).trim() === '') return 'Balance unavailable'
+  if (!currency.trim()) {
+    return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  }
+  try {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount)
+  } catch {
+    return `${currency} ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+}
 
-const Panel: React.FC<{ title: string; action?: React.ReactNode; children: React.ReactNode }> = ({ title, action, children }) => (
-  <section className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-900/[0.03]">
-    <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-      <h2 className="text-sm font-semibold text-[#101533]">{title}</h2>
+const formatAmount = (value: string | number): string => {
+  const amount = Number(value)
+  return Number.isFinite(amount)
+    ? amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : 'Amount unavailable'
+}
+
+const formatDate = (value: string) => {
+  const date = new Date(value)
+  return Number.isNaN(date.getTime())
+    ? 'Date not returned'
+    : new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(date)
+}
+
+const Panel: React.FC<{
+  title: string
+  description?: string
+  action?: React.ReactNode
+  children: React.ReactNode
+}> = ({ title, description, action, children }) => (
+  <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_28px_rgba(20,32,63,0.035)]">
+    <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6">
+      <div>
+        <h2 className="text-sm font-semibold text-[#17213C]">{title}</h2>
+        {description && <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>}
+      </div>
       {action}
     </div>
     {children}
   </section>
 )
 
-const ActivityList: React.FC<{ rows: LedgerActivity[]; empty: string }> = ({ rows, empty }) => (
-  rows.length ? <ul className="divide-y divide-slate-100">{rows.map(row => {
-    const credit = row.direction === 'credit'
-    return (
-      <li key={row.id} className="grid gap-3 px-4 py-3.5 sm:grid-cols-[auto_1fr_auto] sm:items-center">
-        <span className={`flex size-9 items-center justify-center rounded-full ${credit ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`} aria-label={credit ? 'Credit' : 'Debit'}>{credit ? <ArrowUpRight className="size-4" aria-hidden="true" /> : <ArrowDownLeft className="size-4" aria-hidden="true" />}</span>
-        <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><p className="truncate text-sm font-semibold text-[#101533]">{row.description || 'Ledger entry'}</p>{row.isSample && <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700">Sample</span>}</div><p className="mt-1 text-xs text-slate-500">{formatActivityDate(row.createdAt)} · <span className="capitalize">{row.entryType || row.category || row.direction}</span>{row.referenceId ? ` · ${row.referenceId}` : ''}</p></div>
-        <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end"><p className={`text-sm font-semibold tabular-nums ${credit ? 'text-emerald-700' : 'text-rose-800'}`}>{credit ? '+' : '−'}{money(row.displayAmount)}</p><span className={`rounded-full px-2 py-1 text-[11px] font-semibold capitalize ${row.status === 'completed' || row.status === 'posted' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>{row.status || 'Status not returned'}</span></div>
-      </li>
-    )
-  })}</ul> : (
-    <div className="px-4 py-10 text-center">
-      <Receipt className="mx-auto size-6 text-[#C9A227]" aria-hidden="true" />
-      <p className="mt-3 text-sm font-semibold text-[#0504AA]">No activity returned</p>
-      <p className="mt-1 text-sm text-slate-500">{empty}</p>
-    </div>
-  )
-)
-
-const FEATURE_ICONS: Record<string, React.FC<{ className?: string }>> = {
-  transfer: Send,
-  ach: Building2,
-  'bill-pay': Receipt,
-  mobile: Smartphone,
-  check: FileText,
-  wire: Landmark,
-  'virtual-card': CreditCard,
-  'digital-assets': WalletCards,
-  statements: FileText,
-  alerts: Bell,
-  support: Headphones,
-  profile: UserRound,
-}
+const quickActions = [
+  { label: 'View accounts', to: ROUTES.ACCOUNTS, icon: WalletCards, note: 'Your account details' },
+  { label: 'Make a transfer', to: '/services/transfer', icon: Send, note: 'Transfer services' },
+  { label: 'Transaction history', to: ROUTES.TRANSACTIONS, icon: Receipt, note: 'Review account activity' },
+  { label: 'Contact support', to: ROUTES.SUPPORT, icon: HelpCircle, note: 'We are here to help' },
+]
 
 export const MemberDashboardPage: React.FC = () => {
   const { user, loading: authLoading } = useAuth()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [accounts, setAccounts] = useState<Account[]>([])
-  const [rows, setRows] = useState<LedgerActivity[]>([])
-  const [sampleRows, setSampleRows] = useState<LedgerActivity[]>([])
+  const [transactions, setTransactions] = useState<LedgerActivity[]>([])
   const [loading, setLoading] = useState(true)
-  const [beneficiaryName, setBeneficiaryName] = useState('')
-  const [beneficiarySaved, setBeneficiarySaved] = useState(false)
-  const [error, setError] = useState('')
-  const total = useMemo(() => accounts.reduce((sum, account) => sum + Number(account.balance), 0), [accounts])
-  const { check: checkActivation, checking } = useActivationGate(user?.id)
-  const navigate = useNavigate()
-  const [pendingService, setPendingService] = useState<string | null>(null)
-  const [gatePath, setGatePath] = useState<string | null>(null)
-  const [serviceError, setServiceError] = useState('')
-  const [hidden, setHidden] = useState(false)
+  const [accountError, setAccountError] = useState('')
+  const [transactionError, setTransactionError] = useState('')
+  const { notifications, loading: notificationsLoading, error: notificationError } = useNotifications(user?.id)
 
   useEffect(() => {
-    if (!user) return
+    if (!user) {
+      setLoading(false)
+      return
+    }
+
     let active = true
-    void Promise.all([profileService.getProfile(user.id), accountService.getAccounts(user.id)]).then(async ([nextProfile, nextAccounts]) => {
+    setLoading(true)
+    setAccountError('')
+    setTransactionError('')
+
+    const load = async () => {
+      const results = await Promise.allSettled([
+        profileService.getProfile(user.id),
+        accountService.getAccounts(user.id),
+        transactionService.getTransactions(user.id, { limit: 8 }),
+      ])
       if (!active) return
-      setProfile(nextProfile)
-      setAccounts(nextAccounts)
-      try {
-        const activity = await transactionService.getTransactions(user.id, { limit: 40 })
-        if (active) setRows(activity)
-        if (user.id === SAMPLE_MEMBER_ID && nextAccounts.some(account => account.id === SAMPLE_ACCOUNT_ID)) {
-          try {
-            const samples = await transactionService.getSampleTransactions(user.id, [SAMPLE_ACCOUNT_ID])
-            if (active) setSampleRows(samples)
-          } catch {
-            if (active) setSampleRows([])
-          }
-        } else if (active) {
-          setSampleRows([])
-        }
-      } catch {
-        if (active) setError('We could not load transactions from the ledger.')
+
+      const [profileResult, accountsResult, transactionsResult] = results
+      if (profileResult.status === 'fulfilled') setProfile(profileResult.value)
+      else setProfile(null)
+
+      if (accountsResult.status === 'fulfilled') setAccounts(accountsResult.value)
+      else {
+        setAccounts([])
+        setAccountError('We could not load your accounts. Please try again later.')
       }
-    }).catch(() => { if (active) setError('We could not load your accounts.') }).finally(() => { if (active) setLoading(false) })
+
+      if (transactionsResult.status === 'fulfilled') setTransactions(transactionsResult.value)
+      else {
+        setTransactions([])
+        setTransactionError('We could not load recent transactions. Please try again later.')
+      }
+
+      setLoading(false)
+    }
+
+    void load()
     return () => { active = false }
   }, [user])
 
-  useEffect(() => {
-    if (!user || typeof window === 'undefined') return
-    setBeneficiaryName(window.localStorage.getItem(`${BENEFICIARY_STORAGE_KEY}:${user.id}`) || '')
-  }, [user])
-
-  useEffect(() => {
-    if (!user || loading || error) return
-    void checkActivation().then(() => {
-    }).catch(() => setServiceError('We could not verify activation.'))
-  }, [user, loading, error, checkActivation])
-
-  const mergedActivity = useMemo(() => mergeActivity(rows, sampleRows), [rows, sampleRows])
-  const recent = mergedActivity.slice(0, 8)
-  const transfers = rows.filter((row) => isTransferActivity(row)).slice(0, 8)
-  const deposits = rows.filter((row) => isDepositActivity(row)).slice(0, 8)
-  const depositTotal = rows.filter((row) => isDepositActivity(row)).reduce((sum, row) => sum + Number(row.displayAmount || 0), 0)
-  const withdrawalTotal = rows.filter((row) => row.direction === 'debit' && !isTransferActivity(row)).reduce((sum, row) => sum + Number(row.displayAmount || 0), 0)
-  const shown = (value: unknown) => hidden ? '••••••' : money(value)
-
-  const openService = async (path: string, key: string) => {
-    setServiceError('')
-    setPendingService(key)
-    try {
-      const result = await checkActivation()
-      if (!result.activated) {
-        setGatePath(path)
-        return
-      }
-      navigate(path)
-    } catch {
-      setServiceError('We could not verify activation. The service was not opened.')
-    } finally {
-      setPendingService(null)
-    }
+  if (authLoading || (user && loading)) {
+    return (
+      <main className="flex min-h-[50vh] items-center justify-center">
+        <p className="text-sm text-slate-500" role="status">Loading your member overview…</p>
+      </main>
+    )
   }
 
-  if (authLoading || (user && loading)) return <main className="flex min-h-screen items-center justify-center bg-[#f6f7fb] text-sm text-slate-500">Loading your member portal...</main>
-  if (!user) return <main className="p-8"><Link to={ROUTES.LOGIN}>Sign in</Link></main>
+  if (!user) {
+    return <main className="p-8"><Link to={ROUTES.LOGIN}>Sign in</Link></main>
+  }
 
   const firstName = profile?.firstName || user.firstName || 'Member'
+  const fullName = [profile?.firstName || user.firstName, profile?.lastName || user.lastName].filter(Boolean).join(' ')
+  const unreadCount = notifications.filter(notification => !notification.read).length
 
-  return <PortalShell title={`Hello, ${firstName}`} eyebrow="Account overview">
-    <div className="space-y-5">
-      {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
+  return (
+    <PortalShell title="Overview" eyebrow="Private member portal">
+      <div className="space-y-7">
+        <section className="relative overflow-hidden rounded-[24px] bg-[#101A35] px-5 py-7 text-white sm:px-8 sm:py-9 lg:px-10">
+          <div className="pointer-events-none absolute -right-20 -top-32 size-[340px] rounded-full border border-white/[0.07]" aria-hidden="true" />
+          <div className="pointer-events-none absolute -right-8 -top-20 size-[230px] rounded-full border border-[#C9A227]/20" aria-hidden="true" />
+          <div className="relative max-w-3xl">
+            <p className="text-[9px] font-bold uppercase tracking-[.22em] text-[#D4B65D]">EVERMONT · PRIVATE MEMBER</p>
+            <h2 className="mt-3 text-2xl font-medium tracking-[-.035em] sm:text-3xl lg:text-[34px]">
+              Welcome back, {firstName}
+            </h2>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-300">
+              Your financial overview, thoughtfully brought together.
+            </p>
+            <p className="mt-5 text-xs font-medium tracking-wide text-[#E4D6A9]">Where Private Wealth Is Protected.</p>
+          </div>
+          {fullName && (
+            <div className="relative mt-7 flex items-center gap-3 border-t border-white/10 pt-5 sm:absolute sm:bottom-8 sm:right-8 sm:mt-0 sm:border-0 sm:pt-0 lg:right-10">
+              <span className="flex size-10 items-center justify-center rounded-full border border-[#C9A227]/40 bg-white/[0.06] text-xs font-semibold text-[#E4D6A9]">
+                {fullName.split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase()).join('')}
+              </span>
+              <span>
+                <span className="block text-xs font-semibold text-white">{fullName}</span>
+                <span className="mt-1 block text-[10px] text-slate-400">Member account</span>
+              </span>
+            </div>
+          )}
+        </section>
 
-      <section className="rounded-2xl bg-[#0504AA] p-5 text-white sm:p-6">
-        <div className="flex items-start justify-between gap-3">
-          <p className="text-xs font-semibold uppercase tracking-[.16em] text-[#C9A227]">Available balance</p>
-          <button type="button" onClick={() => setHidden((value) => !value)} aria-pressed={hidden} className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-3 py-1.5 text-xs font-semibold">{hidden ? <Eye className="size-4" aria-hidden="true" /> : <EyeOff className="size-4" aria-hidden="true" />}{hidden ? 'Show' : 'Hide'}</button>
-        </div>
-        {error ? <p className="mt-3 text-sm text-blue-100">Balance is hidden because account records did not load.</p> : accounts.length ? <p className="mt-3 text-4xl font-semibold tabular-nums tracking-tight sm:text-5xl">{shown(total)}</p> : <p className="mt-3 text-sm text-blue-100">No accounts are on file for this member.</p>}
-        <p className="mt-3 max-w-xl text-sm leading-6 text-blue-100">{accounts.length ? `Sum of ${accounts.length === 1 ? 'the balance' : 'the balances'} returned for your account${accounts.length === 1 ? '' : 's'}. This page does not move money.` : 'A balance appears only when the database returns an account.'}</p>
-      </section>
+        <section aria-labelledby="accounts-heading">
+          <div className="mb-3 flex items-end justify-between gap-3">
+            <div>
+              <p className="text-[9px] font-bold uppercase tracking-[.2em] text-[#927421]">Your relationship</p>
+              <h2 id="accounts-heading" className="mt-1 text-lg font-semibold tracking-[-.02em] text-[#17213C]">Accounts</h2>
+            </div>
+            <Link to={ROUTES.ACCOUNTS} className="inline-flex items-center gap-1 text-xs font-semibold text-[#0504AA] hover:text-[#8A6A14] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A227]">
+              All accounts <ExternalLink className="size-3.5" aria-hidden="true" />
+            </Link>
+          </div>
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Account summary">
-        {[{ label: 'Account status', value: accounts[0]?.status || 'Not returned', detail: 'Verified from account record' }, { label: 'Total deposits', value: shown(depositTotal), detail: `${rows.filter((row) => isDepositActivity(row)).length} posted entries` }, { label: 'Total withdrawals', value: shown(withdrawalTotal), detail: 'Posted debit activity' }].map(card => <article key={card.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><p className="text-xs font-semibold uppercase tracking-[.14em] text-slate-500">{card.label}</p><p className="mt-3 truncate text-2xl font-semibold tabular-nums text-[#101533]">{card.value}</p><p className="mt-2 text-xs text-slate-500">{card.detail}</p></article>)}
-      </section>
+          {accountError && <p role="alert" className="mb-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{accountError}</p>}
+          {!accountError && accounts.length === 0 && (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-5 py-10 text-center">
+              <WalletCards className="mx-auto size-6 text-[#927421]" aria-hidden="true" />
+              <p className="mt-3 text-sm font-semibold text-[#17213C]">No accounts to display</p>
+              <p className="mt-1 text-xs text-slate-500">Account details will appear here when available.</p>
+            </div>
+          )}
+          {accounts.length > 0 && (
+            <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+              {accounts.map(account => (
+                <article key={account.id} className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_28px_rgba(20,32,63,0.035)] transition-colors hover:border-[#C9A227]/70 sm:p-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#0504AA]/[0.06] text-[#0504AA]">
+                        <WalletCards className="size-[18px]" aria-hidden="true" />
+                      </span>
+                      <div className="min-w-0">
+                        <h3 className="truncate text-sm font-semibold capitalize text-[#17213C]">{account.accountType.replace('_', ' ')}</h3>
+                        <p className="mt-1 font-mono text-[11px] tracking-wide text-slate-500">
+                          {account.accountNumber ? maskAccount(account.accountNumber) : 'Account number not returned'}
+                        </p>
+                      </div>
+                    </div>
+                    <span className={`shrink-0 rounded-full px-2.5 py-1 text-[9px] font-semibold capitalize ${
+                      account.status === 'active' ? 'bg-emerald-50 text-emerald-800' : 'bg-slate-100 text-slate-600'
+                    }`}>
+                      {account.status || 'Status not returned'}
+                    </span>
+                  </div>
+                  <div className="mt-6 border-t border-slate-100 pt-4">
+                    <p className="text-[9px] font-semibold uppercase tracking-[.16em] text-slate-400">Account balance</p>
+                    <p className="mt-1.5 text-[25px] font-medium tracking-[-.035em] text-[#17213C] tabular-nums">
+                      {formatCurrency(account.balance, account.currency)}
+                    </p>
+                    <p className="mt-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                      {account.currency || 'Currency not returned'}
+                    </p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
 
-      <section aria-labelledby="account-summary-title">
-        <h2 id="account-summary-title" className="text-sm font-semibold text-[#101533]">Accounts</h2>
-        {accounts.length ? <ul className="mt-3 grid gap-3 sm:grid-cols-2">{accounts.map(account => (
-          <li key={account.id} className="rounded-2xl border border-slate-200 bg-white p-4">
-            <p className="text-sm font-semibold capitalize text-[#0504AA]">{account.accountType}</p>
-            <p className="mt-1 text-xs text-slate-500">{account.accountNumber ? maskAccount(account.accountNumber) : 'Account number not returned'} · <span className="capitalize">{account.status || 'Status not returned'}</span></p>
-            <p className="mt-3 text-xl font-semibold tabular-nums text-[#101533]">{shown(account.balance)}</p>
-          </li>
-        ))}</ul> : <p className="mt-3 rounded-2xl border border-slate-200 bg-white px-4 py-6 text-sm text-slate-500">No account details were returned.</p>}
-      </section>
+        <section aria-labelledby="quick-actions-heading">
+          <div className="mb-3">
+            <p className="text-[9px] font-bold uppercase tracking-[.2em] text-[#927421]">At your service</p>
+            <h2 id="quick-actions-heading" className="mt-1 text-lg font-semibold tracking-[-.02em] text-[#17213C]">Quick access</h2>
+          </div>
+          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+            {quickActions.map(({ label, to, icon: Icon, note }) => (
+              <Link
+                key={to}
+                to={to}
+                className="group flex min-h-[104px] items-start gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 transition hover:-translate-y-0.5 hover:border-[#C9A227]/70 hover:shadow-[0_10px_28px_rgba(20,32,63,0.07)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A227] sm:p-5"
+              >
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#0504AA]/[0.06] text-[#0504AA] transition-colors group-hover:bg-[#0504AA] group-hover:text-white">
+                  <Icon className="size-[17px]" aria-hidden="true" />
+                </span>
+                <span className="min-w-0 pt-0.5">
+                  <span className="block text-xs font-semibold text-[#17213C]">{label}</span>
+                  <span className="mt-1 block text-[10px] leading-4 text-slate-500">{note}</span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
 
-      <section aria-labelledby="quick-actions-title"><div className="flex items-end justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-[#C9A227]">At a glance</p><h2 id="quick-actions-title" className="mt-1 text-lg font-semibold tracking-tight text-[#101533]">Quick actions</h2></div><span className="text-xs text-slate-500">Secure member shortcuts</span></div><div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-5">{[{ label: 'Accounts', to: ROUTES.ACCOUNTS, icon: WalletCards }, { label: 'Transfer', to: '/services/transfer', icon: Send }, { label: 'Beneficiaries', to: ROUTES.BENEFICIARIES, icon: UserRound }, { label: 'Statements', to: '/statements', icon: FileText }, { label: 'Support', to: ROUTES.SUPPORT, icon: Headphones }].map(({ label, to, icon: Icon }) => <Link key={to} to={to} className="group flex min-h-24 flex-col items-start justify-between rounded-2xl border border-slate-200 bg-white p-3 transition hover:-translate-y-0.5 hover:border-[#C9A227] hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0504AA]"><span className="flex size-9 items-center justify-center rounded-xl bg-[#0504AA]/10 text-[#0504AA] group-hover:bg-[#0504AA] group-hover:text-[#C9A227]"><Icon className="size-4" aria-hidden="true" /></span><span className="text-xs font-semibold text-[#101533]">{label}</span></Link>)}</div></section>
-
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5" aria-labelledby="banking-services-title">
-        <h2 id="banking-services-title" className="text-sm font-semibold text-[#101533]">Features</h2>
-        <p className="mt-1 text-sm text-slate-500">Money-movement features stay closed until the database says this account is activated.</p>
-        {serviceError && <p role="alert" className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{serviceError}</p>}
-        <ul className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {GATED_FEATURES.map((item) => {
-            const Icon = FEATURE_ICONS[item.key] || Landmark
-            const busy = checking && pendingService === item.key
-            return (
-              <li key={item.key}>
-                <button type="button" onClick={() => void openService(item.path, item.key)} disabled={checking} aria-busy={busy} className="flex h-full w-full flex-col items-start gap-3 rounded-2xl border border-slate-200 bg-white p-3 text-left hover:border-[#C9A227] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0504AA] disabled:opacity-60 sm:p-4">
-                  <span className="flex size-10 items-center justify-center rounded-xl bg-[#0504AA] text-[#C9A227]"><Icon className="size-5" aria-hidden="true" /></span>
-                  <span className="text-sm font-semibold text-[#0504AA]">{item.title}</span>
-                  <span className="text-xs leading-5 text-slate-500">{busy ? 'Checking activation…' : item.description}</span>
-                </button>
-              </li>
-            )
-          })}
-          {LINK_FEATURES.map((item) => {
-            const Icon = FEATURE_ICONS[item.key] || Landmark
-            return (
-              <li key={item.key}>
-                <Link to={item.path} className="flex h-full flex-col items-start gap-3 rounded-2xl border border-slate-200 bg-white p-3 hover:border-[#C9A227] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0504AA] sm:p-4">
-                  <span className="flex size-10 items-center justify-center rounded-xl border border-[#C9A227] text-[#0504AA]"><Icon className="size-5" aria-hidden="true" /></span>
-                  <span className="text-sm font-semibold text-[#0504AA]">{item.title}</span>
-                  <span className="text-xs leading-5 text-slate-500">{item.description}</span>
-                </Link>
-              </li>
-            )
-          })}
-        </ul>
-      </section>
-
-      <div className="grid gap-5 xl:grid-cols-[1.35fr_1fr] xl:items-start">
-        <Panel title="Recent activity" action={<Link to={ROUTES.TRANSACTIONS} className="text-sm font-semibold text-[#0504AA]">Full history</Link>}>
-          {error ? <p className="px-4 py-6 text-sm text-slate-500">Activity was not loaded.</p> : <ActivityList rows={recent} empty="Posted ledger entries and transactions will appear here." />}
-        </Panel>
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-1">
-          <Panel title="Transfer history">
-            {error ? <p className="px-4 py-6 text-sm text-slate-500">Transfer history was not loaded.</p> : <ActivityList rows={transfers} empty="No transfer entries were returned." />}
+        <div className="grid gap-5 xl:grid-cols-[1.4fr_1fr]">
+          <Panel
+            title="Recent transactions"
+            description="Recent activity returned for your member accounts."
+            action={
+              <Link to={ROUTES.TRANSACTIONS} className="shrink-0 text-[11px] font-semibold text-[#0504AA] hover:text-[#8A6A14] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A227]">
+                View history
+              </Link>
+            }
+          >
+            {transactionError ? (
+              <p role="alert" className="px-5 py-8 text-sm text-rose-800 sm:px-6">{transactionError}</p>
+            ) : transactions.length === 0 ? (
+              <div className="px-5 py-10 text-center sm:px-6">
+                <Receipt className="mx-auto size-6 text-[#927421]" aria-hidden="true" />
+                <p className="mt-3 text-sm font-semibold text-[#17213C]">No transactions to display</p>
+                <p className="mt-1 text-xs text-slate-500">Posted activity will appear here when available.</p>
+              </div>
+            ) : (
+              <ul className="divide-y divide-slate-100">
+                {transactions.map(row => {
+                  const credit = row.direction === 'credit'
+                  const account = accounts.find(item => item.id === row.accountId)
+                  return (
+                    <li key={row.id} className="flex items-center gap-3 px-5 py-4 sm:px-6">
+                      <span className={`flex size-9 shrink-0 items-center justify-center rounded-full ${credit ? 'bg-emerald-50 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
+                        {credit
+                          ? <ArrowDownLeft className="size-4" aria-hidden="true" />
+                          : <ArrowUpRight className="size-4" aria-hidden="true" />}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-semibold text-[#17213C]">{row.description || 'Transaction'}</p>
+                        <p className="mt-1 text-[10px] text-slate-500">{formatDate(row.createdAt)}</p>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p className={`text-xs font-semibold tabular-nums ${credit ? 'text-emerald-800' : 'text-[#17213C]'}`}>
+                          {credit ? '+' : '−'}{account?.currency
+                            ? formatCurrency(row.displayAmount, account.currency)
+                            : formatAmount(row.displayAmount)}
+                        </p>
+                        <p className="mt-1 text-[9px] font-medium capitalize text-slate-500">
+                          {row.status || 'Status not returned'}
+                          {!account?.currency && <span className="block">Currency not returned</span>}
+                        </p>
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
           </Panel>
-          <Panel title="Deposit history">
-            {error ? <p className="px-4 py-6 text-sm text-slate-500">Deposit history was not loaded.</p> : <ActivityList rows={deposits} empty="No deposit entries were returned." />}
+
+          <Panel
+            title="Your notifications"
+            description={unreadCount ? `${unreadCount} unread message${unreadCount === 1 ? '' : 's'}` : 'Important account messages'}
+            action={
+              <Link to="/alerts" aria-label="View all notifications" className="flex size-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-[#0504AA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A227]">
+                <Bell className="size-4" aria-hidden="true" />
+              </Link>
+            }
+          >
+            {notificationsLoading ? (
+              <p role="status" className="px-5 py-8 text-sm text-slate-500 sm:px-6">Loading notifications…</p>
+            ) : notificationError ? (
+              <p role="alert" className="px-5 py-8 text-sm text-rose-800 sm:px-6">Notifications could not be loaded.</p>
+            ) : notifications.length === 0 ? (
+              <div className="px-5 py-10 text-center sm:px-6">
+                <Bell className="mx-auto size-6 text-[#927421]" aria-hidden="true" />
+                <p className="mt-3 text-sm font-semibold text-[#17213C]">No notifications returned</p>
+                <p className="mt-1 text-xs text-slate-500">Account notifications will appear here when available.</p>
+              </div>
+            ) : (
+              <ul className="divide-y divide-slate-100">
+                {notifications.slice(0, 4).map(notification => (
+                  <li key={notification.id} className="flex gap-3 px-5 py-4 sm:px-6">
+                    <span className={`mt-1.5 size-2 shrink-0 rounded-full ${notification.read ? 'bg-slate-200' : 'bg-[#C9A227]'}`} aria-label={notification.read ? 'Read' : 'Unread'} />
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-semibold text-[#17213C]">{notification.title || 'Account notification'}</p>
+                      <p className="mt-1 line-clamp-2 text-[11px] leading-5 text-slate-500">{notification.message}</p>
+                      <p className="mt-1.5 text-[9px] text-slate-400">{formatDate(notification.createdAt)}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="border-t border-slate-100 px-5 py-3 sm:px-6">
+              <Link to="/alerts" className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#0504AA] hover:text-[#8A6A14] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A227]">
+                All notifications <FileText className="size-3.5" aria-hidden="true" />
+              </Link>
+            </div>
           </Panel>
         </div>
       </div>
-
-      <section className="sticky bottom-4 z-10 rounded-2xl border border-[#C9A227]/40 bg-white/95 p-5 shadow-lg shadow-slate-900/10 backdrop-blur" aria-labelledby="beneficiary-title">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-[#C9A227]">Account planning</p><h2 id="beneficiary-title" className="mt-1 text-base font-semibold text-[#101533]">Beneficiary</h2><p className="mt-1 text-sm text-slate-500">Save a reminder locally for now. This does not change accounts or submit a transaction.</p></div><form className="flex w-full gap-2 sm:max-w-md" onSubmit={event => { event.preventDefault(); if (typeof window !== 'undefined' && user) window.localStorage.setItem(`${BENEFICIARY_STORAGE_KEY}:${user.id}`, beneficiaryName.trim()); setBeneficiarySaved(true) }}><label className="sr-only" htmlFor="beneficiary-name">Beneficiary name</label><input id="beneficiary-name" value={beneficiaryName} onChange={event => { setBeneficiaryName(event.target.value); setBeneficiarySaved(false) }} placeholder="Enter a name" className="min-w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0504AA] focus:ring-4 focus:ring-[#0504AA]/10" /><button type="submit" className="rounded-xl bg-[#0504AA] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#04038c]">Save</button></form></div>{beneficiarySaved && <p className="mt-3 text-xs font-semibold text-emerald-700" role="status">Beneficiary reminder saved on this device.</p>}
-      </section>
-
-      <section className="rounded-2xl border border-slate-200 bg-white p-5">
-        <h2 className="text-sm font-semibold text-[#101533]">Profile and support</h2>
-        <div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold">
-          <Link to={ROUTES.PROFILE} className="rounded-lg border border-slate-200 px-3 py-2 text-[#0504AA] hover:border-[#C9A227]">Profile</Link>
-          <Link to={ROUTES.SETTINGS} className="rounded-lg border border-slate-200 px-3 py-2 text-[#0504AA] hover:border-[#C9A227]">Security and password</Link>
-          <Link to={ROUTES.SUPPORT} className="rounded-lg border border-slate-200 px-3 py-2 text-[#0504AA] hover:border-[#C9A227]">Support</Link>
-          <a href="mailto:support@evermontcredit.online" className="rounded-lg border border-slate-200 px-3 py-2 text-[#0504AA] hover:border-[#C9A227]">Contact support</a>
-        </div>
-      </section>
-      <ActivationRequiredModal open={gatePath != null} nextPath={gatePath || undefined} onClose={() => setGatePath(null)} />
-    </div>
-  </PortalShell>
+    </PortalShell>
+  )
 }
 
 export default MemberDashboardPage
