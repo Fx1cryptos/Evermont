@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase'
 
-export type SupportStatus = 'open' | 'pending_support' | 'resolved' | 'closed'
+export type SupportStatus = 'open' | 'pending_member' | 'pending_support' | 'resolved' | 'closed'
 export type SupportConversation = { id: string; subject: string; status: SupportStatus; created_at: string; updated_at: string }
 export type SupportMessage = { id: string; conversation_id: string; sender_role: 'member' | 'support'; body: string; created_at: string }
 

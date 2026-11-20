@@ -16,6 +16,11 @@ security definer
 set search_path = ''
 as $$
 begin
+  update public.support_conversations
+  set last_message_at = new.created_at,
+      updated_at = new.created_at
+  where id = new.conversation_id;
+
   if lower(new.sender_role) = 'member' and new.is_internal = false then
     insert into public.support_notification_outbox (
       conversation_id,

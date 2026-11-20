@@ -8,7 +8,7 @@ import type { AdminRole } from '@/types/admin'
 
 /**
  * Client-side gate for /admin. Reads the signed-in user's row in public.admin_roles
- * (existing table; RLS unchanged). If RLS hides the row or none exists, access is denied.
+ * (existing table; RLS permits the signed-in staff member to read only their own row). If no role exists, access is denied.
  * This is UX only — real protection must remain server-side (RLS).
  */
 export const AdminRoute: React.FC<React.PropsWithChildren> = ({ children }) => {
