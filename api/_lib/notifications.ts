@@ -97,14 +97,3 @@ export async function processConversationNotification(client: SupabaseClient, co
   const sent = await deliverSupportNotification(client, job)
   return sent ? { sent: 1, failed: 0 } : { sent: 0, failed: 1 }
 }
-
-export async function processNotificationBatch(client: SupabaseClient): Promise<{ sent: number; failed: number }> {
-  const { data, error } = await client.rpc('claim_support_notifications', { p_batch_size: 20 })
-  if (error) throw new Error('Unable to claim support notifications')
-  const jobs = (data as OutboxRow[] | null) ?? []
-  const results = await Promise.all(jobs.map(job => deliverSupportNotification(client, job)))
-  return {
-    sent: results.filter(Boolean).length,
-    failed: results.filter(result => !result).length,
-  }
-}

@@ -122,7 +122,7 @@ export async function sendSupportTestEmail(): Promise<void> {
     Buffer.from('This is a test message from the Evermont support inbox. No member information is included. Gmail delivery is connected if you received this message.', 'utf8').toString('base64'),
     '',
   ].join('\r\n')
-  const response = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
+  const response = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
     method: 'POST',
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ raw: base64Url(message) }),
