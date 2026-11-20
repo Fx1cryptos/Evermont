@@ -15,13 +15,6 @@ type SupportMessage = {
   sender_role: string
 }
 
-type SupportConversation = {
-  user_id: string
-  subject: string
-  priority: string
-  status: string
-}
-
 async function completeJob(client: SupabaseClient, id: string): Promise<void> {
   await client.from('support_notification_outbox').update({
     status: 'sent',

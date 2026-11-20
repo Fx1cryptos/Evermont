@@ -105,6 +105,36 @@ function createRawMessage(content: SupportEmailContent, sender: string, recipien
   ].join('\r\n')
 }
 
+export async function sendSupportTestEmail(): Promise<void> {
+  const sender = process.env.GMAIL_FROM_EMAIL
+  const recipient = process.env.SUPPORT_NOTIFICATION_EMAIL
+  if (!sender || !recipient) throw new Error('Support email configuration is incomplete')
+  const accessToken = await getAccessToken()
+  const subject = 'Evermont support email connection test'
+  const message = [
+    `From: EVERMONT Credit Union <${sender}>`,
+    `To: ${recipient}`,
+    `Subject: ${subject}`,
+    'MIME-Version: 1.0',
+    'Content-Type: text/plain; charset="UTF-8"',
+    'Content-Transfer-Encoding: base64',
+    '',
+    Buffer.from('This is a test message from the Evermont support inbox. No member information is included. Gmail delivery is connected if you received this message.', 'utf8').toString('base64'),
+    '',
+  ].join('\r\n')
+  const response = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ raw: base64Url(message) }),
+    signal: AbortSignal.timeout(15000),
+  })
+  if (!response.ok) {
+    if (response.status === 401 || response.status === 403) throw new Error('Gmail rejected the sender authorization. Confirm that the OAuth grant includes gmail.send.')
+    if (response.status === 429 || response.status >= 500) throw new Error('Gmail is temporarily unavailable. Try the connection test again later.')
+    throw new Error(`Gmail rejected the test message (HTTP ${response.status})`)
+  }
+}
+
 export async function sendSupportEmail(content: SupportEmailContent): Promise<void> {
   const sender = process.env.GMAIL_FROM_EMAIL
   const recipient = process.env.SUPPORT_NOTIFICATION_EMAIL

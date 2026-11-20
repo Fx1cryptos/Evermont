@@ -113,23 +113,33 @@ export default async function handler(request: RequestLike, response: ResponseLi
     }
 
     if (request.method === 'POST') {
-      if (!canManageSupport(user)) {
-        response.status(403).json({ error: 'You do not have permission to respond to support tickets.' })
-        return
-      }
       const body = bodyRecord(request.body)
       const action = getString(body?.action, 20)
       const conversationId = getString(body?.conversationId, 36)
+      if (action !== 'notify' && !canManageSupport(user)) {
+        response.status(403).json({ error: 'You do not have permission to respond to support tickets.' })
+        return
+      }
       if (!conversationId || !UUID_PATTERN.test(conversationId)) {
         response.status(400).json({ error: 'A valid ticket ID is required.' })
         return
       }
       const { data: conversation, error: ticketError } = await client.from('support_conversations')
-        .select('id')
+        .select('id,user_id')
         .eq('id', conversationId)
         .maybeSingle()
       if (ticketError || !conversation) {
         response.status(404).json({ error: 'Support ticket not found.' })
+        return
+      }
+
+      if (action === 'notify') {
+        if (conversation.user_id !== user.id) {
+          response.status(403).json({ error: 'You cannot process notifications for another member.' })
+          return
+        }
+        const result = await processConversationNotification(client, conversationId)
+        response.status(202).json({ result })
         return
       }
 
@@ -189,7 +199,7 @@ export default async function handler(request: RequestLike, response: ResponseLi
       const updates: Record<string, string | null> = {}
       if (body?.status !== undefined) {
         const status = getString(body.status, 32)
-        if (!status || !['open', 'pending', 'resolved', 'closed'].includes(status)) {
+        if (!status || !['open', 'pending_member', 'pending_support', 'resolved', 'closed'].includes(status)) {
           response.status(400).json({ error: 'Choose a valid ticket status.' })
           return
         }
@@ -197,7 +207,7 @@ export default async function handler(request: RequestLike, response: ResponseLi
       }
       if (body?.priority !== undefined) {
         const priority = getString(body.priority, 16)
-        if (!priority || !['normal', 'high', 'urgent'].includes(priority)) {
+        if (!priority || !['low', 'normal', 'high', 'urgent'].includes(priority)) {
           response.status(400).json({ error: 'Choose a valid ticket priority.' })
           return
         }

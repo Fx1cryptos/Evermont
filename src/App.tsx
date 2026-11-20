@@ -5,6 +5,7 @@ import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage'
 import { MemberDetailPage } from '@/pages/admin/MemberDetailPage'
 import { AccountHistoryPage } from '@/pages/admin/AccountHistoryPage'
 import { AdminComingSoonPage } from '@/pages/admin/AdminComingSoonPage'
+import { AdminSupportPage } from '@/pages/admin/AdminSupportPage'
 import { Login } from '@/pages/auth/Login'
 import { Register } from '@/pages/auth/Register'
 import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage'
@@ -43,7 +44,7 @@ const Private: React.FC<{ title: string; children: React.ReactNode }> = ({ title
 const Auth: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => <><NoIndex title={title} />{children}</>
 const Admin: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => <><NoIndex title={title} /><AdminRoute>{children}</AdminRoute></>
 
-const ADMIN_SOON = ['members', 'accounts', 'transactions', 'support', 'audit-logs', 'security', 'settings']
+const ADMIN_SOON = ['members', 'accounts', 'transactions', 'audit-logs', 'security', 'settings']
 
 /** Router-agnostic route table, shared by the browser app and the build-time prerenderer. */
 export const AppRoutes: React.FC = () => (
@@ -84,6 +85,8 @@ export const AppRoutes: React.FC = () => (
     <Route path="/admin" element={<Admin title="Admin"><AdminDashboardPage /></Admin>} />
     <Route path="/admin/members/:id" element={<Admin title="Member Detail"><MemberDetailPage /></Admin>} />
     <Route path="/admin/accounts/:id" element={<Admin title="Account History"><AccountHistoryPage /></Admin>} />
+    <Route path="/admin/support/:id" element={<Admin title="Support"><AdminSupportPage /></Admin>} />
+    <Route path="/admin/support" element={<Admin title="Support"><AdminSupportPage /></Admin>} />
     {ADMIN_SOON.map(s => <Route key={s} path={`/admin/${s}`} element={<Admin title="Admin"><AdminComingSoonPage section={s} /></Admin>} />)}
 
     <Route path="*" element={<NotFoundPage />} />
