@@ -1,6 +1,6 @@
-import type { RequestLike, ResponseLike } from './_lib/support'
-import { authenticateSupportUser, canManageSupport, getSupabaseAdmin, setJsonHeaders } from './_lib/support'
-import { sendSupportTestEmail } from './_lib/gmail'
+import type { RequestLike, ResponseLike } from './_lib/support.js'
+import { authenticateSupportUser, canManageSupport, getSupabaseAdmin, setJsonHeaders } from './_lib/support.js'
+import { sendSupportTestEmail } from './_lib/gmail.js'
 
 export default async function handler(request: RequestLike, response: ResponseLike): Promise<void> {
   setJsonHeaders(response, 'POST, OPTIONS')

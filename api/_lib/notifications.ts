@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { sendSupportEmail } from './gmail'
+import { sendSupportEmail } from './gmail.js'
 
 type OutboxRow = {
   id: string
