@@ -43,6 +43,11 @@ type TicketMessage = {
   created_at: string
 }
 type InboxResult = { conversations: Conversation[] }
+type GmailStatus = {
+  connection: { senderEmail: string; accountEmail: string; senderMatches: boolean; canReadInbox: boolean }
+  sync: { lastSyncedAt: string | null; lastError: string | null; isRunning: boolean }
+}
+type SyncResult = { imported: number; ignored: number; nextPagePending: boolean; lastSyncedAt: string }
 type DetailResult = {
   conversation: Conversation
   member: { name: string | null; email: string | null }
@@ -111,8 +116,15 @@ export const AdminSupportPage: React.FC = () => {
   const [working, setWorking] = useState(false)
   const [testSending, setTestSending] = useState(false)
   const [testMessage, setTestMessage] = useState('')
+  const [syncing, setSyncing] = useState(false)
+  const [syncMessage, setSyncMessage] = useState('')
   const [actionError, setActionError] = useState('')
 
+  const { data: gmailStatus, mutate: refreshGmailStatus } = useSWR<GmailStatus>(
+    ['support-gmail-status'],
+    () => supportRequest<GmailStatus>('/api/support-gmail'),
+    { refreshInterval: 60000, revalidateOnFocus: true },
+  )
   const inboxKey = ['support-inbox', search, statusFilter, priorityFilter]
   const { data: inboxData, error: inboxError, isLoading: inboxLoading, mutate: refreshInbox } = useSWR<InboxResult>(
     inboxKey,
@@ -174,6 +186,21 @@ export const AdminSupportPage: React.FC = () => {
     }
   }
 
+  const syncMailbox = async () => {
+    if (syncing || gmailStatus?.sync.isRunning) return
+    setSyncing(true)
+    setSyncMessage('')
+    try {
+      const { result } = await supportRequest<{ result: SyncResult }>('/api/support-gmail', { method: 'POST', body: '{}' })
+      setSyncMessage(`${result.imported} new message${result.imported === 1 ? '' : 's'} imported${result.nextPagePending ? '. More messages remain; sync again to continue.' : '.'}`)
+      await Promise.all([refreshGmailStatus(), refreshInbox(), id ? refreshDetail() : Promise.resolve(undefined)])
+    } catch (error) {
+      setSyncMessage(error instanceof Error ? error.message : 'Gmail inbox sync failed.')
+    } finally {
+      setSyncing(false)
+    }
+  }
+
   const retryNotifications = async () => {
     if (!id || working) return
     setWorking(true)
@@ -210,13 +237,21 @@ export const AdminSupportPage: React.FC = () => {
               <ShieldCheck size={14} className="text-emerald-700" aria-hidden="true" />
               Staff-only workspace
             </div>
+            <button type="button" onClick={() => void syncMailbox()} disabled={syncing || gmailStatus?.sync.isRunning || !gmailStatus?.connection.senderMatches} className="inline-flex h-9 items-center gap-2 rounded-xl border border-[#0504AA]/20 bg-white px-3 text-xs font-semibold text-[#0504AA] hover:bg-blue-50 disabled:opacity-50">
+              <RotateCw size={14} className={syncing || gmailStatus?.sync.isRunning ? 'animate-spin' : ''} aria-hidden="true" />
+              {syncing || gmailStatus?.sync.isRunning ? 'Syncing inbox' : 'Sync inbox'}
+            </button>
             <button type="button" onClick={() => void sendTestEmail()} disabled={testSending} className="inline-flex h-9 items-center gap-2 rounded-xl border border-[#0504AA]/20 bg-white px-3 text-xs font-semibold text-[#0504AA] hover:bg-blue-50 disabled:opacity-50">
               {testSending ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
               Send test email
             </button>
           </div>
         </div>
-        {testMessage && <p role="status" className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">{testMessage}</p>}
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs text-slate-600">
+          <p>{gmailStatus?.connection.senderMatches === false ? 'Configured sender and authorized Gmail account do not match.' : gmailStatus?.connection.senderMatches ? `Gmail connected · ${gmailStatus.connection.accountEmail}` : 'Checking Gmail connection…'}</p>
+          <p>{gmailStatus?.sync.lastSyncedAt ? `Last synced ${formatDate(gmailStatus.sync.lastSyncedAt)}` : 'Inbox has not been synced yet'}</p>
+        </div>
+        {(syncMessage || gmailStatus?.sync.lastError || testMessage) && <p role="status" className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">{syncMessage || gmailStatus?.sync.lastError || testMessage}</p>}
 
         <div className="grid min-h-[620px] flex-1 grid-cols-1 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:grid-cols-[360px_minmax(0,1fr)]">
           <section className={`${isTicketVisibleOnMobile ? 'hidden lg:flex' : 'flex'} min-h-0 flex-col border-r border-slate-200`} aria-label="Support conversation inbox">
