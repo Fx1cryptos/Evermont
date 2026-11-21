@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { ROUTES } from '@/constants/routes'
 import { supportService, type SupportConversation, type SupportStatus } from '@/services/supportService'
 
-const labels: Record<SupportStatus, string> = { open: 'Open', pending_support: 'Pending Support', resolved: 'Resolved', closed: 'Closed' }
+const labels: Record<SupportStatus, string> = { open: 'Open', pending_member: 'Waiting on you', pending_support: 'Pending Support', resolved: 'Resolved', closed: 'Closed' }
 export const SupportPage: React.FC = () => {
   const { user } = useAuth(); const navigate = useNavigate(); const [rows, setRows] = useState<SupportConversation[]>([]); const [subject, setSubject] = useState(''); const [body, setBody] = useState(''); const [creating, setCreating] = useState(false); const [showForm, setShowForm] = useState(false); const [error, setError] = useState('')
   const load = async () => { if (!user) return; const result = await supportService.listConversations(user.id); if (result.error) setError('We could not load your conversations.'); else setRows(result.data) }
