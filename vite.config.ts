@@ -4,6 +4,8 @@ import path from 'path'
 
 const INTENDED_SUPABASE_REF = 'gdodqiwjcezdznzroupw'
 const INTENDED_SUPABASE_URL = `https://${INTENDED_SUPABASE_REF}.supabase.co`
+/** Embedded when no acceptable public key exists; src/lib/supabase.ts treats it as unconfigured. */
+const UNCONFIGURED_SUPABASE_KEY = 'placeholder-anon-key'
 
 type KeyKind = 'publishable' | 'anon' | 'rejected'
 
@@ -133,8 +135,12 @@ async function resolveSupabaseAnonKey(env: Record<string, string>, supabaseUrl: 
   const reason = unreachable
     ? `Could not verify a public Supabase key for project ${INTENDED_SUPABASE_REF}.${summary}`
     : `No public anon or publishable key was accepted by project ${INTENDED_SUPABASE_REF}.${summary}`
-  console.error(`[evermont] ${reason}`)
-  throw new Error(`[evermont] ${reason}`)
+  // A missing or unverifiable public key must not stop the site from building or
+  // starting: the public pages do not need Supabase, and src/lib/supabase.ts
+  // already falls back to an unconfigured client (member sign-in unavailable).
+  // No other project's key, service-role key, or secret key is ever embedded.
+  console.warn(`[evermont] ${reason} Building without a Supabase client; member sign-in stays unavailable.`)
+  return UNCONFIGURED_SUPABASE_KEY
 }
 
 export default defineConfig(async ({ mode }): Promise<UserConfig> => {

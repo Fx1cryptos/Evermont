@@ -199,3 +199,23 @@ Never claim a feature works unless it has been appropriately tested.
 10. Primary Objective
 
 Coordinate the three existing Evermont websites into a consistent ecosystem while preserving their code, protecting member data, and maintaining a clear distinction between implemented functionality and planned functionality.
+
+---
+
+## Base44 development environment
+
+This repository runs as a Vite + React + TypeScript app (Supabase for auth/data) inside a single Compose service.
+
+```bash
+docker compose -f docker-compose.base44.yml up -d          # Vite dev server, host :3000 -> container :5173, HMR on
+docker compose -f docker-compose.base44.yml exec -T web npm run build   # type-check + client build + SSR prerender
+docker compose -f docker-compose.base44.yml logs -f web
+```
+
+Non-obvious points:
+
+* Dependencies are installed by the container command (`npm ci`) on every start; `node_modules` is a Compose volume, so the host copy is ignored.
+* `vite.config.ts` resolves the Supabase URL/key at config load. It embeds only a public anon or publishable key for project `gdodqiwjcezdznzroupw`; other-project keys, service-role keys, secret keys and JWT secrets are rejected. When no acceptable key is available the build and dev server still run, public pages work, and member sign-in reports itself unavailable (`src/lib/supabase.ts`). Do not make that check fatal again — a missing key used to abort `vite build`/`vite dev` at config load.
+* Keys arrive through secrets in `/run/base44/app.env` (wired as the last `env_file:` in Compose). Never commit them; `.env.example` documents the names only.
+* `npm run build` prerenders the 19 public routes with `scripts/prerender.mjs`, which requires the `<!-- Primary SEO -->` marker in `index.html` and deletes `dist-ssr` afterwards.
+* Vercel status context `evermont-public-homepage` has failed on every recent main commit (including the previous one); `evermont_credit_union` builds the same code successfully. Treat the former as a stale/duplicate project with missing environment variables, not as a code regression.

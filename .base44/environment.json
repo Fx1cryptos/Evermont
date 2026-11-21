@@ -1,0 +1,19 @@
+{
+  "previewPort": 3000,
+  "healthPath": "/",
+  "startCommand": "docker compose -f docker-compose.base44.yml up -d",
+  "secrets": [
+    {
+      "name": "VITE_SUPABASE_URL",
+      "description": "Supabase project URL for project gdodqiwjcezdznzroupw (https://gdodqiwjcezdznzroupw.supabase.co). Supabase dashboard > Project Settings > API.",
+      "requiredAtBoot": false,
+      "generatedForDevelopment": false
+    },
+    {
+      "name": "VITE_SUPABASE_ANON_KEY",
+      "description": "Public anon or publishable key for project gdodqiwjcezdznzroupw. Supabase dashboard > Project Settings > API. Without it the site still builds and serves public pages; member sign-in stays unavailable.",
+      "requiredAtBoot": false,
+      "generatedForDevelopment": false
+    }
+  ]
+}
