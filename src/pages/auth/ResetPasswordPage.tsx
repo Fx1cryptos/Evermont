@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { authLinkMessage, clearPasswordRecovery, hasPasswordRecovery, useAuthLink } from '@/lib/authCallback'
+import { authLinkMessage, passwordLink, useAuthLink } from '@/lib/authCallback'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { ROUTES } from '@/constants/routes'
@@ -21,44 +21,17 @@ export const ResetPasswordPage: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const fromRecoveryLink = authLink.type === 'recovery' || authLink.hasCode || authLink.hasAccessToken || authLink.hasError || hasPasswordRecovery()
-    if (!fromRecoveryLink) {
-      setStatus('missing')
-      return
-    }
-    if (authLink.hasError && !authLink.hasCode && !authLink.hasAccessToken && !hasPasswordRecovery()) {
-      setError(authLinkMessage(authLink))
-      setStatus('error')
-      return
-    }
+  const [recipient, setRecipient] = useState<string | null>(null)
 
+  useEffect(() => {
+    if (!passwordLink) { setStatus('missing'); return }
     let active = true
-    const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!active) return
-      if (event === 'PASSWORD_RECOVERY' && session) setStatus('ready')
-    })
-    void supabase.auth.initialize().then(async (result) => {
-      if (!active) return
-      if (result.error && !hasPasswordRecovery()) {
-        setError(authLinkMessage(authLink))
-        setStatus('error')
-        return
-      }
-      const { data: sessionData } = await supabase.auth.getSession()
-      if (!active) return
-      if (!sessionData.session) {
-        setError(authLinkMessage(authLink))
-        setStatus('error')
-        return
-      }
-      setStatus('ready')
+    void passwordLink.verify(supabase.auth).then(id => {
+      if (active) { setRecipient(id); setStatus('ready') }
     }).catch(() => {
-      if (!active) return
-      setError('Connection failed. Check your internet connection and open the link again.')
-      setStatus('error')
+      if (active) { setError(authLinkMessage(authLink)); setStatus('error') }
     })
-    return () => { active = false; data.subscription.unsubscribe() }
+    return () => { active = false }
   }, [authLink])
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -69,6 +42,8 @@ export const ResetPasswordPage: React.FC = () => {
     if (password !== confirm) { setError('Passwords do not match.'); return }
     try {
       setLoading(true)
+      const { data, error: identityError } = await supabase.auth.getUser()
+      if (identityError || !recipient || data.user?.id !== recipient) throw Error('Your session changed. Request a fresh link.')
       const { error: updateError } = await supabase.auth.updateUser({ password })
       if (updateError) {
         const code = updateError.code || ''
@@ -78,7 +53,7 @@ export const ResetPasswordPage: React.FC = () => {
         if ((updateError.message || '').toLowerCase().includes('password')) throw new Error('Please choose a stronger password and try again.')
         throw new Error('We could not update your password. Request a new reset link and try again.')
       }
-      clearPasswordRecovery()
+      passwordLink?.finish()
       setStatus('done')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'We could not update your password.')
@@ -86,7 +61,7 @@ export const ResetPasswordPage: React.FC = () => {
   }
 
   return (
-    <AuthCard eyebrow="Account recovery" title="Choose a new password" subtitle="Use at least 8 characters, with an uppercase letter, a lowercase letter, and a number.">
+    <AuthCard eyebrow={passwordLink?.type === 'invite' ? 'Account invitation' : 'Account recovery'} title="Choose a new password" subtitle="Use at least 8 characters, with an uppercase letter, a lowercase letter, and a number.">
       {status === 'working' && <p className="text-sm text-slate-600">Checking your reset link…</p>}
       {status === 'done' && (
         <div role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">

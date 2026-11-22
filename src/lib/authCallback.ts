@@ -3,6 +3,7 @@
  * Tokens are not stored here and must not be rendered.
  */
 import React from 'react'
+import { capturePasswordLink } from './passwordLink'
 
 export type AuthLink = {
   type: string | null
@@ -32,6 +33,11 @@ export function readAuthLink(): AuthLink {
 
 export const authLink: AuthLink = readAuthLink()
 
+export const passwordLink = typeof window === 'undefined' ? null : capturePasswordLink(
+  new URL(window.location.href),
+  () => window.history.replaceState(window.history.state, '', window.location.pathname),
+)
+
 /** Prefer a link parsed before Supabase clears the URL, then any later hash. */
 export function useAuthLink(): AuthLink {
   const [link, setLink] = React.useState(authLink)
@@ -45,23 +51,6 @@ export function useAuthLink(): AuthLink {
     return () => window.removeEventListener('hashchange', update)
   }, [])
   return link
-}
-
-const RECOVERY_FLAG = 'evermont-password-recovery'
-
-export function markPasswordRecovery() {
-  if (typeof window === 'undefined') return
-  window.sessionStorage.setItem(RECOVERY_FLAG, '1')
-}
-
-export function hasPasswordRecovery() {
-  if (typeof window === 'undefined') return false
-  return window.sessionStorage.getItem(RECOVERY_FLAG) === '1'
-}
-
-export function clearPasswordRecovery() {
-  if (typeof window === 'undefined') return
-  window.sessionStorage.removeItem(RECOVERY_FLAG)
 }
 
 export function authLinkMessage(link: AuthLink = authLink): string {

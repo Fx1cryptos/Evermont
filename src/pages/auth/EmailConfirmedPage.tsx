@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { authLinkMessage, markPasswordRecovery, useAuthLink } from '@/lib/authCallback'
+import { authLinkMessage, passwordLink, useAuthLink } from '@/lib/authCallback'
 import { ROUTES } from '@/constants/routes'
 import { AuthCard } from './AuthCard'
 
@@ -15,7 +15,11 @@ export const EmailConfirmedPage: React.FC = () => {
   const [detail, setDetail] = useState<string | null>(null)
 
   useEffect(() => {
-    if (authLink.hasError && !authLink.hasCode && !authLink.hasAccessToken) {
+    if (passwordLink) {
+      navigate(ROUTES.RESET_PASSWORD, { replace: true })
+      return
+    }
+    if (authLink.hasError) {
       setStatus('error')
       setDetail(authLinkMessage(authLink))
       return
@@ -27,21 +31,9 @@ export const EmailConfirmedPage: React.FC = () => {
     }
 
     let active = true
-    const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!active || !session) return
-      if (event === 'PASSWORD_RECOVERY' || authLink.type === 'recovery') {
-        markPasswordRecovery()
-        navigate(ROUTES.RESET_PASSWORD, { replace: true })
-      }
-    })
     void supabase.auth.initialize().then(async (result) => {
       if (!active) return
-      if (result.error || authLink.type === 'recovery') {
-        if (authLink.type === 'recovery') {
-          markPasswordRecovery()
-          navigate(ROUTES.RESET_PASSWORD, { replace: true })
-          return
-        }
+      if (result.error) {
         setStatus('error')
         setDetail(authLinkMessage(authLink))
         return
@@ -60,7 +52,7 @@ export const EmailConfirmedPage: React.FC = () => {
       setDetail('Connection failed. Check your internet connection and open the link again.')
     })
 
-    return () => { active = false; data.subscription.unsubscribe() }
+    return () => { active = false }
   }, [authLink, navigate])
 
   return (
