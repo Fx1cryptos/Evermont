@@ -592,3 +592,90 @@ test('atomic member submission keeps identity server-side and retries an ambiguo
   assert.equal((await supportService.submit(notice, null, 'Question', ' Hello ')).data, ticket)
   assert.deepEqual(requests, Array(2).fill({p_request:notice,p_ticket:null,p_subject:'Question',p_body:'Hello'}))
 })
+
+test('authenticated inbox, admin reply and member retrieval with Google unavailable (transport fixture)',async()=>{
+ const {default: handler}=await load('/api/support.ts')
+ const {supportService}=await load('/src/services/supportService.ts')
+ env('SUPABASE_URL',origin); env('SUPABASE_SERVICE_ROLE_KEY','fixture')
+ client.auth.getSession=async()=>({data:{session:null}})
+ const rows=[], conversation={id:ticket,user_id:member,status:'open',subject:'Test'}
+ let staff=true
+ transport=async (url,opt)=>{
+  const path=url.pathname, p=url.searchParams
+  if (path.endsWith('/submit_member_support_message')) {
+   const args=JSON.parse(opt.body); rows.push({conversation_id:ticket,id:notice,body:args.p_body,sender_role:'member'}); return json(ticket)
+  }
+  if(path.endsWith('/auth/v1/user'))return json({id:staff?'staff':member})
+  if(path.endsWith('/admin_roles'))return json(staff?[{role:'ADMIN'}]:[])
+  if(path.endsWith('/profiles'))return json([{id:member,first_name:'Test'}])
+  if(path.endsWith('/support_conversations')){
+   if(opt.method==='PATCH')return json(null)
+   if(p.get('select')?.includes('latest:support_messages'))return json([{...conversation,latest:[{body:rows[0].body}],unread:[{count:1}]}])
+   return json([conversation])
+  }
+  if(path.endsWith('/support_messages')){
+   if(opt.method==='POST'){ const row={...JSON.parse(opt.body),created_at:new Date().toISOString()}; if(rows.some(r=>r.id===row.id))return json({code:'23505',message:'duplicate'},409); rows.push(row);return json(row,201) }
+   assert.equal(p.get('conversation_id'),'eq.'+ticket)
+   if(p.has('id')){
+     assert.equal(p.get('sender_id'),'eq.staff');assert.equal(p.get('sender_role'),'eq.support')
+     assert.equal(p.get('is_internal'),'eq.false')
+     return json(rows.filter(r=>'eq.'+r.id===p.get('id')))
+   }
+   return json(rows)
+  }
+  throw Error('External provider unavailable')
+ }
+ const request=async(method,body)=>{const res={status(n){this.code=n;return this},json(b){this.body=b},setHeader(){}}
+ await handler({method,body,query:{},headers:{authorization:'Bearer fixture'}},res);return res}
+ assert.equal((await supportService.submit(notice,null,'Test','Synthetic question')).data,ticket)
+ assert.equal((await request('GET')).body.conversations[0].preview,'Synthetic question')
+ const reply = {action:'reply',conversationId:ticket,message:'Synthetic answer',requestId:crypto.randomUUID()}
+ assert.equal((await request('POST',reply)).code,201)
+ assert.equal((await request('POST',reply)).code,200)
+ assert.equal((await request('POST',{...reply,message:'Different answer'})).code,409)
+ assert.deepEqual((await supportService.listMessages(member,ticket)).data.map(m=>m.body),['Synthetic question','Synthetic answer'])
+ await supportService.submit(crypto.randomUUID(),ticket,null,'Member follow-up')
+ assert.equal(rows.at(-1).body,'Member follow-up')
+ staff=false
+ assert.equal((await request('GET')).code,403)
+ assert.equal((await request('POST',{action:'reply',conversationId:ticket,message:'Denied'})).code,403)
+})
+
+test('categorized human complaints never call Gemini or enqueue an AI response', async () => {
+  const { assistMember } = await load('/api/_lib/assistant.ts')
+  const { complaintCategories, complaintSubject } = await load('/shared/supportCategories.ts')
+  for (const category of complaintCategories) {
+    let calls = 0
+    transport = async (url) => {
+      assert.ok(url.pathname.endsWith('/support_conversations'))
+      calls++
+      return json([{id:ticket,subject:complaintSubject(category,'Complaint'),status:'open'}])
+    }
+    assert.equal(await assistMember(client,ticket,member),false)
+    assert.equal(calls,1)
+  }
+})
+
+test('dashboard unread total requires an authorized inbox viewer and excludes internal and staff messages',async()=>{
+  const {default:handler}=await load('/api/support.ts')
+  env('SUPABASE_URL',origin);env('SUPABASE_SERVICE_ROLE_KEY','fixture')
+  let authorized=false, reads=0
+  transport=async (url,opt)=>{
+    if(url.pathname.endsWith('/auth/v1/user')) return json({id:member})
+    if(url.pathname.endsWith('/admin_roles')) return json(authorized?[{role:'OPERATIONS'}]:[])
+    assert.ok(url.pathname.endsWith('/support_messages'))
+    assert.equal(opt.method,'HEAD')
+    for(const [field,value] of Object.entries({sender_role:'eq.member',is_internal:'eq.false',read_by_support:'eq.false'}))
+      assert.equal(url.searchParams.get(field),value)
+    reads++
+    return new Response(null,{headers:{'content-range':'0-0/7'}})
+  }
+  const get=async()=>{
+    const res={status(n){this.code=n;return this},json(b){this.body=b},setHeader(){}}
+    await handler({method:'GET',headers:{authorization:'Bearer fixture'},query:{summary:'unread'}},res)
+    return res
+  }
+  assert.equal((await get()).code,403); assert.equal(reads,0)
+  authorized=true
+  assert.deepEqual((await get()).body,{unread:7}); assert.equal(reads,1)
+})

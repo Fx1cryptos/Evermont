@@ -3,6 +3,10 @@ begin;
 alter table public.support_messages add column if not exists client_request_id uuid;
 create unique index if not exists support_member_request_once
   on public.support_messages(sender_id, client_request_id) where client_request_id is not null;
+-- Supports both per-conversation unread counts and the staff dashboard total.
+create index if not exists support_unread_member_by_ticket
+  on public.support_messages(conversation_id)
+  where sender_role = 'member' and read_by_support = false and is_internal = false;
 grant insert(client_request_id) on public.support_messages to authenticated;
 
 create or replace function public.submit_member_support_message(

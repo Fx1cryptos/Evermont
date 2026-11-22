@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import useSWR from 'swr'
 import {
@@ -18,7 +18,7 @@ import {
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { useAuth } from '@/contexts/AuthContext'
-import { supabase } from '@/lib/supabase'
+import { supportRequest } from '@/services/adminSupportRequest'
 
 type Status = 'open' | 'pending_member' | 'pending_support' | 'resolved' | 'closed'
 type Priority = 'low' | 'normal' | 'high' | 'urgent'
@@ -39,6 +39,7 @@ type Conversation = {
 type TicketMessage = {
   id: string
   sender_id: string
+  read_by_member: boolean
   sender_role: 'member' | 'support' | 'system'
   body: string
   is_internal: boolean
@@ -59,8 +60,8 @@ type DetailResult = {
 
 const statusLabel: Record<Status, string> = {
   open: 'Open',
-  pending_member: 'Waiting on member',
-  pending_support: 'Needs response',
+  pending_member: 'Pending · member',
+  pending_support: 'Pending · support',
   resolved: 'Resolved',
   closed: 'Closed',
 }
@@ -69,27 +70,6 @@ const priorityLabel: Record<Priority, string> = {
   normal: 'Normal',
   high: 'High',
   urgent: 'Urgent',
-}
-
-async function getAccessToken(): Promise<string> {
-  const { data, error } = await supabase.auth.getSession()
-  if (error || !data.session?.access_token) throw new Error('Your session has expired. Sign in again.')
-  return data.session.access_token
-}
-
-async function supportRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const token = await getAccessToken()
-  const response = await fetch(path, {
-    ...init,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      ...init.headers,
-    },
-  })
-  const result = await response.json() as T & { error?: string }
-  if (!response.ok) throw new Error(result.error || 'Support request failed.')
-  return result
 }
 
 function formatDate(value: string): string {
@@ -160,21 +140,28 @@ export const AdminSupportPage: React.FC = () => {
     }
   }
 
+  const replyAttempt = useRef<{intent: string; key: string} | null>(null)
+  const replySending = useRef(false)
   const sendReply = async (event: React.FormEvent) => {
     event.preventDefault()
-    if (!id || !reply.trim() || working) return
+    if (!id || !reply.trim() || working || replySending.current) return
+    replySending.current = true
+    const intent = JSON.stringify([user?.id, id, note, reply.trim()])
+    if (replyAttempt.current?.intent !== intent) replyAttempt.current = {intent, key: crypto.randomUUID()}
     setWorking(true)
     setActionError('')
     try {
       await supportRequest('/api/support', {
         method: 'POST',
-        body: JSON.stringify({ action: note ? 'note' : 'reply', conversationId: id, message: reply.trim() }),
+        body: JSON.stringify({ action: note ? 'note' : 'reply', requestId:replyAttempt.current?.key, conversationId: id, message: reply.trim() }),
       })
+      replyAttempt.current = null
       setReply('')
-      await Promise.all([refreshDetail(), refreshInbox()])
-    } catch (error) {
-      setActionError(error instanceof Error ? error.message : 'Your reply could not be sent.')
+      void Promise.all([refreshDetail(), refreshInbox()]).catch(() => undefined)
+    } catch {
+      setActionError('Reply not confirmed. Refresh the conversation or retry with the same text.')
     } finally {
+      replySending.current = false
       setWorking(false)
     }
   }
@@ -277,8 +264,8 @@ export const AdminSupportPage: React.FC = () => {
                   <select value={statusFilter} onChange={event => {setPage(0);setStatusFilter(event.target.value)}} className="h-9 w-full appearance-none rounded-lg border border-slate-200 bg-white pl-2.5 pr-7 text-xs text-slate-600 outline-none focus:border-[#0504AA]">
                     <option value="all">All statuses</option>
                     <option value="open">Open</option>
-                    <option value="pending_support">Needs response</option>
-                    <option value="pending_member">Waiting on member</option>
+                    <option value="pending_support">Pending · support</option>
+                    <option value="pending_member">Pending · member</option>
                     <option value="resolved">Resolved</option>
                     <option value="closed">Closed</option>
                   </select><ChevronDown size={13} className="pointer-events-none absolute right-2 top-3 text-slate-400" aria-hidden="true" />
@@ -316,7 +303,7 @@ export const AdminSupportPage: React.FC = () => {
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
                 <div className="flex min-w-0 items-center gap-3"><button type="button" onClick={() => navigate('/admin/support')} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 lg:hidden" aria-label="Back to conversations"><ArrowLeft size={18} /></button><div className="min-w-0"><p className="truncate text-xs text-slate-500">Ticket {id.slice(0, 8).toUpperCase()} · {detail?.member.name || 'Member'}</p><h2 className="truncate text-base font-semibold text-slate-950">{ticket?.subject || 'Support conversation'}</h2></div></div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs">{ticket?.human_requested ? "Human requested · " : ""}Email: {detail?.notification || "No delivery status"}</span><button className="text-xs font-bold text-[#0504AA]" disabled={working || !ticket} onClick={() => void updateTicket({assignSelf:true})}>{ticket?.assigned_to === user?.id ? "Assigned to you" : "Assign to me"}</button><label className="relative"><span className="sr-only">Ticket status</span><select disabled={working || !ticket} value={ticket?.status || 'open'} onChange={event => void updateTicket({ status: event.target.value as Status })} className="h-9 appearance-none rounded-lg border border-slate-200 bg-white pl-3 pr-8 text-xs font-medium text-slate-700 outline-none disabled:opacity-60"><option value="open">Open</option><option value="pending_support">Needs response</option><option value="pending_member">Waiting on member</option><option value="resolved">Resolved</option><option value="closed">Closed</option></select><ChevronDown size={13} className="pointer-events-none absolute right-2.5 top-3 text-slate-400" aria-hidden="true" /></label>
+                  <span className="text-xs">{ticket?.human_requested ? "Human requested · " : ""}Email: {detail?.notification || "No delivery status"}</span><button className="text-xs font-bold text-[#0504AA]" disabled={working || !ticket} onClick={() => void updateTicket({assignSelf:true})}>{ticket?.assigned_to === user?.id ? "Assigned to you" : "Assign to me"}</button><label className="relative"><span className="sr-only">Ticket status</span><select disabled={working || !ticket} value={ticket?.status || 'open'} onChange={event => void updateTicket({ status: event.target.value as Status })} className="h-9 appearance-none rounded-lg border border-slate-200 bg-white pl-3 pr-8 text-xs font-medium text-slate-700 outline-none disabled:opacity-60"><option value="open">Open</option><option value="pending_support">Pending · support</option><option value="pending_member">Pending · member</option><option value="resolved">Resolved</option><option value="closed">Closed</option></select><ChevronDown size={13} className="pointer-events-none absolute right-2.5 top-3 text-slate-400" aria-hidden="true" /></label>
                   <label className="relative"><span className="sr-only">Ticket priority</span><select disabled={working || !ticket} value={ticket?.priority || 'normal'} onChange={event => void updateTicket({ priority: event.target.value as Priority })} className="h-9 appearance-none rounded-lg border border-slate-200 bg-white pl-3 pr-8 text-xs font-medium text-slate-700 outline-none disabled:opacity-60"><option value="low">Low</option><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select><ChevronDown size={13} className="pointer-events-none absolute right-2.5 top-3 text-slate-400" aria-hidden="true" /></label>
                 </div>
               </div>
@@ -328,7 +315,7 @@ export const AdminSupportPage: React.FC = () => {
                 {detailError && <div role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{detailError.message}</div>}
                 {detail?.messages.filter(message => message.body.toLowerCase().includes(messageSearch.trim().toLowerCase())).map(message => {
                   const isStaff = message.sender_role !== 'member'
-                  return <div key={message.id} className={`flex ${isStaff ? 'justify-end' : 'justify-start'}`}><article className={`max-w-[88%] rounded-2xl px-4 py-3 shadow-sm ${isStaff ? 'rounded-br-md bg-[#0504AA] text-white' : 'rounded-bl-md border border-slate-200 bg-white text-slate-800'}`}><div className={`mb-1.5 flex items-center gap-2 text-[11px] ${isStaff ? 'text-blue-100' : 'text-slate-400'}`}><span className="font-semibold">{message.is_internal ? 'Internal staff note' : message.sender_role === 'system' ? 'EVERMONT assistant / system' : isStaff ? 'Evermont Support' : (detail.member.name || 'Member')}</span><time>{formatDate(message.created_at)}</time></div><p className="whitespace-pre-wrap break-words text-sm leading-6">{message.body}</p></article></div>
+                  return <div key={message.id} className={`flex ${isStaff ? 'justify-end' : 'justify-start'}`}><article className={`max-w-[88%] rounded-2xl px-4 py-3 shadow-sm ${isStaff ? 'rounded-br-md bg-[#0504AA] text-white' : 'rounded-bl-md border border-slate-200 bg-white text-slate-800'}`}><div className={`mb-1.5 flex items-center gap-2 text-[11px] ${isStaff ? 'text-blue-100' : 'text-slate-400'}`}><span className="font-semibold">{message.is_internal ? 'Internal staff note' : message.sender_role === 'system' ? 'EVERMONT assistant / system' : isStaff ? 'Evermont Support' : (detail.member.name || 'Member')}</span><time>{formatDate(message.created_at)}</time>{message.sender_role === 'support' && !message.is_internal && <span>{message.read_by_member ? 'Read by member' : 'Saved to conversation'}</span>}</div><p className="whitespace-pre-wrap break-words text-sm leading-6">{message.body}</p></article></div>
                 })}
                 {detail && detail.messages.filter(message => !message.is_internal).length === 0 && <p className="text-sm text-slate-500">No messages have been sent in this ticket.</p>}
               </div>
@@ -336,7 +323,7 @@ export const AdminSupportPage: React.FC = () => {
                 {actionError && <div role="alert" className="mb-3 flex items-start gap-2 rounded-lg bg-rose-50 p-2.5 text-xs text-rose-800"><AlertCircle size={14} className="mt-0.5 shrink-0" />{actionError}</div>}
                 <form onSubmit={sendReply}>
                   <label htmlFor="support-reply" className="mb-2 block text-xs font-semibold text-slate-700">{note ? 'Internal note · staff only' : 'Reply to member'}</label><label className="my-2 flex gap-2 text-sm"><input type="checkbox" checked={note} onChange={e => setNote(e.target.checked)} /> Internal note</label>
-                  <textarea id="support-reply" value={reply} onChange={event => setReply(event.target.value)} maxLength={4000} rows={3} placeholder="Write a clear, helpful response…" className="w-full resize-y rounded-xl border border-slate-200 bg-white p-3 text-sm leading-6 outline-none placeholder:text-slate-400 focus:border-[#0504AA] focus:ring-2 focus:ring-blue-100" />
+                  <textarea disabled={working} id="support-reply" value={reply} onChange={event => setReply(event.target.value)} maxLength={4000} rows={3} placeholder="Write a clear, helpful response…" className="w-full resize-y rounded-xl border border-slate-200 bg-white p-3 text-sm leading-6 outline-none placeholder:text-slate-400 focus:border-[#0504AA] focus:ring-2 focus:ring-blue-100" />
                   <div className="mt-2 flex items-center justify-between gap-3"><p className="text-[11px] text-slate-400">Never request a password, PIN, CVV, or one-time code.</p><button type="submit" disabled={working || !reply.trim()} className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl bg-[#0504AA] px-4 text-sm font-semibold text-white transition hover:bg-blue-900 disabled:cursor-not-allowed disabled:opacity-50">{working ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />} {note ? 'Save note' : 'Send reply'}</button></div>
                 </form>
               </div>

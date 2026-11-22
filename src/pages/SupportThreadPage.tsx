@@ -62,8 +62,7 @@ function Thread({ owner, id }: { owner: string; id: string }) {
     if (attempt.current?.draft !== draft) attempt.current = { draft, key: crypto.randomUUID() }
     setBusy(true)
     try {
-      let result: { error: unknown } = await supportService.submit(attempt.current.key, id, null, draft)
-      if ((result.error as {code?: string} | null)?.code === 'PGRST202') result = await supportService.sendMessage(owner, id, draft)
+      const result = await supportService.submit(attempt.current.key, id, null, draft)
       if (result.error) throw result.error
       attempt.current = null
       setDraft('')

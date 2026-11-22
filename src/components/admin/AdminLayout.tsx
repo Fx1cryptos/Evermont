@@ -1,3 +1,5 @@
+import useSWR from 'swr'
+import { supportRequest } from '@/services/adminSupportRequest'
 import { LOGO_PATH } from '@/config/site'
 import React from 'react'
 import { useAuth } from '@/contexts/AuthContext'
@@ -19,6 +21,13 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 }) => {
   const { user, signOut } = useAuth()
   const { role } = useAdminAuth()
+  const canViewSupport = role && ['SUPER_ADMIN','ADMIN','OPERATIONS','SUPPORT'].includes(role)
+  const {data: counts, error: countError} = useSWR(
+    canViewSupport && user ? ['admin-support-unread',user.id] : null,
+    () => supportRequest<{unread:number}>('/api/support?summary=unread'),
+    { refreshInterval: 10000 },
+  )
+  const unread = countError ? undefined : counts?.unread
   const staffName = user?.firstName || user?.email || suppliedName || 'Staff'
   const staffRole = role || suppliedRole || 'Staff'
   const [logoutError, setLogoutError] = React.useState(false)
@@ -90,10 +99,11 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="relative p-2 hover:bg-gray-100 rounded">
+            {canViewSupport && <a href="/admin/support" className="relative p-2 rounded hover:bg-gray-100"
+              aria-label={unread == null ? 'Support inbox, unread count unavailable' : `Support inbox, ${unread} unread messages`}>
               <Bell size={20} className="text-gray-600" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
+              {unread != null && unread > 0 && <span className="absolute -right-1 -top-1 rounded-full bg-red-700 px-1.5 text-xs font-bold text-white">{unread}</span>}
+            </a>}
 
             <div className="flex items-center gap-3 pl-4 border-l border-evermont-border">
               <div className="text-right">

@@ -1,3 +1,4 @@
+import { complaintCategories, complaintSubject, type ComplaintCategory } from '../../shared/supportCategories'
 import React, { useRef, useState } from 'react'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import useSWR from 'swr'
@@ -20,6 +21,7 @@ export const SupportPage: React.FC<{ embedded?: boolean }> = ({ embedded = false
   const attempt = useRef<{ draft: string; key: string } | null>(null)
   const sending = useRef(false)
   const [search, setSearch] = useState('')
+  const [category, setCategory] = useState<ComplaintCategory>('General Enquiry')
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
   const [creating, setCreating] = useState(false)
@@ -41,26 +43,22 @@ export const SupportPage: React.FC<{ embedded?: boolean }> = ({ embedded = false
     event.preventDefault()
     if (sending.current || creating || !user || !subject.trim() || !body.trim()) return
     sending.current = true
-    const draft = JSON.stringify([user.id, subject, body])
+    const title = complaintSubject(category, subject)
+    const draft = JSON.stringify([user.id, title, body])
     if (attempt.current?.draft !== draft) attempt.current = { draft, key: crypto.randomUUID() }
     const key = attempt.current.key
     setCreating(true)
     setError('')
-    const result = await supportService.submit(key, null, subject, body)
-      .then(async r => r.error?.code === 'PGRST202'
-        ? supportService.createConversation(user.id, subject, body)
-        : { data: typeof r.data === 'string' ? { id: r.data } : null, error: r.error })
-      .catch(() => ({ data: null, error: true }))
-      .finally(() => { sending.current = false; setCreating(false) })
-    if (result.data && result.error) {
-      navigate(`${ROUTES.SUPPORT}/${result.data.id}`, { state: { firstMessageFailed: true, draft: body } })
-      return
+    try {
+      const result = await supportService.submit(key, null, title, body)
+      if (result.error || typeof result.data !== 'string') throw new Error()
+      navigate(`${ROUTES.SUPPORT}/${result.data}`, {state:{received:true}})
+    } catch {
+      setError('Your complaint could not be confirmed. Your draft is here; retry Send to Support.')
+    } finally {
+      sending.current = false
+      setCreating(false)
     }
-    if (result.error || !result.data) {
-      setError('We could not start your conversation.')
-      return
-    }
-    navigate(`${ROUTES.SUPPORT}/${result.data.id}`, {state:{received:true}})
   }
   const inboxContent = (
     <>
@@ -83,18 +81,25 @@ export const SupportPage: React.FC<{ embedded?: boolean }> = ({ embedded = false
           onSubmit={create}
           className="mt-6 rounded-2xl border border-[#C9A227]/50 bg-white p-6 shadow-sm"
         >
-          <h2 className="text-lg font-semibold text-[#0504AA]">Start a conversation</h2>
+          <h2 className="text-lg font-semibold text-[#0504AA]">Contact human support</h2>
           <div className="mt-4 grid gap-4">
+            <label>Complaint category
+              <select value={category} disabled={creating} onChange={e => setCategory(e.target.value as ComplaintCategory)} className="block w-full rounded-xl border p-3">
+                {complaintCategories.map(item => <option key={item}>{item}</option>)}
+              </select>
+            </label>
             <input
+              disabled={creating}
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               required
-              maxLength={120}
+              maxLength={100}
               placeholder="Subject"
               aria-label="Subject"
               className="rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-[#0504AA]"
             />
             <textarea
+              disabled={creating}
               value={body}
               onChange={(e) => setBody(e.target.value)}
               required

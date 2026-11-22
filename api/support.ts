@@ -35,6 +35,13 @@ export default async function handler(request: RequestLike, response: ResponseLi
         response.status(403).json({ error: 'You do not have permission to view support tickets.' })
         return
       }
+      if (getQueryString(request, 'summary') === 'unread') {
+        const { count, error } = await client.from('support_messages').select('id',{count:'exact',head:true})
+          .eq('sender_role','member').eq('read_by_support',false).eq('is_internal',false)
+        if (error || count === null) throw new Error('Unread count unavailable')
+        response.status(200).json({ unread: count })
+        return
+      }
       const id = getQueryString(request, 'id')
       if (id) {
         if (!UUID_PATTERN.test(id)) {
@@ -170,7 +177,12 @@ export default async function handler(request: RequestLike, response: ResponseLi
           if (note.error) {response.status(503).json({error:'Internal notes are not available.'}); return}
           response.status(201).json({message:{id:note.data}}); return
         }
+        const requestId = body?.requestId
+        if (typeof requestId !== 'string' || !UUID_PATTERN.test(requestId)) {
+          response.status(400).json({error:'A reply request ID is required.'}); return
+        }
         const { data, error } = await client.from('support_messages').insert({
+          id: requestId,
           conversation_id: conversationId,
           sender_id: user.id,
           sender_role: 'support',
@@ -179,11 +191,17 @@ export default async function handler(request: RequestLike, response: ResponseLi
           read_by_member: false,
           read_by_support: true,
         }).select('id,created_at').single()
+        if (error?.code === '23505') {
+          const prior = await client.from('support_messages').select('id,created_at,body')
+            .eq('id',requestId).eq('conversation_id',conversationId).eq('sender_id',user.id)
+            .eq('sender_role','support').eq('is_internal',false).maybeSingle()
+          if (prior.error) throw new Error('Could not confirm reply')
+          if (prior.data?.body === message) {
+            response.status(200).json({message:{id:prior.data.id,created_at:prior.data.created_at}}); return
+          }
+          response.status(409).json({error:'Reply request conflicts with a previous submission.'}); return
+        }
         if (error) throw new Error('Unable to save the support reply')
-        await client.from('support_conversations').update({
-          last_message_at: data.created_at,
-          updated_at: data.created_at,
-        }).eq('id', conversationId)
         console.info({event:'support.staff_reply.saved'})
         response.status(201).json({ message: data })
         return

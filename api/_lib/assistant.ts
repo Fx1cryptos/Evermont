@@ -1,3 +1,4 @@
+import { isHumanComplaint } from '../../shared/supportCategories.js'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 // The provider only receives topic labels. Only the reviewed answer strings below can reach a member.
@@ -64,13 +65,14 @@ export async function approvedAnswer(messages: string[]): Promise<string | null>
 export async function assistMember(client: SupabaseClient, ticket: string, member: string) {
   const { data: conversation, error } = await client
     .from('support_conversations')
-    .select('id,human_requested,status,assigned_to')
+    .select('id,human_requested,status,assigned_to,subject')
     .eq('id', ticket)
     .eq('user_id', member)
     .maybeSingle()
   if (
     error ||
     !conversation ||
+    isHumanComplaint(conversation.subject) ||
     conversation.human_requested ||
     conversation.assigned_to ||
     ['resolved', 'closed'].includes(conversation.status)
