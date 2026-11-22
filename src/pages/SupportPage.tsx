@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import useSWR from 'swr'
 import { MessageCircle, Plus } from 'lucide-react'
 import { PortalShell } from '@/components/member/PortalShell'
@@ -10,7 +10,7 @@ import { supportService, type SupportStatus } from '@/services/supportService'
 const labels: Record<SupportStatus, string> = {
   open: 'Open',
   pending_member: 'Waiting on you',
-  pending_support: 'Pending Support',
+  pending_support: 'Awaiting Human Support',
   resolved: 'Resolved',
   closed: 'Closed',
 }
@@ -21,7 +21,8 @@ export const SupportPage: React.FC<{ embedded?: boolean }> = ({ embedded = false
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
   const [creating, setCreating] = useState(false)
-  const [showForm, setShowForm] = useState(false)
+  const [params] = useSearchParams()
+  const [showForm, setShowForm] = useState(params.get("chat") === "1")
   const [error, setError] = useState('')
   const inbox = useSWR(
     user ? ['support-list', user.id] : null,
@@ -51,7 +52,7 @@ export const SupportPage: React.FC<{ embedded?: boolean }> = ({ embedded = false
       setError('We could not start your conversation.')
       return
     }
-    navigate(`${ROUTES.SUPPORT}/${result.data.id}`)
+    navigate(`${ROUTES.SUPPORT}/${result.data.id}`, {state:{received:true}})
   }
   const inboxContent = (
     <>
@@ -66,7 +67,7 @@ export const SupportPage: React.FC<{ embedded?: boolean }> = ({ embedded = false
           className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-[#0504AA] px-4 py-3 text-sm font-semibold text-white shadow-sm"
         >
           <Plus className="size-4" />
-          New conversation
+          Chat with EVERMONT Support
         </button>
       </div>
       {showForm && (

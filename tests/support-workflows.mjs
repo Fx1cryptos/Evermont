@@ -352,3 +352,29 @@ test('default rate is 0.008, rounds once in currency minor units and never accep
  assert.equal(defaultFeeMinorUnits(1000000000000000000n),8000000000000000n)
  assert.throws(()=>defaultFeeMinorUnits(-1n))
 })
+
+test('account quote examples use database decimal strings and currency precision', async () => {
+  const { minor } = await load('/api/activation-quote.ts')
+  const { defaultFeeMinorUnits } = await load('/shared/activationFee.ts')
+  for (const [balance,fee] of [['1000.00',800n],['5000.00',4000n],['10000.00',8000n],['19.99',16n]]) {
+    assert.equal(defaultFeeMinorUnits(minor(balance,2)),fee)
+  }
+  assert.throws(()=>minor('1.001',2))
+})
+
+test('trusted quote endpoint uses verified identity and database balance, never client-supplied amounts',async()=>{
+  const {default:handler}=await load('/api/activation-quote.ts')
+  env('SUPABASE_URL',origin);env('VITE_SUPABASE_ANON_KEY','fixture-public')
+  let calls=0
+  transport=async url=>{
+    if(url.pathname.endsWith('/auth/v1/user')) return json({id:member})
+    assert.equal(url.searchParams.get('user_id'),'eq.'+member); calls++
+    if(url.pathname.endsWith('/accounts')) return json([{id:'owned',account_type:'savings',currency:'USD',balance:'5000.00'}])
+    assert.ok(url.pathname.endsWith('/activation_fee_rates')); return json([])
+  }
+  const res={setHeader(){},status(n){this.code=n;return this},end(){},json(v){this.body=v}}
+  await handler({method:'GET',headers:{},query:{}},res)
+  assert.equal(res.code,401)
+  await handler({method:'GET',headers:{authorization:'Bearer fixture'},query:{balance:'1',user_id:'other'}},res)
+  assert.equal(res.code,200);assert.equal(res.body.quotes[0].fee,'40.00');assert.equal(calls,2)
+})

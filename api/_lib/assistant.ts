@@ -2,6 +2,9 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 // The provider only receives topic labels. Only the reviewed answer strings below can reach a member.
 const knowledge = {
+  login: 'Use Member Sign In with your existing email. Choose Forgot Password if you need a recovery link.',
+  beneficiaries: 'Open Beneficiaries in the banking menu to view recipients linked to your membership.',
+  navigation: 'Use the member sidebar or mobile menu for accounts, transaction history, activation and support.',
   activation:
     'Open Activation in your member portal to review your verification status and payment history. A support agent can review an outstanding requirement.',
   statements: 'Open Statements to view the documents available for your accounts.',
@@ -95,7 +98,11 @@ export async function assistMember(client: SupabaseClient, ticket: string, membe
       .reverse()
       .map((turn) => String(turn.body)),
   )
-  if (!answer) return false
+  if (!answer || answer === knowledge.human) {
+    await client.from('support_conversations').update({human_requested:true,status:'pending_support'})
+      .eq('id',ticket).eq('user_id',member).is('assigned_to',null).not('status','in','(resolved,closed)')
+    return false
+  }
   const result = await client.rpc('complete_support_assistant', {
     p_ticket: ticket,
     p_member: member,

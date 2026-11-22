@@ -138,6 +138,8 @@ export async function deliverSupportNotification(client: SupabaseClient, job: Ou
       const sent = await sendSupportEmail({
         ticketId: job.conversation_id,
         subject: typedConversation.subject,
+        question: typedMessage.body, received: typedMessage.created_at, status:typedConversation.status,
+        memberEmail: userData.user?.email_confirmed_at ? userData.user.email : undefined,
         memberName: typeof memberName === 'string' ? memberName.slice(0, 120) : undefined,
         notificationId: job.id,
       },job.attempt_count > 1)

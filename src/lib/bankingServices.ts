@@ -54,8 +54,8 @@ export function bankingServiceForPath(path: string): { title: string; path: stri
 }
 
 export const ACTIVATION_REQUIRED_TITLE = 'Account Activation Required'
-export const ACTIVATION_REQUIRED_BODY = 'Your account must be activated before you can access this banking service. Please complete your account activation to unlock ACH transfers, mobile deposits, check deposits, and wire transfers.'
-export const ACTIVATE_ACCOUNT_LABEL = 'Activate My Account'
+export const ACTIVATION_REQUIRED_BODY = 'This banking service is currently unavailable. Your account must be activated and upgraded before you can use this feature. Please complete your account activation to unlock access to this service.'
+export const ACTIVATE_ACCOUNT_LABEL = 'Go to Account Activation'
 
 /** ABA routing checksum, weights 3-7-1. */
 export function isValidAbaRouting(value: string): boolean {

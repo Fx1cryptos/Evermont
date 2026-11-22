@@ -1,6 +1,10 @@
 type SupportEmailContent = {
   ticketId: string
   subject: string
+  memberEmail?: string
+  question?: string
+  received?: string
+  status?: string
   memberName?: string
   notificationId: string
 }
@@ -185,12 +189,18 @@ export function notificationReference(id: string) { return `<notice.${id}@evermo
 export function createRawMessage(content: SupportEmailContent, sender: string, recipient: string): string {
   const safe = (value: string) => redactSensitiveText(cleanHeader(value)).replace(/\d(?:[ -]?\d){3,}/g, '[redacted]').slice(0,120)
   const origin = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://evermontcredit.online'
+  // Unrestricted member prose can contain secrets even without labels. Only forward
+  // verbatim questions from a small, non-sensitive allowlist; keep the rest in the portal.
+  const question = content.question?.trim() || ''
+  const category = /statement/i.test(question) ? 'Statements' : /beneficiar/i.test(question) ? 'Beneficiaries' : /activation/i.test(question) ? 'Activation' : 'Member support'
+  const excerpt = /^(where can i find my statements|how do i reset my password|how do i view my beneficiaries|how do i contact support)\??$/i.test(question) ? question : 'Member requested help. Read the original question and replies in the secure conversation.'
   const plain = ['EVERMONT • Member support', `Reference: ${content.ticketId}`, `Member: ${safe(content.memberName || 'Member')}`,
-    `Subject: ${safe(content.subject)}`, `Open securely: ${origin}/admin/support/${encodeURIComponent(content.ticketId)}`,
+    `Category: ${category}`, `Received: ${cleanHeader(content.received || "")}`, `Status: ${safe(content.status || "Open")}`,
+    `Contact: ${cleanHeader(content.memberEmail || "See profile")}`, `Summary: ${excerpt}`, `Open securely: ${origin}/admin/support/${encodeURIComponent(content.ticketId)}`,
     'To publish a member-visible reply, reply directly to this notification from the authorized inbox.',
     'Put MEMBER REPLY on its own line, followed by your reply, then END REPLY on its own line. Use the portal for internal notes.'].join('\n')
   return [`From: EVERMONT Support <${sender}>`,`To: ${recipient}`,`Message-ID: ${notificationReference(content.notificationId)}`,
-    `Subject: ${encodeSubject('EVERMONT support · ' + content.ticketId + ' · ' + safe(content.subject))}`,
+    `Subject: ${encodeSubject('EVERMONT support · ' + content.ticketId + ' · ' + category)}`,
     'MIME-Version: 1.0','Content-Type: text/plain; charset="UTF-8"','Content-Transfer-Encoding: base64','', Buffer.from(plain).toString('base64')].join('\r\n')
 }
 

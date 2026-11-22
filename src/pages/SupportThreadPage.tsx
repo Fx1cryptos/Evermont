@@ -17,7 +17,7 @@ function Thread({ owner, id }: { owner: string; id: string }) {
   const [notice, setNotice] = useState(
     location.state?.firstMessageFailed
       ? 'Conversation created. Your first message was not saved; please send it here.'
-      : '',
+      : location.state?.received ? 'Your support request has been received.' : '',
   )
   const { data, error, mutate } = useSWR(
     ['member-thread', owner, id],
@@ -91,7 +91,7 @@ function Thread({ owner, id }: { owner: string; id: string }) {
         <header className="flex flex-wrap items-center justify-between gap-4 bg-[#07142D] p-5 text-white">
           <div>
             <p className="text-xs font-bold uppercase tracking-widest text-[#C9A227]">Member services</p>
-            <h2 className="mt-1 text-xl font-semibold">Secure conversation</h2>
+            <h2 className="mt-1 text-xl font-semibold">Secure conversation</h2>{data && <p className="mt-2 break-all text-sm text-blue-100">Ticket ID: {data.conversation.id} · {closed ? "Resolved" : data.conversation.status === "pending_support" ? "Awaiting Human Support" : data.messages[data.messages.length-1]?.sender_role === "system" ? "AI Responded" : data.messages.some(m=>m.sender_role === "support") ? "In Progress" : "Open"}</p>}
           </div>
           {data && !closed && (
             <button

@@ -1,4 +1,6 @@
 import { defaultActivationPercent } from '../../shared/activationFee'
+import useSWR from 'swr'
+import { supabase } from '@/lib/supabase'
 import React, { useEffect, useState } from 'react'
 import { ArrowLeft, CheckCircle, Clock3, MessageCircle, ShieldCheck } from 'lucide-react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
@@ -17,6 +19,14 @@ const statusLabel = (status: ActivationPaymentStatus) => status.charAt(0).toUppe
 
 export const ActivationPage: React.FC = () => {
   const { user } = useAuth()
+  const quote = useSWR(user ? ['activation-quote',user.id] : null, async () => {
+    const session = await supabase.auth.getSession()
+    const token = session.data.session?.access_token
+    if (!token) throw Error('Session unavailable')
+    const res = await fetch('/api/activation-quote',{headers:{Authorization:'Bearer '+token},cache:'no-store'})
+    if (!res.ok) throw Error('Quote unavailable')
+    return (await res.json()).quotes as {id:string;type:string;currency:string;balance:string;rate:string;fee:string}[]
+  })
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const nextService = bankingServiceForPath(searchParams.get('next') || '')
@@ -53,7 +63,7 @@ export const ActivationPage: React.FC = () => {
       </section>
       <aside className="rounded-2xl bg-[#080A9F] p-6 text-white shadow-sm"><ShieldCheck className="size-6 text-[#C8A43D]" /><h2 className="mt-5 text-lg font-semibold">Account security</h2><p className="mt-2 text-sm leading-6 text-blue-100">For your protection, activation status is verified from your authenticated member record. Contact Support if you have questions about account access.</p></aside>
     </div>
-    <aside className="private-surface mt-6 p-6"><p className="private-overline">Activation fees</p><h2 className="private-heading">{defaultActivationPercent} standard rate</h2><p className="mt-2 text-sm text-slate-600">Your payable amount is unavailable until the calculation basis and any authorized override are verified. No payment is requested here.</p></aside>
+    <aside className="private-surface mt-6 p-6"><p className="private-overline">Activation fees</p><h2 className="private-heading">{defaultActivationPercent} standard rate</h2><p className="mt-2 text-sm text-slate-600">Estimates use your current account balance. No payment is requested here.</p>{quote.error ? <button onClick={()=>void quote.mutate()}>Estimate unavailable · Retry</button> : !quote.data ? <p>Loading estimate…</p> : quote.data.length ? quote.data.map(q=><article key={q.id} className="mt-4 rounded-xl border p-4"><strong className="capitalize">{q.type} · {q.currency}</strong><p>Account balance: {q.currency} {q.balance}</p><p>Applicable rate: {q.rate}</p><p>Estimated activation fee: {q.currency} {q.fee}</p></article>) : <p>No linked accounts.</p>}</aside>
     <section className="mt-7 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="border-b border-slate-100 px-6 py-5 sm:px-8"><h2 className="text-xl font-semibold text-[#080A9F]">Payment history</h2><p className="mt-1 text-sm text-slate-500">Activation payment attempts associated with your account.</p></div>{loading ? <p className="p-6 text-sm text-slate-500">Loading payment history...</p> : error ? <p role="alert" className="p-6 text-sm text-red-700">{error}</p> : payments.length === 0 ? <div className="p-10 text-center"><Clock3 className="mx-auto size-8 text-slate-300" /><p className="mt-3 text-sm font-semibold text-slate-700">No payment records yet</p><p className="mt-1 text-sm text-slate-500">Your activation payment attempts will appear here.</p></div> : <div className="overflow-x-auto"><table className="w-full min-w-[680px] text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500"><tr><th className="px-6 py-4 font-semibold">Date</th><th className="px-6 py-4 font-semibold">Amount</th><th className="px-6 py-4 font-semibold">Method</th><th className="px-6 py-4 font-semibold">Reference</th><th className="px-6 py-4 font-semibold">Status</th></tr></thead><tbody className="divide-y divide-slate-100">{payments.map(payment => <tr key={payment.id}><td className="px-6 py-4 whitespace-nowrap text-slate-600">{new Date(payment.created_at).toLocaleDateString()}</td><td className="px-6 py-4 whitespace-nowrap font-semibold text-[#172033]">{money(payment.amount, payment.currency)}</td><td className="px-6 py-4 text-slate-600">{payment.payment_method || '—'}</td><td className="px-6 py-4 font-mono text-xs text-slate-500">{payment.payment_reference || '—'}</td><td className="px-6 py-4"><span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[payment.status] || statusStyles.pending}`}>{statusLabel(payment.status)}</span></td></tr>)}</tbody></table></div>}</section>
   </PortalShell>
 }

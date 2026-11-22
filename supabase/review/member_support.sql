@@ -74,4 +74,24 @@ create trigger on_human_support_reply after insert on public.support_messages fo
 -- Reject replies to closed tickets even if a client calls PostgREST directly.
 create policy support_open_member_posts on public.support_messages as restrictive for insert to authenticated
 with check (exists (select 1 from public.support_conversations c where c.id=conversation_id and c.user_id=(select auth.uid()) and c.status not in ('resolved','closed')));
+-- Serialize submissions per authenticated member; service/staff delivery is unaffected.
+create or replace function public.limit_member_chat_writes() returns trigger
+language plpgsql security invoker set search_path='' as $$
+declare owner_id uuid := auth.uid();
+begin
+  if owner_id is null then return new; end if;
+  perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended(owner_id::text, 19));
+  if tg_table_name='support_messages' then
+    if length(trim(new.body)) not between 1 and 4000 or
+      (select count(*) from public.support_messages where sender_id=owner_id and created_at>now()-interval '1 minute')>=12
+      then raise exception 'Message limit reached or invalid message'; end if;
+  else
+    if length(trim(new.subject)) not between 1 and 160 or
+      (select count(*) from public.support_conversations where user_id=owner_id and created_at>now()-interval '1 hour')>=15
+      then raise exception 'Conversation limit reached or invalid subject'; end if;
+  end if;
+  return new;
+end; $$;
+create trigger limit_member_chat_messages before insert on public.support_messages for each row execute function public.limit_member_chat_writes();
+create trigger limit_member_chat_tickets before insert on public.support_conversations for each row execute function public.limit_member_chat_writes();
 commit;

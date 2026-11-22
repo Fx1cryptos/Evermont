@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Bell, CreditCard, FileText, Headphones, LayoutDashboard, LogOut, Menu, Receipt, Send, ShieldCheck, UserRound, WalletCards, X, Home, Landmark, Smartphone } from 'lucide-react'
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { ROUTES } from '@/constants/routes'
 import { LOGO_PATH, SITE_NAME, SITE_TAGLINE, SITE_TAGLINE_SECOND, SITE_URL, SUPPORT_EMAIL } from '@/config/site'
 import { useAuth } from '@/contexts/AuthContext'
@@ -9,7 +9,7 @@ import { useNotifications } from '@/hooks/useNotifications'
 
 const groups = [
   { label: 'Main', items: [
-    { label: 'Dashboard', to: ROUTES.DASHBOARD, icon: LayoutDashboard },
+    { label: 'Overview', to: ROUTES.DASHBOARD, icon: LayoutDashboard },
     { label: 'My Accounts', to: ROUTES.ACCOUNTS, icon: WalletCards },
   ] },
   { label: 'Banking', items: [
@@ -23,7 +23,7 @@ const groups = [
   ] },
   { label: 'Account management', items: [
     { label: 'Notifications', to: '/alerts', icon: Bell },
-    { label: 'Account Activation', to: ROUTES.ACTIVATION, icon: ShieldCheck },
+    { label: 'Activation', to: ROUTES.ACTIVATION, icon: ShieldCheck },
     { label: 'Profile & Security', to: ROUTES.PROFILE, icon: UserRound },
   ] },
   { label: 'Support', items: [
@@ -36,6 +36,7 @@ const navClass = ({ isActive }: { isActive: boolean }) => `flex min-h-10 items-c
 export const PortalShell: React.FC<React.PropsWithChildren<{ title: string; eyebrow?: string }>> = ({ title, eyebrow = 'Member portal', children }) => {
   const { signOut, user } = useAuth()
   const { unreadCount } = useNotifications(user?.id)
+  const location = useLocation()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const handleSignOut = async () => { try { await signOut(); navigate(ROUTES.LOGIN, { replace: true }) } catch { /* AuthContext retains the error. */ } }
@@ -98,7 +99,7 @@ export const PortalShell: React.FC<React.PropsWithChildren<{ title: string; eyeb
     </div>}
 
     <div className="flex min-h-[calc(100vh-4.25rem)] flex-col lg:ml-[264px]">
-      <main className="flex-1"><div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</div></main>
+      <main className="flex-1"><div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</div><div className="sticky bottom-3 pointer-events-none mx-auto flex max-w-6xl justify-end px-4 pb-2">{!location.pathname.startsWith("/support") && <Link to="/support?chat=1" aria-label="Chat with EVERMONT Support" className="pointer-events-auto inline-flex items-center gap-2 rounded-full bg-[#07142D] p-3 text-sm font-semibold text-white shadow-lg"><Headphones size={18}/><span className="hidden sm:inline">Member chat</span></Link>}</div></main>
       <footer className="border-t border-slate-200/80 bg-white px-4 py-5 sm:px-6 lg:px-8"><div className="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div className="flex items-center gap-3"><img src={LOGO_PATH} alt="" width={32} height={32} className="size-8 rounded-lg object-contain" /><div className="text-[11px] leading-5 text-slate-500"><p className="font-semibold text-[#07142D]">{SITE_NAME}</p><p>{SITE_TAGLINE_SECOND}</p></div></div><a href={`mailto:${SUPPORT_EMAIL}`} className="text-sm font-semibold text-[#0504AA] hover:text-[#C9A227]">Contact support</a></div></footer>
     </div>
   </div>

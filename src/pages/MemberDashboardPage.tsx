@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { ArrowDownLeft, ArrowUpRight, Bell, Building2, CreditCard, Eye, EyeOff, FileText, Headphones, Landmark, Receipt, Send, Smartphone, UserRound, WalletCards } from 'lucide-react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { SupportPage } from './SupportPage'
-import { MemberDesk, DashboardSkeleton } from '@/components/member/MemberDesk'
+import { DashboardSkeleton } from '@/components/member/MemberDesk'
 import { PortalShell } from '@/components/member/PortalShell'
 import { ActivationRequiredModal } from '@/components/member/ActivationRequiredModal'
 import { useAuth } from '@/contexts/AuthContext'
@@ -70,11 +70,8 @@ export const MemberDashboardPage: React.FC = () => {
   const [error, setError] = useState('')
   const singleCurrency = accounts.length && accounts.every(account => account.currency === accounts[0].currency) ? accounts[0].currency : null
   const total = useMemo(() => accounts.reduce((sum, account) => sum + Number(account.balance), 0), [accounts])
-  const { check: checkActivation, checking } = useActivationGate(user?.id)
-  const navigate = useNavigate()
-  const [pendingService, setPendingService] = useState<string | null>(null)
+  const { check: checkActivation } = useActivationGate(user?.id)
   const [gatePath, setGatePath] = useState<string | null>(null)
-  const [serviceError, setServiceError] = useState('')
   const [membership, setMembership] = useState<GateResult | null>(null)
   const [verificationError, setVerificationError] = useState('')
   const [attempt, retry] = useState(0)
@@ -114,23 +111,6 @@ export const MemberDashboardPage: React.FC = () => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(Number(value))
   }
 
-  const openService = async (path: string, key: string) => {
-    setServiceError('')
-    setPendingService(key)
-    try {
-      const result = await checkActivation()
-      if (!result.activated) {
-        setGatePath(path)
-        return
-      }
-      navigate(path)
-    } catch {
-      setServiceError('We could not verify activation. The service was not opened.')
-    } finally {
-      setPendingService(null)
-    }
-  }
-
   if (authLoading || (user && loading)) return <DashboardSkeleton />
   if (!user) return <main className="p-8"><Link to={ROUTES.LOGIN}>Sign in</Link></main>
 
@@ -167,25 +147,16 @@ export const MemberDashboardPage: React.FC = () => {
       </section>
 
       </div>
-      <MemberDesk />
-      <div className="grid gap-5">
-        <Panel title="Recent activity" action={<Link to={ROUTES.TRANSACTIONS} className="text-sm font-semibold text-[#0504AA]">Full history</Link>}>
-          {error || activityError ? <p className="px-4 py-6 text-sm text-slate-500">Activity was not loaded.</p> : <ActivityList format={(value,id) => shown(value, accounts.find(a => a.id === id)?.currency || null)} rows={recent} empty="Posted ledger entries and transactions will appear here." />}
-        </Panel>
-      </div>
-
       <section><h2 className="text-lg font-semibold">Transfers, deposits &amp; cards</h2>
-        {serviceError && <p role="alert" className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{serviceError}</p>}
         <ul className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
           {GATED_FEATURES.filter(item => item.key !== "digital-assets").map((item) => {
             const Icon = FEATURE_ICONS[item.key] || Landmark
-            const busy = checking && pendingService === item.key
             return (
               <li key={item.key}>
-                <button type="button" onClick={() => void openService(item.path, item.key)} disabled={checking || !membership?.activated || !['ach','check','mobile','wire'].includes(item.key)} aria-busy={busy} className="flex h-full w-full flex-col items-start gap-3 rounded-2xl border border-slate-200 bg-white p-3 text-left hover:border-[#C9A227] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0504AA] disabled:bg-slate-50 disabled:text-slate-500 sm:p-4">
+                <button type="button" onClick={() => setGatePath(item.path)} className="flex h-full w-full flex-col items-start gap-3 rounded-2xl border border-slate-200 bg-white p-3 text-left hover:border-[#C9A227] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0504AA] disabled:bg-slate-50 disabled:text-slate-500 sm:p-4">
                   <span className="flex size-10 items-center justify-center rounded-xl bg-[#0504AA] text-[#C9A227]"><Icon className="size-5" aria-hidden="true" /></span>
                   <span className="text-sm font-semibold text-[#0504AA]">{item.title}</span>
-                  <span className="text-xs leading-5 text-slate-500">{busy ? 'Checking activation…' : !['ach','check','mobile','wire'].includes(item.key) ? 'Unavailable' : !membership?.activated ? 'Requires verified activation' : item.description}</span>
+                  <span className="text-xs leading-5 text-slate-500">View service access</span>
                 </button>
               </li>
             )
@@ -194,6 +165,12 @@ export const MemberDashboardPage: React.FC = () => {
       </section>
 
       <section className="private-surface p-5"><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="private-overline">Private correspondence</p><h2 className="private-heading">Member support</h2></div><button className="rounded-full bg-[#0504AA] px-5 py-3 text-sm font-semibold text-white" aria-expanded={supportOpen} onClick={()=>setSupportOpen(!supportOpen)}>{supportOpen ? 'Close inbox' : 'Open your inbox'}</button></div>{supportOpen && <div className="mt-5"><SupportPage embedded /></div>}</section>
+      <div className="grid gap-5">
+        <Panel title="Recent activity" action={<Link to={ROUTES.TRANSACTIONS} className="text-sm font-semibold text-[#0504AA]">Full history</Link>}>
+          {error || activityError ? <p className="px-4 py-6 text-sm text-slate-500">Activity was not loaded.</p> : <ActivityList format={(value,id) => shown(value, accounts.find(a => a.id === id)?.currency || null)} rows={recent} empty="Posted ledger entries and transactions will appear here." />}
+        </Panel>
+      </div>
+
       <ActivationRequiredModal open={gatePath != null} nextPath={gatePath || undefined} onClose={() => setGatePath(null)} />
     </div>
   </PortalShell>

@@ -83,7 +83,8 @@ export const TransactionsPage: React.FC = () => {
           : 'No transactions match your filters'
 
   return <PortalShell title="Transaction history" eyebrow="Account activity">
-    <div className="mt-7 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-[1fr_180px_220px]">
+    <header className="private-hero px-6 py-7"><p className="private-overline text-white">Member ledger</p><h2 className="mt-2 font-serif text-3xl">Account activity</h2><p className="mt-2 text-sm text-blue-100">Review posted amounts, references and the balance after each entry.</p></header>
+    <div className="mt-5 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-[1fr_180px_220px]">
       <label className="relative">
         <Search className="absolute left-3 top-3 size-4 text-slate-400" />
         <input aria-label="Search transactions" value={query} onChange={event => setQuery(event.target.value)} placeholder="Search description, category or reference" className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-3" />
@@ -128,7 +129,7 @@ export const TransactionsPage: React.FC = () => {
                 </div>
                 <p className="hidden text-sm capitalize text-slate-600 lg:block">{row.category || 'General'}</p>
                 <p className="hidden text-sm text-slate-600 lg:block">{account?.accountNumber ? maskAccount(account.accountNumber) : account?.accountType || 'Account'}</p>
-                <p className="text-xs font-semibold capitalize text-slate-500 lg:text-sm">{row.status || '—'}</p>
+                <p className={`w-fit rounded-full px-3 py-1 text-xs font-semibold capitalize ${row.status === 'completed' ? 'bg-emerald-50 text-emerald-800' : row.status === 'pending' ? 'bg-amber-50 text-amber-900' : ['failed','reversed'].includes(row.status || '') ? 'bg-red-50 text-red-800' : 'bg-slate-100 text-slate-700'}`}>{row.status || '—'}</p>
                 <div className="flex items-center justify-between gap-3 lg:block lg:text-right">
                   <p className={`text-lg font-semibold ${credit ? 'text-emerald-700' : 'text-slate-900'}`}>{credit ? '+' : '−'}{money(row.displayAmount)}</p>
                   <button type="button" aria-expanded={open} aria-controls={detailId} onClick={() => setOpenId(open ? null : row.id)} className="text-xs font-semibold text-[#0504AA] lg:mt-1">

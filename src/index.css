@@ -67,3 +67,8 @@ textarea:focus {
 .private-hero::after { content: ''; position: absolute; width: 24rem; height: 24rem; border: 1px solid #ffffff20; border-radius: 50%; top:-18rem; right:-3rem; box-shadow: 0 0 0 24px #ffffff08, 0 0 0 52px #ffffff08, 0 0 0 84px #ffffff06; pointer-events:none; }
 .private-shell :focus-visible { outline: 3px solid #847016; outline-offset: 2px; }
 .private-shell main h1,.private-shell header h1 { font-family: Georgia,serif; }
+
+@media (prefers-reduced-motion: no-preference) {
+  nav[aria-label="Mobile member navigation"] { animation: member-drawer-in .16s ease-out; }
+  @keyframes member-drawer-in { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+}
