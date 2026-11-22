@@ -31,7 +31,7 @@ const server = await createServer({
     {
       name: 'fixture',
       resolveId: (id) => (id === 'virtual:client' ? '\0client' : null),
-      load: (id) => (id === '\0client' ? 'export const supabase=globalThis.__client;' : null),
+      load: (id) => (id === '\0client' ? 'export const supabase=globalThis.__client;export const isSupabaseConfigured=true;' : null),
     },
   ],
 })
@@ -322,4 +322,33 @@ test('assistant only commits to the owned source turn, stops after a handoff, an
   healthy = false
   assert.equal(await assistMember(client, ticket, member), false)
   assert.equal(replies.length, 1)
+})
+
+test('four distinct owner filters return their own balance, ledger and beneficiaries',async()=>{
+  const {accountService}=await load('/src/services/accountService.ts')
+  const {transactionService}=await load('/src/services/transactionService.ts')
+  const {readBeneficiaries}=await load('/src/services/beneficiaryService.ts')
+  const owners = ['fixture-1','fixture-2','fixture-3','fixture-4']
+  transport = async url => {
+    const table=url.pathname.split('/').pop()
+    if(table==='transactions') return json([])
+    const col=table==='ledger_entries'?'member_id':'user_id'
+    const rows=owners.map((owner,i)=>({id:table+i,[col]:owner,account_id:'accounts'+i,balance:String(i+1),amount:String(i+1),entry_type:'deposit',name:'Recipient '+i}))
+    return json(rows.filter(r=>'eq.'+r[col]===url.searchParams.get(col)))
+  }
+  for(const [i,owner] of owners.entries()){
+    const a=await accountService.getAccounts(owner), t=await transactionService.getTransactions(owner), b=await readBeneficiaries(owner)
+    assert.deepEqual(a.map(x=>[x.userId,x.balance]),[[owner,String(i+1)]])
+    assert.deepEqual(t.map(x=>[x.memberId,x.accountId]),[[owner,'accounts'+i]])
+    assert.deepEqual(b.map(x=>x.user_id),[owner])
+  }
+})
+test('default rate is 0.008, rounds once in currency minor units and never accepts negative basis',async()=>{
+ const {defaultActivationRate,defaultFeeMinorUnits}=await load('/shared/activationFee.ts')
+ assert.equal(defaultActivationRate.decimal,'0.008')
+ assert.equal(defaultFeeMinorUnits(10000n),80n)
+ assert.equal(defaultFeeMinorUnits(62n),0n)
+ assert.equal(defaultFeeMinorUnits(63n),1n)
+ assert.equal(defaultFeeMinorUnits(1000000000000000000n),8000000000000000n)
+ assert.throws(()=>defaultFeeMinorUnits(-1n))
 })

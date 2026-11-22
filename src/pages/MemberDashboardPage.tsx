@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { ArrowDownLeft, ArrowUpRight, Bell, Building2, CreditCard, Eye, EyeOff, FileText, Headphones, Landmark, Receipt, Send, Smartphone, UserRound, WalletCards } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
+import { SupportPage } from './SupportPage'
+import { MemberDesk, DashboardSkeleton } from '@/components/member/MemberDesk'
 import { PortalShell } from '@/components/member/PortalShell'
 import { ActivationRequiredModal } from '@/components/member/ActivationRequiredModal'
 import { useAuth } from '@/contexts/AuthContext'
@@ -76,6 +78,7 @@ export const MemberDashboardPage: React.FC = () => {
   const [membership, setMembership] = useState<GateResult | null>(null)
   const [verificationError, setVerificationError] = useState('')
   const [attempt, retry] = useState(0)
+  const [supportOpen,setSupportOpen] = useState(false)
   const [hidden, setHidden] = useState(false)
 
   useEffect(() => {
@@ -128,7 +131,7 @@ export const MemberDashboardPage: React.FC = () => {
     }
   }
 
-  if (authLoading || (user && loading)) return <main className="flex min-h-screen items-center justify-center bg-[#f6f7fb] text-sm text-slate-500">Loading your member portal...</main>
+  if (authLoading || (user && loading)) return <DashboardSkeleton />
   if (!user) return <main className="p-8"><Link to={ROUTES.LOGIN}>Sign in</Link></main>
 
   const firstName = profile?.firstName || user.firstName || 'Member'
@@ -137,37 +140,41 @@ export const MemberDashboardPage: React.FC = () => {
     <div className="space-y-5">
       {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
 
-      <section className="rounded-2xl border-t-4 border-[#C9A227] bg-[radial-gradient(ellipse_at_top_right,#302e98,#101e40_55%,#07142D)] p-6 text-white sm:p-6">
+      <section className="private-hero p-6 sm:p-9">
         <div className="flex items-start justify-between gap-3">
-          <p className="text-xs font-semibold uppercase tracking-[.16em] text-[#C9A227]">Private banking · Total balance</p>
+          <p className="text-xs font-semibold uppercase tracking-[.16em] text-[#C9A227]">Private wealth / Portfolio</p>
           <button type="button" onClick={() => setHidden((value) => !value)} aria-pressed={hidden} className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-3 py-1.5 text-xs font-semibold">{hidden ? <Eye className="size-4" aria-hidden="true" /> : <EyeOff className="size-4" aria-hidden="true" />}{hidden ? 'Show' : 'Hide'}</button>
         </div>
+        <h2 className="mt-5 font-serif text-3xl sm:text-4xl">Account overview</h2>
         {error ? <p className="mt-3 text-sm text-blue-100">Balance is hidden because account records did not load.</p> : accounts.length ? <p className="mt-3 text-4xl font-semibold tabular-nums tracking-tight sm:text-5xl">{shown(accounts.some(a => a.balance == null) ? null : total)}</p> : <p className="mt-3 text-sm text-blue-100">No accounts are on file for this member.</p>}
-        <p className="mt-3 max-w-xl text-sm leading-6 text-blue-100">{accounts.length ? `Across ${accounts.length} member account${accounts.length === 1 ? '' : 's'}` : 'A balance appears only when the database returns an account.'}</p>
+        <p className="mt-3 max-w-xl text-sm leading-6 text-blue-100">{accounts.length ? `Across ${accounts.length} member account${accounts.length === 1 ? '' : 's'}` : 'Your linked accounts and their balances will appear here.'}</p>
       </section>
 
-      <section aria-live="polite" className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4">
-        <div><p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Membership</p><h2 className="mt-1 font-semibold">{membership?.label || (verificationError ? 'Unable to verify activation' : 'Checking activation…')}</h2><p className="text-sm text-slate-600">{membership?.detail || verificationError}</p></div>
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
+      <section aria-live="polite" className="private-surface flex flex-col items-start justify-between gap-4 p-6 lg:order-2">
+        <div><p className="private-overline">Membership</p><h2 className="mt-1 font-semibold">{membership?.label || (verificationError ? 'Unable to verify activation' : 'Checking activation…')}</h2><p className="text-sm text-slate-600">{membership?.detail || verificationError}</p></div>
         {verificationError ? <button className="font-semibold text-[#0504AA]" onClick={() => retry(n => n + 1)}>Retry verification</button> : <Link className="font-semibold text-[#0504AA]" to={ROUTES.ACTIVATION}>Activation details →</Link>}
       </section>
-      <section aria-labelledby="account-summary-title">
-        <h2 id="account-summary-title" className="text-sm font-semibold text-[#07142D]">Accounts</h2>
+      <section className="private-surface p-5" aria-labelledby="account-summary-title"><p className="private-overline">Portfolio details</p>
+        <h2 id="account-summary-title" className="private-heading">Accounts</h2>
         {accounts.length ? <ul className="mt-3 grid gap-3 sm:grid-cols-2">{accounts.map(account => (
           <li key={account.id} className="rounded-2xl border border-slate-200 bg-white p-4">
             <p className="text-sm font-semibold capitalize text-[#0504AA]">{account.accountType}</p>
             <p className="mt-1 text-xs text-slate-500">{account.accountNumber ? maskAccount(account.accountNumber) : 'Account number not returned'} · <span className="capitalize">{account.status || 'Status not returned'}</span></p>
-            <p className="mt-3 text-xl font-semibold tabular-nums text-[#07142D]">{shown(account.balance, account.currency)}</p><p className="mt-2 text-xs text-slate-500">{account.currency} · Account balance{account.updatedAt ? ' · Updated ' + formatActivityDate(account.updatedAt) : ''}</p>
+            <p className="mt-3 text-xl font-semibold tabular-nums text-[#07142D]">{shown(account.balance, account.currency)}</p><p className="mt-2 text-xs text-slate-500">{account.currency} · Account balance{account.createdAt ? ' · Opened ' + new Date(account.createdAt).toLocaleDateString() : ''}{account.updatedAt ? ' · Updated ' + formatActivityDate(account.updatedAt) : ''}</p>
           </li>
         ))}</ul> : <p className="mt-3 rounded-2xl border border-slate-200 bg-white px-4 py-6 text-sm text-slate-500">No account details were returned.</p>}
       </section>
 
+      </div>
+      <MemberDesk />
       <div className="grid gap-5">
         <Panel title="Recent activity" action={<Link to={ROUTES.TRANSACTIONS} className="text-sm font-semibold text-[#0504AA]">Full history</Link>}>
           {error || activityError ? <p className="px-4 py-6 text-sm text-slate-500">Activity was not loaded.</p> : <ActivityList format={(value,id) => shown(value, accounts.find(a => a.id === id)?.currency || null)} rows={recent} empty="Posted ledger entries and transactions will appear here." />}
         </Panel>
       </div>
 
-      <section><h2 className="text-lg font-semibold">Quick actions</h2>
+      <section><h2 className="text-lg font-semibold">Transfers, deposits &amp; cards</h2>
         {serviceError && <p role="alert" className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{serviceError}</p>}
         <ul className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
           {GATED_FEATURES.filter(item => item.key !== "digital-assets").map((item) => {
@@ -183,30 +190,10 @@ export const MemberDashboardPage: React.FC = () => {
               </li>
             )
           })}
-          {[{key:'beneficiaries',title:'Beneficiaries',path:ROUTES.BENEFICIARIES,description:'Manage your recipients.'},{key:'statements',title:'Statements',path:'/statements',description:'Browse your documents.'},{key:'history',title:'Transaction history',path:ROUTES.TRANSACTIONS,description:'Review account activity.'}].map((item) => {
-            const Icon = FEATURE_ICONS[item.key] || Landmark
-            return (
-              <li key={item.key}>
-                <Link to={item.path} className="flex h-full flex-col items-start gap-3 rounded-2xl border border-slate-200 bg-white p-3 hover:border-[#C9A227] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0504AA] sm:p-4">
-                  <span className="flex size-10 items-center justify-center rounded-xl border border-[#C9A227] text-[#0504AA]"><Icon className="size-5" aria-hidden="true" /></span>
-                  <span className="text-sm font-semibold text-[#0504AA]">{item.title}</span>
-                  <span className="text-xs leading-5 text-slate-500">{item.description}</span>
-                </Link>
-              </li>
-            )
-          })}
         </ul>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5">
-        <h2 className="text-sm font-semibold text-[#07142D]">Profile and support</h2>
-        <div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold">
-          <Link to={ROUTES.PROFILE} className="rounded-lg border border-slate-200 px-3 py-2 text-[#0504AA] hover:border-[#C9A227]">Profile</Link>
-          <Link to={ROUTES.SETTINGS} className="rounded-lg border border-slate-200 px-3 py-2 text-[#0504AA] hover:border-[#C9A227]">Security and password</Link>
-          <Link to={ROUTES.SUPPORT} className="rounded-lg border border-slate-200 px-3 py-2 text-[#0504AA] hover:border-[#C9A227]">Support</Link>
-          <a href="mailto:support@evermontcredit.online" className="rounded-lg border border-slate-200 px-3 py-2 text-[#0504AA] hover:border-[#C9A227]">Contact support</a>
-        </div>
-      </section>
+      <section className="private-surface p-5"><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="private-overline">Private correspondence</p><h2 className="private-heading">Member support</h2></div><button className="rounded-full bg-[#0504AA] px-5 py-3 text-sm font-semibold text-white" aria-expanded={supportOpen} onClick={()=>setSupportOpen(!supportOpen)}>{supportOpen ? 'Close inbox' : 'Open your inbox'}</button></div>{supportOpen && <div className="mt-5"><SupportPage embedded /></div>}</section>
       <ActivationRequiredModal open={gatePath != null} nextPath={gatePath || undefined} onClose={() => setGatePath(null)} />
     </div>
   </PortalShell>

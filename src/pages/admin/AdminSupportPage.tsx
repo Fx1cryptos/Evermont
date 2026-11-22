@@ -113,6 +113,7 @@ export const AdminSupportPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [page,setPage] = useState(0)
+  const [messageSearch,setMessageSearch] = useState('')
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState('all')
@@ -320,10 +321,12 @@ export const AdminSupportPage: React.FC = () => {
                 </div>
               </div>
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 bg-white px-4 py-3 text-xs text-slate-500 sm:px-6"><div className="flex min-w-0 items-center gap-2"><Mail size={14} className="shrink-0" aria-hidden="true" /><span className="truncate">{detail?.member.email || 'Member email unavailable'}</span></div><button type="button" onClick={() => void retryNotifications()} disabled={working} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium text-[#0504AA] hover:bg-blue-50 disabled:opacity-50"><RotateCw size={13} aria-hidden="true" /> Retry email</button></div>
+              <label className="grid gap-1 border-b bg-white px-5 py-3 text-xs font-semibold text-slate-600">Find in this conversation<input type="search" className="rounded-lg border px-3 py-2" value={messageSearch} onChange={e=>setMessageSearch(e.target.value)} placeholder="Search messages and staff notes" /></label>
               <div className="min-h-[220px] flex-1 space-y-4 overflow-y-auto p-4 sm:p-6">
+                {detail && messageSearch.trim() && !detail.messages.some(m=>m.body.toLowerCase().includes(messageSearch.trim().toLowerCase())) && <p>No matching messages.</p>}
                 {detailLoading && <div className="flex items-center gap-2 text-sm text-slate-500"><Loader2 size={15} className="animate-spin" /> Loading ticket</div>}
                 {detailError && <div role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{detailError.message}</div>}
-                {detail?.messages.map(message => {
+                {detail?.messages.filter(message => message.body.toLowerCase().includes(messageSearch.trim().toLowerCase())).map(message => {
                   const isStaff = message.sender_role !== 'member'
                   return <div key={message.id} className={`flex ${isStaff ? 'justify-end' : 'justify-start'}`}><article className={`max-w-[88%] rounded-2xl px-4 py-3 shadow-sm ${isStaff ? 'rounded-br-md bg-[#0504AA] text-white' : 'rounded-bl-md border border-slate-200 bg-white text-slate-800'}`}><div className={`mb-1.5 flex items-center gap-2 text-[11px] ${isStaff ? 'text-blue-100' : 'text-slate-400'}`}><span className="font-semibold">{message.is_internal ? 'Internal staff note' : message.sender_role === 'system' ? 'EVERMONT assistant / system' : isStaff ? 'Evermont Support' : (detail.member.name || 'Member')}</span><time>{formatDate(message.created_at)}</time></div><p className="whitespace-pre-wrap break-words text-sm leading-6">{message.body}</p></article></div>
                 })}

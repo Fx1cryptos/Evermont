@@ -12,6 +12,7 @@ export const accountService = {
 
       if (error) throw error
 
+      if (data?.some(account => account.user_id !== userId)) throw new Error('Account ownership mismatch')
       return (
         data?.map((acc) => ({
           id: acc.id,

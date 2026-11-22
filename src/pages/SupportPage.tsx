@@ -14,7 +14,7 @@ const labels: Record<SupportStatus, string> = {
   resolved: 'Resolved',
   closed: 'Closed',
 }
-export const SupportPage: React.FC = () => {
+export const SupportPage: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
@@ -53,8 +53,8 @@ export const SupportPage: React.FC = () => {
     }
     navigate(`${ROUTES.SUPPORT}/${result.data.id}`)
   }
-  return (
-    <PortalShell title="Messaging center" eyebrow="Member services">
+  const inboxContent = (
+    <>
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-[#07142D] p-6 text-white">
         <p className="max-w-xl text-blue-100">
           <strong className="mb-2 block text-2xl font-semibold text-white">Your private inbox</strong>Ask a
@@ -167,7 +167,8 @@ export const SupportPage: React.FC = () => {
           )
         )}
       </section>
-    </PortalShell>
+    </>
   )
+  return embedded ? inboxContent : <PortalShell title="Messaging center" eyebrow="Member services">{inboxContent}</PortalShell>
 }
 export default SupportPage

@@ -169,6 +169,7 @@ export const transactionService = {
 
       const ledger = ((ledgerResult.data || []) as Parameters<typeof mapLedgerRow>[0][]).map((row) => toActivity(mapLedgerRow(row)))
       const transactions = transactionResult.error ? [] : ((transactionResult.data || []) as Parameters<typeof mapTransactionRow>[0][]).map(mapTransactionRow)
+      if ([...ledger,...transactions].some(row => row.memberId !== userId)) throw new Error('Unable to load transaction history.')
       let rows = mergeActivity(ledger, transactions)
       if (filters.type) rows = rows.filter((row) => row.direction === filters.type)
       return applyWindow(rows, filters)

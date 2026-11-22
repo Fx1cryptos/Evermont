@@ -62,10 +62,10 @@ export const PortalShell: React.FC<React.PropsWithChildren<{ title: string; eyeb
     </div>
   ))
 
-  return <div className="min-h-screen bg-[#F5F7FB] text-[#07142D]">
+  return <div className="private-shell min-h-screen bg-[#f4f4f1] text-[#07142D]">
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-[264px] flex-col border-r border-slate-200/80 bg-white px-4 pb-4 pt-5 lg:flex">
       {brand()}
-      <div className="mt-5 rounded-xl bg-[#07142D] px-3.5 py-3 text-white"><p className="text-[9px] font-bold uppercase tracking-[.16em] text-[#C9A227]">Private wealth</p><p className="mt-1 text-xs font-medium leading-5 text-white/85">{SITE_TAGLINE}</p></div>
+      <div className="mt-5 rounded-xl private-hero px-3.5 py-3 text-white"><p className="text-[9px] font-bold uppercase tracking-[.16em] text-[#C9A227]">Private Wealth Secured Bank</p><p className="mt-1 text-xs font-medium leading-5 text-white/85">{SITE_TAGLINE}</p></div>
       <nav className="mt-2 flex-1 overflow-y-auto pb-4" aria-label="Member navigation">
         <a href={SITE_URL} target="_blank" rel="noopener noreferrer" className="mt-4 flex min-h-10 items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-[#0504AA]"><Home className="size-4" aria-hidden="true" />Visit EVERMONT Website</a>
         {linkGroups()}
@@ -84,7 +84,7 @@ export const PortalShell: React.FC<React.PropsWithChildren<{ title: string; eyeb
           <Link to={ROUTES.DASHBOARD} className="lg:hidden" aria-label="Evermont member dashboard"><img src={LOGO_PATH} alt="" width={34} height={34} className="size-[34px] rounded-lg object-contain" /></Link>
           <div className="min-w-0"><p className="text-[10px] font-bold uppercase tracking-[.15em] text-[#C9A227]">{eyebrow}</p><h1 className="truncate text-base font-semibold tracking-tight text-[#07142D] sm:text-lg">{title}</h1></div>
         </div>
-        <div className="flex shrink-0 items-center gap-2 sm:gap-3"><Link to="/alerts" className="relative rounded-xl p-2.5 text-slate-500 transition hover:bg-slate-100 hover:text-[#0504AA]" aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : "Notifications"}>{unreadCount > 0 && <small className="absolute right-0 top-0 rounded-full bg-[#0504AA] px-1 text-white">{unreadCount}</small>}<Bell className="size-5" aria-hidden="true" /></Link><span className="hidden items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800 sm:flex"><span className="size-1.5 rounded-full bg-emerald-500" />Secure session</span><Link to={ROUTES.PROFILE} className="hidden size-9 items-center justify-center rounded-full bg-[#07142D] text-sm font-semibold text-white sm:flex" aria-label={`Profile: ${displayName}`}>{displayName.charAt(0).toUpperCase()}</Link></div>
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3"><Link to="/alerts" className="relative rounded-xl p-2.5 text-slate-500 transition hover:bg-slate-100 hover:text-[#0504AA]" aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : "Notifications"}>{unreadCount > 0 && <small className="absolute right-0 top-0 rounded-full bg-[#0504AA] px-1 text-white">{unreadCount}</small>}<Bell className="size-5" aria-hidden="true" /></Link><span className="hidden items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800 sm:flex"><span className="size-1.5 rounded-full bg-emerald-500" />Secure session</span><details className="relative"><summary className="grid size-10 cursor-pointer list-none place-items-center rounded-full bg-[#07142D] text-sm font-bold text-white" aria-label="Member profile menu">{displayName.charAt(0).toUpperCase()}</summary><div className="private-surface absolute right-0 mt-2 grid w-48 p-2 text-sm"><Link className="p-3" to={ROUTES.PROFILE}>My profile</Link><Link className="p-3" to={ROUTES.SETTINGS}>Security settings</Link><button className="p-3 text-left" onClick={()=>void handleSignOut()}>Sign out</button></div></details></div>
       </div>
     </header>
 

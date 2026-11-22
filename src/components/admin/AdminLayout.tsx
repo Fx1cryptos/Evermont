@@ -1,3 +1,4 @@
+import { LOGO_PATH } from '@/config/site'
 import React from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
@@ -41,14 +42,12 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       <aside
         className={`${
           sidebarOpen ? 'w-64' : 'w-20'
-        } bg-evermont-blue text-white transition-all duration-300 flex flex-col hidden md:flex`}
+        } bg-[#07142D] text-white transition-all duration-300 flex flex-col hidden md:flex`}
       >
         <div className="p-4 border-b border-blue-700">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-evermont-gold flex items-center justify-center text-evermont-blue font-bold">
-              E
-            </div>
-            {sidebarOpen && <span className="font-bold">Evermont Ops</span>}
+            <img src={LOGO_PATH} alt="EVERMONT Credit Union" className="size-10 rounded-lg" />
+            {sidebarOpen && <span className="font-bold">EVERMONT · Staff</span>}
           </div>
         </div>
 

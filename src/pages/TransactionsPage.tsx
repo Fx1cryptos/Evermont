@@ -10,13 +10,11 @@ import type { Account } from '@/types'
 type ActivityType = 'all' | 'deposits' | 'withdrawals'
 const PAGE_SIZE = 10
 
-const money = (value: unknown) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value) || 0)
-const posted = (value: string | null) => (value == null ? '—' : money(value))
-
 export const TransactionsPage: React.FC = () => {
   const { user } = useAuth()
   const [rows, setRows] = useState<LedgerActivity[]>([])
   const [accounts, setAccounts] = useState<Account[]>([])
+  const [accountFilter,setAccountFilter] = useState('all')
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState('all')
   const [activityType, setActivityType] = useState<ActivityType>('all')
@@ -56,7 +54,7 @@ export const TransactionsPage: React.FC = () => {
   useEffect(() => {
     setPage(0)
     setOpenId(null)
-  }, [query, status, activityType, startDate, endDate])
+  }, [query, status, activityType, startDate, endDate, accountFilter])
 
   const filtered = useMemo(() => rows.filter(row => {
     const matchesStatus = status === 'all' || row.status === status
@@ -66,8 +64,8 @@ export const TransactionsPage: React.FC = () => {
     const matchesStart = !startDate || created >= new Date(`${startDate}T00:00:00`).getTime()
     const matchesEnd = !endDate || created <= new Date(`${endDate}T23:59:59.999`).getTime()
     const matchesType = activityType === 'all' || (activityType === 'deposits' ? row.direction === 'credit' : row.direction === 'debit')
-    return matchesStatus && matchesQuery && matchesType && matchesStart && matchesEnd
-  }), [rows, query, status, activityType, startDate, endDate])
+    return (accountFilter === "all" || row.accountId === accountFilter) && matchesStatus && matchesQuery && matchesType && matchesStart && matchesEnd
+  }), [rows, query, status, activityType, startDate, endDate, accountFilter])
 
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
@@ -102,6 +100,7 @@ export const TransactionsPage: React.FC = () => {
         <option value="deposits">Deposits / Credits</option>
         <option value="withdrawals">Withdrawals / Debits</option>
       </select>
+      <select aria-label="Filter by account" value={accountFilter} className="rounded-xl border p-2" onChange={e=>setAccountFilter(e.target.value)}><option value="all">All accounts</option>{accounts.map(a=><option key={a.id} value={a.id}>{a.accountType} {maskAccount(a.accountNumber || "")}</option>)}</select>
       <label className="grid gap-1 text-xs font-semibold text-slate-500">From<input type="date" aria-label="Filter from date" value={startDate} onChange={event => setStartDate(event.target.value)} className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-normal text-slate-700" /></label>
       <label className="grid gap-1 text-xs font-semibold text-slate-500">To<input type="date" aria-label="Filter to date" value={endDate} onChange={event => setEndDate(event.target.value)} className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-normal text-slate-700" /></label>
     </div>
@@ -113,6 +112,8 @@ export const TransactionsPage: React.FC = () => {
         </div>
         <div className="divide-y divide-slate-100">
           {visible.map(row => {
+            const money = (value: unknown) => value != null && Number.isFinite(Number(value)) && account?.currency && /^[A-Z]{3}$/.test(account.currency) ? new Intl.NumberFormat('en-US',{style:'currency',currency:account.currency}).format(Number(value)) : 'Unavailable'
+            const posted = (value: string | null) => value == null ? '—' : money(value)
             const credit = row.direction === 'credit'
             const account = accounts.find(item => item.id === row.accountId)
             const open = openId === row.id

@@ -133,7 +133,7 @@ function Thread({ owner, id }: { owner: string; id: string }) {
                 <p className="my-1">
                   {m.sender_role === 'system' ? m.body.replace(/^EVERMONT AI Support: /, '') : m.body}
                 </p>
-                <time className="text-xs opacity-75">{new Date(m.created_at).toLocaleString()}</time>
+                <time className="text-xs opacity-75">{new Date(m.created_at).toLocaleString()}</time>{m.sender_role === 'member' && <span className="ml-2 text-xs opacity-75">Saved to conversation</span>}
               </article>
             ))
           )}

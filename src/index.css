@@ -55,3 +55,15 @@ textarea:focus {
 ::-webkit-scrollbar-thumb {
   @apply bg-gray-400 rounded hover:bg-gray-600;
 }
+
+/* Shared private-portal surfaces and typography; public marketing pages retain their own layout. */
+.private-surface { @apply min-w-0 rounded-2xl border border-slate-200 bg-white shadow-sm; }
+.private-heading { font-family: Georgia, serif; @apply mt-1 text-2xl font-normal tracking-tight text-[#07142D]; }
+.private-overline { @apply text-[10px] font-bold uppercase tracking-[.2em] text-[#786017]; }
+.private-hero {
+  background: radial-gradient(ellipse at 95% -35%, #444ab0 0%, transparent 54%), linear-gradient(115deg,#07142D,#162952 70%,#21296a);
+  @apply relative overflow-hidden rounded-3xl border-b-4 border-[#C9A227] text-white;
+}
+.private-hero::after { content: ''; position: absolute; width: 24rem; height: 24rem; border: 1px solid #ffffff20; border-radius: 50%; top:-18rem; right:-3rem; box-shadow: 0 0 0 24px #ffffff08, 0 0 0 52px #ffffff08, 0 0 0 84px #ffffff06; pointer-events:none; }
+.private-shell :focus-visible { outline: 3px solid #847016; outline-offset: 2px; }
+.private-shell main h1,.private-shell header h1 { font-family: Georgia,serif; }
