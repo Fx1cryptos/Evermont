@@ -12,10 +12,13 @@
     "type-check": "tsc --noEmit",
     "preview:vite": "vite preview",
     "demo:css": "tailwindcss -c banking_demo/tailwind.config.cjs -i banking_demo/banking/static/banking/source.css -o banking_demo/banking/static/banking/demo.css --minify",
-    "test:portal": "node --test tests/portal-access.mjs"
+    "test:portal": "node --test --test-concurrency=1 tests/*.mjs",
+    "support:worker:build": "tsc -p tsconfig.support-worker.json",
+    "support:worker": "node .support-worker/scripts/support-worker.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.38.0",
+    "jspdf": "^4.2.1",
     "lucide-react": "^0.294.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

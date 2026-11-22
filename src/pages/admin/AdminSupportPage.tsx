@@ -28,9 +28,11 @@ type Conversation = {
   subject: string
   status: Status
   priority: Priority
+  human_requested?: boolean
   assigned_to: string | null
   last_message_at: string
   created_at: string
+  memberName?: string | null
   unreadCount: number
   preview: string
 }
@@ -42,13 +44,14 @@ type TicketMessage = {
   is_internal: boolean
   created_at: string
 }
-type InboxResult = { conversations: Conversation[] }
+type InboxResult = { hasMore?:boolean; conversations: Conversation[] }
 type GmailStatus = {
   connection: { senderEmail: string; accountEmail: string; senderMatches: boolean; canReadInbox: boolean }
   sync: { lastSyncedAt: string | null; lastError: string | null; isRunning: boolean }
 }
 type SyncResult = { imported: number; ignored: number; nextPagePending: boolean; lastSyncedAt: string }
 type DetailResult = {
+  notification?: string
   conversation: Conversation
   member: { name: string | null; email: string | null }
   messages: TicketMessage[]
@@ -109,9 +112,11 @@ export const AdminSupportPage: React.FC = () => {
   const { user } = useAuth()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const [page,setPage] = useState(0)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState('all')
+  const [note, setNote] = useState(false)
   const [reply, setReply] = useState('')
   const [working, setWorking] = useState(false)
   const [testSending, setTestSending] = useState(false)
@@ -121,23 +126,23 @@ export const AdminSupportPage: React.FC = () => {
   const [actionError, setActionError] = useState('')
 
   const { data: gmailStatus, mutate: refreshGmailStatus } = useSWR<GmailStatus>(
-    ['support-gmail-status'],
+    ['support-gmail-status',user?.id],
     () => supportRequest<GmailStatus>('/api/support-gmail'),
     { refreshInterval: 60000, revalidateOnFocus: true },
   )
-  const inboxKey = ['support-inbox', search, statusFilter, priorityFilter]
+  const inboxKey = ['support-inbox', user?.id, search, statusFilter, priorityFilter,page]
   const { data: inboxData, error: inboxError, isLoading: inboxLoading, mutate: refreshInbox } = useSWR<InboxResult>(
     inboxKey,
-    () => supportRequest<InboxResult>(`/api/support?q=${encodeURIComponent(search)}&status=${statusFilter}&priority=${priorityFilter}`),
+    () => supportRequest<InboxResult>(`/api/support?q=${encodeURIComponent(search)}&status=${statusFilter}&priority=${priorityFilter}&page=${page}`),
     { refreshInterval: 30000, revalidateOnFocus: true },
   )
   const { data: detail, error: detailError, isLoading: detailLoading, mutate: refreshDetail } = useSWR<DetailResult>(
-    id ? ['support-ticket', id] : null,
+    id ? ['support-ticket', user?.id, id] : null,
     () => supportRequest<DetailResult>(`/api/support?id=${encodeURIComponent(id as string)}`),
-    { revalidateOnFocus: true },
+    { revalidateOnFocus: true, refreshInterval: 15000 },
   )
 
-  const updateTicket = async (updates: { status?: Status; priority?: Priority }) => {
+  const updateTicket = async (updates: { status?: Status; priority?: Priority; assignSelf?: boolean }) => {
     if (!id) return
     setWorking(true)
     setActionError('')
@@ -162,7 +167,7 @@ export const AdminSupportPage: React.FC = () => {
     try {
       await supportRequest('/api/support', {
         method: 'POST',
-        body: JSON.stringify({ action: 'reply', conversationId: id, message: reply.trim() }),
+        body: JSON.stringify({ action: note ? 'note' : 'reply', conversationId: id, message: reply.trim() }),
       })
       setReply('')
       await Promise.all([refreshDetail(), refreshInbox()])
@@ -263,12 +268,12 @@ export const AdminSupportPage: React.FC = () => {
               <label className="mt-4 flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-3 focus-within:border-[#0504AA] focus-within:ring-2 focus-within:ring-blue-100">
                 <Search size={16} className="shrink-0 text-slate-400" aria-hidden="true" />
                 <span className="sr-only">Search tickets</span>
-                <input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search subject or ticket" className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400" />
+                <input value={search} onChange={event => {setPage(0);setSearch(event.target.value)}} placeholder="Search subject or ticket" className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400" />
               </label>
               <div className="mt-3 grid grid-cols-2 gap-2">
                 <label className="relative">
                   <span className="sr-only">Filter by status</span>
-                  <select value={statusFilter} onChange={event => setStatusFilter(event.target.value)} className="h-9 w-full appearance-none rounded-lg border border-slate-200 bg-white pl-2.5 pr-7 text-xs text-slate-600 outline-none focus:border-[#0504AA]">
+                  <select value={statusFilter} onChange={event => {setPage(0);setStatusFilter(event.target.value)}} className="h-9 w-full appearance-none rounded-lg border border-slate-200 bg-white pl-2.5 pr-7 text-xs text-slate-600 outline-none focus:border-[#0504AA]">
                     <option value="all">All statuses</option>
                     <option value="open">Open</option>
                     <option value="pending_support">Needs response</option>
@@ -279,7 +284,7 @@ export const AdminSupportPage: React.FC = () => {
                 </label>
                 <label className="relative">
                   <span className="sr-only">Filter by priority</span>
-                  <select value={priorityFilter} onChange={event => setPriorityFilter(event.target.value)} className="h-9 w-full appearance-none rounded-lg border border-slate-200 bg-white pl-2.5 pr-7 text-xs text-slate-600 outline-none focus:border-[#0504AA]">
+                  <select value={priorityFilter} onChange={event => {setPage(0);setPriorityFilter(event.target.value)}} className="h-9 w-full appearance-none rounded-lg border border-slate-200 bg-white pl-2.5 pr-7 text-xs text-slate-600 outline-none focus:border-[#0504AA]">
                     <option value="all">All priorities</option>
                     <option value="urgent">Urgent</option>
                     <option value="high">High</option>
@@ -296,10 +301,11 @@ export const AdminSupportPage: React.FC = () => {
               {conversations.map(conversation => (
                 <button key={conversation.id} type="button" onClick={() => navigate(`/admin/support/${conversation.id}`)} className={`block w-full border-b border-slate-100 px-4 py-4 text-left transition hover:bg-slate-50 ${id === conversation.id ? 'bg-blue-50/60' : ''}`} aria-current={id === conversation.id ? 'page' : undefined}>
                   <div className="flex items-start justify-between gap-2"><p className="truncate text-sm font-semibold text-slate-900">{conversation.subject}</p>{conversation.unreadCount > 0 && <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#0504AA] px-1.5 text-[10px] font-bold text-white">{conversation.unreadCount}</span>}</div>
-                  <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{conversation.preview || 'No messages yet'}</p>
+                  <p className="mt-1 text-xs font-medium">{conversation.memberName || "Member"} · {conversation.id}</p><p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{conversation.preview || 'No messages yet'}</p>
                   <div className="mt-3 flex flex-wrap items-center gap-1.5"><span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${getStatusStyle(conversation.status)}`}>{statusLabel[conversation.status]}</span><span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${getPriorityStyle(conversation.priority)}`}>{priorityLabel[conversation.priority]}</span><time className="ml-auto text-[10px] text-slate-400">{formatDate(conversation.last_message_at)}</time></div>
                 </button>
               ))}
+              {(page > 0 || inboxData?.hasMore) && <div className="flex justify-between p-3 text-sm"><button disabled={!page} onClick={()=>setPage(p=>p-1)}>Previous</button><button disabled={!inboxData?.hasMore} onClick={()=>setPage(p=>p+1)}>Next</button></div>}
             </div>
           </section>
 
@@ -309,7 +315,7 @@ export const AdminSupportPage: React.FC = () => {
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
                 <div className="flex min-w-0 items-center gap-3"><button type="button" onClick={() => navigate('/admin/support')} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 lg:hidden" aria-label="Back to conversations"><ArrowLeft size={18} /></button><div className="min-w-0"><p className="truncate text-xs text-slate-500">Ticket {id.slice(0, 8).toUpperCase()} · {detail?.member.name || 'Member'}</p><h2 className="truncate text-base font-semibold text-slate-950">{ticket?.subject || 'Support conversation'}</h2></div></div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <label className="relative"><span className="sr-only">Ticket status</span><select disabled={working || !ticket} value={ticket?.status || 'open'} onChange={event => void updateTicket({ status: event.target.value as Status })} className="h-9 appearance-none rounded-lg border border-slate-200 bg-white pl-3 pr-8 text-xs font-medium text-slate-700 outline-none disabled:opacity-60"><option value="open">Open</option><option value="pending_support">Needs response</option><option value="pending_member">Waiting on member</option><option value="resolved">Resolved</option><option value="closed">Closed</option></select><ChevronDown size={13} className="pointer-events-none absolute right-2.5 top-3 text-slate-400" aria-hidden="true" /></label>
+                  <span className="text-xs">{ticket?.human_requested ? "Human requested · " : ""}Email: {detail?.notification || "No delivery status"}</span><button className="text-xs font-bold text-[#0504AA]" disabled={working || !ticket} onClick={() => void updateTicket({assignSelf:true})}>{ticket?.assigned_to === user?.id ? "Assigned to you" : "Assign to me"}</button><label className="relative"><span className="sr-only">Ticket status</span><select disabled={working || !ticket} value={ticket?.status || 'open'} onChange={event => void updateTicket({ status: event.target.value as Status })} className="h-9 appearance-none rounded-lg border border-slate-200 bg-white pl-3 pr-8 text-xs font-medium text-slate-700 outline-none disabled:opacity-60"><option value="open">Open</option><option value="pending_support">Needs response</option><option value="pending_member">Waiting on member</option><option value="resolved">Resolved</option><option value="closed">Closed</option></select><ChevronDown size={13} className="pointer-events-none absolute right-2.5 top-3 text-slate-400" aria-hidden="true" /></label>
                   <label className="relative"><span className="sr-only">Ticket priority</span><select disabled={working || !ticket} value={ticket?.priority || 'normal'} onChange={event => void updateTicket({ priority: event.target.value as Priority })} className="h-9 appearance-none rounded-lg border border-slate-200 bg-white pl-3 pr-8 text-xs font-medium text-slate-700 outline-none disabled:opacity-60"><option value="low">Low</option><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select><ChevronDown size={13} className="pointer-events-none absolute right-2.5 top-3 text-slate-400" aria-hidden="true" /></label>
                 </div>
               </div>
@@ -317,18 +323,18 @@ export const AdminSupportPage: React.FC = () => {
               <div className="min-h-[220px] flex-1 space-y-4 overflow-y-auto p-4 sm:p-6">
                 {detailLoading && <div className="flex items-center gap-2 text-sm text-slate-500"><Loader2 size={15} className="animate-spin" /> Loading ticket</div>}
                 {detailError && <div role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{detailError.message}</div>}
-                {detail?.messages.filter(message => !message.is_internal).map(message => {
+                {detail?.messages.map(message => {
                   const isStaff = message.sender_role !== 'member'
-                  return <div key={message.id} className={`flex ${isStaff ? 'justify-end' : 'justify-start'}`}><article className={`max-w-[88%] rounded-2xl px-4 py-3 shadow-sm ${isStaff ? 'rounded-br-md bg-[#0504AA] text-white' : 'rounded-bl-md border border-slate-200 bg-white text-slate-800'}`}><div className={`mb-1.5 flex items-center gap-2 text-[11px] ${isStaff ? 'text-blue-100' : 'text-slate-400'}`}><span className="font-semibold">{isStaff ? 'Evermont Support' : (detail.member.name || 'Member')}</span><time>{formatDate(message.created_at)}</time></div><p className="whitespace-pre-wrap break-words text-sm leading-6">{message.body}</p></article></div>
+                  return <div key={message.id} className={`flex ${isStaff ? 'justify-end' : 'justify-start'}`}><article className={`max-w-[88%] rounded-2xl px-4 py-3 shadow-sm ${isStaff ? 'rounded-br-md bg-[#0504AA] text-white' : 'rounded-bl-md border border-slate-200 bg-white text-slate-800'}`}><div className={`mb-1.5 flex items-center gap-2 text-[11px] ${isStaff ? 'text-blue-100' : 'text-slate-400'}`}><span className="font-semibold">{message.is_internal ? 'Internal staff note' : message.sender_role === 'system' ? 'EVERMONT assistant / system' : isStaff ? 'Evermont Support' : (detail.member.name || 'Member')}</span><time>{formatDate(message.created_at)}</time></div><p className="whitespace-pre-wrap break-words text-sm leading-6">{message.body}</p></article></div>
                 })}
                 {detail && detail.messages.filter(message => !message.is_internal).length === 0 && <p className="text-sm text-slate-500">No messages have been sent in this ticket.</p>}
               </div>
               <div className="border-t border-slate-200 bg-white p-4 sm:px-6">
                 {actionError && <div role="alert" className="mb-3 flex items-start gap-2 rounded-lg bg-rose-50 p-2.5 text-xs text-rose-800"><AlertCircle size={14} className="mt-0.5 shrink-0" />{actionError}</div>}
                 <form onSubmit={sendReply}>
-                  <label htmlFor="support-reply" className="mb-2 block text-xs font-semibold text-slate-700">Reply to member</label>
+                  <label htmlFor="support-reply" className="mb-2 block text-xs font-semibold text-slate-700">{note ? 'Internal note · staff only' : 'Reply to member'}</label><label className="my-2 flex gap-2 text-sm"><input type="checkbox" checked={note} onChange={e => setNote(e.target.checked)} /> Internal note</label>
                   <textarea id="support-reply" value={reply} onChange={event => setReply(event.target.value)} maxLength={4000} rows={3} placeholder="Write a clear, helpful response…" className="w-full resize-y rounded-xl border border-slate-200 bg-white p-3 text-sm leading-6 outline-none placeholder:text-slate-400 focus:border-[#0504AA] focus:ring-2 focus:ring-blue-100" />
-                  <div className="mt-2 flex items-center justify-between gap-3"><p className="text-[11px] text-slate-400">Never request a password, PIN, CVV, or one-time code.</p><button type="submit" disabled={working || !reply.trim()} className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl bg-[#0504AA] px-4 text-sm font-semibold text-white transition hover:bg-blue-900 disabled:cursor-not-allowed disabled:opacity-50">{working ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />} Send reply</button></div>
+                  <div className="mt-2 flex items-center justify-between gap-3"><p className="text-[11px] text-slate-400">Never request a password, PIN, CVV, or one-time code.</p><button type="submit" disabled={working || !reply.trim()} className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl bg-[#0504AA] px-4 text-sm font-semibold text-white transition hover:bg-blue-900 disabled:cursor-not-allowed disabled:opacity-50">{working ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />} {note ? 'Save note' : 'Send reply'}</button></div>
                 </form>
               </div>
             </>}

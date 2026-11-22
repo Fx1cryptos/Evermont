@@ -5,14 +5,13 @@ import { PortalShell } from '@/components/member/PortalShell'
 import { ActivationRequiredModal } from '@/components/member/ActivationRequiredModal'
 import { useAuth } from '@/contexts/AuthContext'
 import { ROUTES } from '@/constants/routes'
-import { GATED_FEATURES, LINK_FEATURES, maskAccount } from '@/lib/bankingServices'
+import { GATED_FEATURES, maskAccount } from '@/lib/bankingServices'
 import { accountService } from '@/services/accountService'
 import { profileService } from '@/services/profileService'
-import { isDepositActivity, isTransferActivity, transactionService, type LedgerActivity } from '@/services/transactionService'
-import { useActivationGate } from '@/hooks/useActivationGate'
+import { transactionService, type LedgerActivity } from '@/services/transactionService'
+import { useActivationGate, type GateResult } from '@/hooks/useActivationGate'
 import type { Account, Profile } from '@/types'
 
-const money = (value: unknown) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value) || 0)
 const formatActivityDate = (value: string | null) => value ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(value)) : 'Date not returned'
 
 const Panel: React.FC<{ title: string; action?: React.ReactNode; children: React.ReactNode }> = ({ title, action, children }) => (
@@ -25,14 +24,14 @@ const Panel: React.FC<{ title: string; action?: React.ReactNode; children: React
   </section>
 )
 
-const ActivityList: React.FC<{ rows: LedgerActivity[]; empty: string }> = ({ rows, empty }) => (
+const ActivityList: React.FC<{ rows: LedgerActivity[]; empty: string; format: (value: string, account: string) => string }> = ({ rows, empty, format }) => (
   rows.length ? <ul className="divide-y divide-slate-100">{rows.map(row => {
     const credit = row.direction === 'credit'
     return (
       <li key={row.id} className="grid gap-3 px-4 py-3.5 sm:grid-cols-[auto_1fr_auto] sm:items-center">
         <span className={`flex size-9 items-center justify-center rounded-full ${credit ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`} aria-label={credit ? 'Credit' : 'Debit'}>{credit ? <ArrowUpRight className="size-4" aria-hidden="true" /> : <ArrowDownLeft className="size-4" aria-hidden="true" />}</span>
         <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><p className="truncate text-sm font-semibold text-[#07142D]">{row.description || 'Ledger entry'}</p></div><p className="mt-1 text-xs text-slate-500">{formatActivityDate(row.createdAt)} · <span className="capitalize">{row.entryType || row.category || row.direction}</span>{row.referenceId ? ` · ${row.referenceId}` : ''}</p></div>
-        <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end"><p className={`text-sm font-semibold tabular-nums ${credit ? 'text-emerald-700' : 'text-rose-800'}`}>{credit ? '+' : '−'}{money(row.displayAmount)}</p><span className={`rounded-full px-2 py-1 text-[11px] font-semibold capitalize ${row.status === 'completed' || row.status === 'posted' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>{row.status || 'Status not returned'}</span></div>
+        <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end"><p className={`text-sm font-semibold tabular-nums ${credit ? 'text-emerald-700' : 'text-rose-800'}`}>{credit ? '+' : '−'}{format(row.displayAmount,row.accountId)}</p>{row.balanceAfter != null && <small>Balance {format(row.balanceAfter,row.accountId)}</small>}<span className={`rounded-full px-2 py-1 text-[11px] font-semibold capitalize ${row.status === 'completed' || row.status === 'posted' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>{row.status || 'Status not returned'}</span></div>
       </li>
     )
   })}</ul> : (
@@ -65,6 +64,7 @@ export const MemberDashboardPage: React.FC = () => {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [rows, setRows] = useState<LedgerActivity[]>([])
   const [loading, setLoading] = useState(true)
+  const [activityError,setActivityError] = useState(false)
   const [error, setError] = useState('')
   const singleCurrency = accounts.length && accounts.every(account => account.currency === accounts[0].currency) ? accounts[0].currency : null
   const total = useMemo(() => accounts.reduce((sum, account) => sum + Number(account.balance), 0), [accounts])
@@ -73,6 +73,9 @@ export const MemberDashboardPage: React.FC = () => {
   const [pendingService, setPendingService] = useState<string | null>(null)
   const [gatePath, setGatePath] = useState<string | null>(null)
   const [serviceError, setServiceError] = useState('')
+  const [membership, setMembership] = useState<GateResult | null>(null)
+  const [verificationError, setVerificationError] = useState('')
+  const [attempt, retry] = useState(0)
   const [hidden, setHidden] = useState(false)
 
   useEffect(() => {
@@ -87,23 +90,21 @@ export const MemberDashboardPage: React.FC = () => {
         if (active) setRows(activity)
 
       } catch {
-        if (active) setError('We could not load transactions from the ledger.')
+        if (active) setActivityError(true)
       }
     }).catch(() => { if (active) setError('We could not load your accounts.') }).finally(() => { if (active) setLoading(false) })
     return () => { active = false }
   }, [user])
 
   useEffect(() => {
-    if (!user || loading || error) return
-    void checkActivation().then(() => {
-    }).catch(() => setServiceError('We could not verify activation.'))
-  }, [user, loading, error, checkActivation])
+    let mounted = true
+    setMembership(null); setVerificationError('')
+    if (user) void checkActivation().then(result => { if (mounted) setMembership(result) })
+      .catch(e => { if (mounted) setVerificationError(e instanceof Error ? e.message : 'Please retry verification.') })
+    return () => { mounted = false }
+  }, [user, attempt, checkActivation])
 
   const recent = rows.slice(0, 8)
-  const transfers = rows.filter((row) => isTransferActivity(row)).slice(0, 8)
-  const deposits = rows.filter((row) => isDepositActivity(row)).slice(0, 8)
-  const depositTotal = rows.filter((row) => isDepositActivity(row)).reduce((sum, row) => sum + Number(row.displayAmount || 0), 0)
-  const withdrawalTotal = rows.filter((row) => row.direction === 'debit' && !isTransferActivity(row)).reduce((sum, row) => sum + Number(row.displayAmount || 0), 0)
   const shown = (value: unknown, currency = singleCurrency) => {
     if (hidden) return '••••••'
     if (!currency || !/^[A-Z]{3}$/.test(currency) || value == null || !Number.isFinite(Number(value))) return 'Unavailable'
@@ -136,51 +137,53 @@ export const MemberDashboardPage: React.FC = () => {
     <div className="space-y-5">
       {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
 
-      <section className="rounded-2xl border-t-4 border-[#C9A227] bg-gradient-to-r from-[#07142D] to-[#0504AA] p-5 text-white sm:p-6">
+      <section className="rounded-2xl border-t-4 border-[#C9A227] bg-[radial-gradient(ellipse_at_top_right,#302e98,#101e40_55%,#07142D)] p-6 text-white sm:p-6">
         <div className="flex items-start justify-between gap-3">
-          <p className="text-xs font-semibold uppercase tracking-[.16em] text-[#C9A227]">Account balances</p>
+          <p className="text-xs font-semibold uppercase tracking-[.16em] text-[#C9A227]">Private banking · Total balance</p>
           <button type="button" onClick={() => setHidden((value) => !value)} aria-pressed={hidden} className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-3 py-1.5 text-xs font-semibold">{hidden ? <Eye className="size-4" aria-hidden="true" /> : <EyeOff className="size-4" aria-hidden="true" />}{hidden ? 'Show' : 'Hide'}</button>
         </div>
-        {error ? <p className="mt-3 text-sm text-blue-100">Balance is hidden because account records did not load.</p> : accounts.length ? <p className="mt-3 text-4xl font-semibold tabular-nums tracking-tight sm:text-5xl">{shown(total)}</p> : <p className="mt-3 text-sm text-blue-100">No accounts are on file for this member.</p>}
-        <p className="mt-3 max-w-xl text-sm leading-6 text-blue-100">{accounts.length ? `Sum of ${accounts.length === 1 ? 'the balance' : 'the balances'} returned for your account${accounts.length === 1 ? '' : 's'}. This page does not move money.` : 'A balance appears only when the database returns an account.'}</p>
+        {error ? <p className="mt-3 text-sm text-blue-100">Balance is hidden because account records did not load.</p> : accounts.length ? <p className="mt-3 text-4xl font-semibold tabular-nums tracking-tight sm:text-5xl">{shown(accounts.some(a => a.balance == null) ? null : total)}</p> : <p className="mt-3 text-sm text-blue-100">No accounts are on file for this member.</p>}
+        <p className="mt-3 max-w-xl text-sm leading-6 text-blue-100">{accounts.length ? `Across ${accounts.length} member account${accounts.length === 1 ? '' : 's'}` : 'A balance appears only when the database returns an account.'}</p>
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-label="Account summary">
-        {[{ label: 'Account status', value: accounts[0]?.status || 'Not returned', detail: 'Verified from account record' }, { label: 'Recent deposits', value: error ? 'Unavailable' : shown(depositTotal), detail: `${rows.filter((row) => isDepositActivity(row)).length} entries in recent activity` }, { label: 'Recent withdrawals', value: error ? 'Unavailable' : shown(withdrawalTotal), detail: 'Latest 40 activity records' }].map(card => <article key={card.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><p className="text-xs font-semibold uppercase tracking-[.14em] text-slate-500">{card.label}</p><p className="mt-3 truncate text-2xl font-semibold tabular-nums text-[#07142D]">{card.value}</p><p className="mt-2 text-xs text-slate-500">{card.detail}</p></article>)}
+      <section aria-live="polite" className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4">
+        <div><p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Membership</p><h2 className="mt-1 font-semibold">{membership?.label || (verificationError ? 'Unable to verify activation' : 'Checking activation…')}</h2><p className="text-sm text-slate-600">{membership?.detail || verificationError}</p></div>
+        {verificationError ? <button className="font-semibold text-[#0504AA]" onClick={() => retry(n => n + 1)}>Retry verification</button> : <Link className="font-semibold text-[#0504AA]" to={ROUTES.ACTIVATION}>Activation details →</Link>}
       </section>
-
       <section aria-labelledby="account-summary-title">
         <h2 id="account-summary-title" className="text-sm font-semibold text-[#07142D]">Accounts</h2>
         {accounts.length ? <ul className="mt-3 grid gap-3 sm:grid-cols-2">{accounts.map(account => (
           <li key={account.id} className="rounded-2xl border border-slate-200 bg-white p-4">
             <p className="text-sm font-semibold capitalize text-[#0504AA]">{account.accountType}</p>
             <p className="mt-1 text-xs text-slate-500">{account.accountNumber ? maskAccount(account.accountNumber) : 'Account number not returned'} · <span className="capitalize">{account.status || 'Status not returned'}</span></p>
-            <p className="mt-3 text-xl font-semibold tabular-nums text-[#07142D]">{shown(account.balance, account.currency)}</p>
+            <p className="mt-3 text-xl font-semibold tabular-nums text-[#07142D]">{shown(account.balance, account.currency)}</p><p className="mt-2 text-xs text-slate-500">{account.currency} · Account balance{account.updatedAt ? ' · Updated ' + formatActivityDate(account.updatedAt) : ''}</p>
           </li>
         ))}</ul> : <p className="mt-3 rounded-2xl border border-slate-200 bg-white px-4 py-6 text-sm text-slate-500">No account details were returned.</p>}
       </section>
 
-      <section aria-labelledby="quick-actions-title"><div className="flex items-end justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-[#C9A227]">At a glance</p><h2 id="quick-actions-title" className="mt-1 text-lg font-semibold tracking-tight text-[#07142D]">Quick actions</h2></div><span className="text-xs text-slate-500">Secure member shortcuts</span></div><div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">{[{ label: 'Transfers & ACH', to: '/services/ach', icon: Send }, { label: 'Wire transfer', to: '/services/wire', icon: Landmark }, { label: 'Check deposit', to: '/services/check-deposit', icon: FileText }, { label: 'Bill payments', to: '/services/bill-pay', icon: Receipt }, { label: 'Card management', to: '/services/virtual-card', icon: CreditCard }, { label: 'Beneficiaries', to: ROUTES.BENEFICIARIES, icon: UserRound }, { label: 'Statements', to: '/statements', icon: FileText }].map(({ label, to, icon: Icon }) => <Link key={to} to={to} className="group flex min-h-24 flex-col items-start justify-between rounded-2xl border border-slate-200 bg-white p-3 transition hover:-translate-y-0.5 hover:border-[#C9A227] hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0504AA]"><span className="flex size-9 items-center justify-center rounded-xl bg-[#0504AA]/10 text-[#0504AA] group-hover:bg-[#0504AA] group-hover:text-[#C9A227]"><Icon className="size-4" aria-hidden="true" /></span><span className="text-xs font-semibold text-[#07142D]">{label}</span></Link>)}</div></section>
+      <div className="grid gap-5">
+        <Panel title="Recent activity" action={<Link to={ROUTES.TRANSACTIONS} className="text-sm font-semibold text-[#0504AA]">Full history</Link>}>
+          {error || activityError ? <p className="px-4 py-6 text-sm text-slate-500">Activity was not loaded.</p> : <ActivityList format={(value,id) => shown(value, accounts.find(a => a.id === id)?.currency || null)} rows={recent} empty="Posted ledger entries and transactions will appear here." />}
+        </Panel>
+      </div>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5" aria-labelledby="banking-services-title">
-        <h2 id="banking-services-title" className="text-sm font-semibold text-[#07142D]">Features</h2>
-        <p className="mt-1 text-sm text-slate-500">Money-movement features stay closed until the database says this account is activated.</p>
+      <section><h2 className="text-lg font-semibold">Quick actions</h2>
         {serviceError && <p role="alert" className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{serviceError}</p>}
         <ul className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {GATED_FEATURES.map((item) => {
+          {GATED_FEATURES.filter(item => item.key !== "digital-assets").map((item) => {
             const Icon = FEATURE_ICONS[item.key] || Landmark
             const busy = checking && pendingService === item.key
             return (
               <li key={item.key}>
-                <button type="button" onClick={() => void openService(item.path, item.key)} disabled={checking} aria-busy={busy} className="flex h-full w-full flex-col items-start gap-3 rounded-2xl border border-slate-200 bg-white p-3 text-left hover:border-[#C9A227] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0504AA] disabled:opacity-60 sm:p-4">
+                <button type="button" onClick={() => void openService(item.path, item.key)} disabled={checking || !membership?.activated || !['ach','check','mobile','wire'].includes(item.key)} aria-busy={busy} className="flex h-full w-full flex-col items-start gap-3 rounded-2xl border border-slate-200 bg-white p-3 text-left hover:border-[#C9A227] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0504AA] disabled:bg-slate-50 disabled:text-slate-500 sm:p-4">
                   <span className="flex size-10 items-center justify-center rounded-xl bg-[#0504AA] text-[#C9A227]"><Icon className="size-5" aria-hidden="true" /></span>
                   <span className="text-sm font-semibold text-[#0504AA]">{item.title}</span>
-                  <span className="text-xs leading-5 text-slate-500">{busy ? 'Checking activation…' : item.description}</span>
+                  <span className="text-xs leading-5 text-slate-500">{busy ? 'Checking activation…' : !['ach','check','mobile','wire'].includes(item.key) ? 'Unavailable' : !membership?.activated ? 'Requires verified activation' : item.description}</span>
                 </button>
               </li>
             )
           })}
-          {LINK_FEATURES.map((item) => {
+          {[{key:'beneficiaries',title:'Beneficiaries',path:ROUTES.BENEFICIARIES,description:'Manage your recipients.'},{key:'statements',title:'Statements',path:'/statements',description:'Browse your documents.'},{key:'history',title:'Transaction history',path:ROUTES.TRANSACTIONS,description:'Review account activity.'}].map((item) => {
             const Icon = FEATURE_ICONS[item.key] || Landmark
             return (
               <li key={item.key}>
@@ -194,20 +197,6 @@ export const MemberDashboardPage: React.FC = () => {
           })}
         </ul>
       </section>
-
-      <div className="grid gap-5 xl:grid-cols-[1.35fr_1fr] xl:items-start">
-        <Panel title="Recent activity" action={<Link to={ROUTES.TRANSACTIONS} className="text-sm font-semibold text-[#0504AA]">Full history</Link>}>
-          {error ? <p className="px-4 py-6 text-sm text-slate-500">Activity was not loaded.</p> : <ActivityList rows={recent} empty="Posted ledger entries and transactions will appear here." />}
-        </Panel>
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-1">
-          <Panel title="Transfer history">
-            {error ? <p className="px-4 py-6 text-sm text-slate-500">Transfer history was not loaded.</p> : <ActivityList rows={transfers} empty="No transfer entries were returned." />}
-          </Panel>
-          <Panel title="Deposit history">
-            {error ? <p className="px-4 py-6 text-sm text-slate-500">Deposit history was not loaded.</p> : <ActivityList rows={deposits} empty="No deposit entries were returned." />}
-          </Panel>
-        </div>
-      </div>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5">
         <h2 className="text-sm font-semibold text-[#07142D]">Profile and support</h2>

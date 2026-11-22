@@ -25,14 +25,16 @@ type SupportConversation = {
   gmail_thread_id: string | null
 }
 
-async function completeJob(client: SupabaseClient, id: string): Promise<void> {
-  await client.from('support_notification_outbox').update({
+async function completeJob(client: SupabaseClient, id: string, binding?: {threadId?: string; id?: string}): Promise<void> {
+  const {error} = await client.from('support_notification_outbox').update({
+    ...(binding ? { payload: { notification_thread:binding.threadId, notification_message:binding.id } } : {}),
     status: 'sent',
     sent_at: new Date().toISOString(),
     locked_at: null,
     last_error: null,
     updated_at: new Date().toISOString(),
   }).eq('id', id)
+  if (error) throw new Error('Could not record notification delivery')
 }
 
 async function failJob(client: SupabaseClient, job: OutboxRow, error: unknown): Promise<void> {
@@ -65,7 +67,7 @@ export async function deliverSupportNotification(client: SupabaseClient, job: Ou
         .single(),
       client.from('support_messages')
         .select('id,body,created_at,is_internal,sender_role')
-        .eq('id', job.message_id)
+        .eq('id', job.message_id).eq('conversation_id',job.conversation_id)
         .single(),
     ])
     if (conversationError || !conversation) throw new Error('Support ticket could not be loaded')
@@ -133,17 +135,13 @@ export async function deliverSupportNotification(client: SupabaseClient, job: Ou
         || metadata.name
         || undefined
 
-      await sendSupportEmail({
+      const sent = await sendSupportEmail({
         ticketId: job.conversation_id,
         subject: typedConversation.subject,
         memberName: typeof memberName === 'string' ? memberName.slice(0, 120) : undefined,
-        memberEmail: userData.user?.email,
-        body: typedMessage.body,
-        createdAt: typedMessage.created_at,
-        priority: typedConversation.priority,
-        status: typedConversation.status,
-      })
-      await completeJob(client, job.id)
+        notificationId: job.id,
+      },job.attempt_count > 1)
+      await completeJob(client, job.id, sent)
       return true
     }
 

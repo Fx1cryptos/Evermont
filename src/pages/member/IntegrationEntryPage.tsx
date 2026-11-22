@@ -11,6 +11,9 @@ import { ROUTES } from '@/constants/routes'
 export const IntegrationEntryPage: React.FC<{ title: string; path: string; gated?: boolean }> = ({ title, path, gated = true }) => {
   const { user, loading: authLoading } = useAuth()
   const [ready, setReady] = useState(false)
+  const [attempt, retry] = useState(0)
+  const [gateError, setGateError] = useState('')
+  const [gateLabel,setGateLabel] = useState('')
   const { check } = useActivationGate(user?.id)
   const [gate, setGate] = useState<'loading' | 'error' | 'closed' | 'open'>('loading')
 
@@ -20,9 +23,9 @@ export const IntegrationEntryPage: React.FC<{ title: string; path: string; gated
     accountService.getAccounts(user.id).then(async () => {
       if (!active) return
       setReady(true)
-    }).catch(() => { if (active) setGate('error') })
+    }).catch(e => { if (active) { setGateError(e instanceof Error ? e.message : 'Please retry verification.'); setGate('error') } })
     return () => { active = false }
-  }, [user])
+  }, [user, attempt])
 
   useEffect(() => {
     if (!user || !ready) return
@@ -33,10 +36,11 @@ export const IntegrationEntryPage: React.FC<{ title: string; path: string; gated
     let active = true
     check().then((result) => {
       if (!active) return
+      setGateLabel(result.label); setGateError(result.detail)
       setGate(result.activated ? 'open' : 'closed')
-    }).catch(() => { if (active) setGate('error') })
+    }).catch(e => { if (active) { setGateError(e instanceof Error ? e.message : 'Please retry verification.'); setGate('error') } })
     return () => { active = false }
-  }, [user, ready, gated, check])
+  }, [user, ready, gated, check, attempt])
 
   if (authLoading || (user && gate === 'loading')) {
     return <main className="flex min-h-screen items-center justify-center bg-[#f6f7fb] text-sm text-slate-600">Checking your account…</main>
@@ -46,11 +50,11 @@ export const IntegrationEntryPage: React.FC<{ title: string; path: string; gated
   return (
     <PortalShell title={title} eyebrow="Banking service">
       <div className="mx-auto max-w-xl">
-        {gate === 'error' && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">We could not verify activation. This service stays closed.</p>}
+        {gate === 'error' && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{gateError} <button type="button" onClick={() => retry(n => n+1)} className="underline">Retry verification</button></p>}
         {gate === 'closed' && (
           <section className="rounded-2xl border border-[#C9A227] bg-white p-6" aria-labelledby="activation-required-title">
-            <h2 id="activation-required-title" className="text-xl font-semibold text-[#0504AA]">{ACTIVATION_REQUIRED_TITLE}</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-600">{ACTIVATION_REQUIRED_BODY}</p>
+            <h2 id="activation-required-title" className="text-xl font-semibold text-[#0504AA]">{gateLabel || ACTIVATION_REQUIRED_TITLE}</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-600">{gateError || ACTIVATION_REQUIRED_BODY}</p>
             <Link to={`${ROUTES.ACTIVATION}?next=${encodeURIComponent(path)}`} className="mt-5 inline-flex rounded-xl bg-[#0504AA] px-4 py-2.5 text-sm font-semibold text-white">{ACTIVATE_ACCOUNT_LABEL}</Link>
           </section>
         )}

@@ -1,24 +1,12 @@
 import { useCallback, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { readActivation } from '@/services/activationStatus'
 
-export type GateResult = { activated: boolean }
-
+export type GateResult = Awaited<ReturnType<typeof readActivation>>
 export const useActivationGate = (userId: string | undefined) => {
   const [checking, setChecking] = useState(false)
-  const check = useCallback(async (): Promise<GateResult> => {
-    if (!userId) return { activated: false }
+  const check = useCallback(async () => {
     setChecking(true)
-    try {
-      const { data: statusRow, error } = await supabase
-        .from('user_activation_status')
-        .select('activation_status')
-        .eq('user_id', userId)
-        .maybeSingle()
-      if (error || !statusRow) throw new Error('Activation status unavailable')
-      return { activated: String(statusRow?.activation_status || '').toLowerCase() === 'activated' }
-    } finally {
-      setChecking(false)
-    }
+    try { return await readActivation(userId) } finally { setChecking(false) }
   }, [userId])
   return { check, checking }
 }

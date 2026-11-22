@@ -31,3 +31,4 @@ Thumbs.db
 # Compiled output must never be committed into src
 src/**/*.js
 !src/**/*.config.js
+.support-worker/

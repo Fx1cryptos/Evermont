@@ -2,6 +2,8 @@ import type { RequestLike, ResponseLike } from './_lib/support.js'
 import { getBearerToken, authenticateSupportUser, canManageSupport, canViewSupport, getQueryString, getString, getSupabaseAdmin, setJsonHeaders } from './_lib/support.js'
 import { processConversationNotification } from './_lib/notifications.js'
 
+import { assistMember } from './_lib/assistant.js'
+
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 function bodyRecord(value: unknown): Record<string, unknown> | null {
@@ -67,7 +69,8 @@ export default async function handler(request: RequestLike, response: ResponseLi
           || metadata.name
           || null
         response.status(200).json({
-          conversation,
+          conversation: { ...conversation, human_requested: (await client.from('support_conversations').select('human_requested').eq('id',id).maybeSingle()).data?.human_requested },
+          notification: (await client.from('support_notification_outbox').select('status').eq('conversation_id',id).order('created_at',{ascending:false}).limit(1).maybeSingle()).data?.status,
           member: { name: typeof name === 'string' ? name : null, email: memberData.user?.email ?? null },
           messages: messages ?? [],
         })
@@ -77,17 +80,26 @@ export default async function handler(request: RequestLike, response: ResponseLi
       const status = getQueryString(request, 'status')
       const priority = getQueryString(request, 'priority')
       const query = getQueryString(request, 'q')?.toLocaleLowerCase() ?? ''
+      const page = Math.max(0, Math.min(100000, Number.parseInt(getQueryString(request,'page') || '0',10) || 0))
+      const pageSize = 40
       let conversationsQuery = client.from('support_conversations')
         .select('id,user_id,subject,status,priority,assigned_to,last_message_at,created_at,updated_at')
         .order('last_message_at', { ascending: false })
-        .limit(100)
+        .order('id').range(page*pageSize,(page+1)*pageSize)
       if (status && status !== 'all') conversationsQuery = conversationsQuery.eq('status', status)
       if (priority && priority !== 'all') conversationsQuery = conversationsQuery.eq('priority', priority)
+      if (query) {
+        const text = query.replace(/[^\p{L}\p{N} -]/gu,' ').trim().slice(0,120)
+        if (UUID_PATTERN.test(text)) conversationsQuery = conversationsQuery.eq('id',text)
+        else if (text) conversationsQuery = conversationsQuery.ilike('subject','%'+text+'%')
+        else { response.status(200).json({conversations:[],hasMore:false}); return }
+      }
       const { data: conversations, error } = await conversationsQuery
       if (error) throw new Error('Unable to load support tickets')
-      const filtered = (conversations ?? []).filter(item => !query
-        || item.subject.toLocaleLowerCase().includes(query)
-        || item.id.toLocaleLowerCase().includes(query))
+      const filtered = (conversations || []).slice(0,pageSize)
+      const owners = [...new Set(filtered.map(row=>row.user_id))]
+      const profiles = owners.length ? await client.from('profiles').select('id,first_name,last_name').in('id',owners) : {data:[]}
+      const names = new Map((profiles.data || []).map(p=>[p.id,[p.first_name,p.last_name].filter(Boolean).join(' ')]))
       const ids = filtered.map(item => item.id)
       const { data: messages, error: messagesError } = ids.length
         ? await client.from('support_messages')
@@ -108,8 +120,9 @@ export default async function handler(request: RequestLike, response: ResponseLi
         }
         messageSummary.set(message.conversation_id, summary)
       }
-      response.status(200).json({ conversations: filtered.map(item => ({
+      response.status(200).json({ hasMore:(conversations || []).length > pageSize, conversations: filtered.map(item => ({
         ...item,
+        memberName:names.get(item.user_id) || null,
         unreadCount: messageSummary.get(item.id)?.unread ?? 0,
         preview: messageSummary.get(item.id)?.latest ?? '',
       })) })
@@ -120,7 +133,7 @@ export default async function handler(request: RequestLike, response: ResponseLi
       const body = bodyRecord(request.body)
       const action = getString(body?.action, 20)
       const conversationId = getString(body?.conversationId, 36)
-      if (action !== 'notify' && !canManageSupport(user)) {
+      if (!['notify','handoff','read'].includes(action || '') && !canManageSupport(user)) {
         response.status(403).json({ error: 'You do not have permission to respond to support tickets.' })
         return
       }
@@ -137,21 +150,38 @@ export default async function handler(request: RequestLike, response: ResponseLi
         return
       }
 
-      if (action === 'notify') {
+      if (['notify','handoff','read'].includes(action || '')) {
         if (conversation.user_id !== user.id) {
           response.status(403).json({ error: 'You cannot process notifications for another member.' })
           return
         }
-        const result = await processConversationNotification(client, conversationId)
+        if (action === 'handoff') {
+          const {data, error} = await client.from('support_conversations').update({human_requested:true,status:'pending_support'}).eq('id',conversationId).eq('user_id',user.id).not('status','in','(resolved,closed)').select('id').maybeSingle()
+          response.status(error || !data ? 409 : 200).json(error || !data ? {error:'Handoff unavailable. Send a normal message to support.'} : {requested:true})
+          return
+        }
+        if (action === 'read') {
+          const ids = body?.ids
+          if (!Array.isArray(ids) || !ids.length || ids.length > 100 || ids.some(id => typeof id !== 'string' || !UUID_PATTERN.test(id))) { response.status(400).json({error:'Invalid receipts.'}); return }
+          const {error} = await client.from('support_messages').update({read_by_member:true}).eq('conversation_id',conversationId).eq('is_internal',false).in('id',ids)
+          if (error) throw error
+          response.status(200).json({read:true}); return
+        }
+        const [result] = await Promise.all([processConversationNotification(client, conversationId), assistMember(client, conversationId,user.id)])
         response.status(202).json({ result })
         return
       }
 
-      if (action === 'reply') {
+      if (action === 'reply' || action === 'note') {
         const message = getString(body?.message, 4000)
         if (!message) {
           response.status(400).json({ error: 'Write a reply of 1–4,000 characters.' })
           return
+        }
+        if (action === 'note') {
+          const note = await client.rpc('add_internal_support_note',{p_ticket:conversationId,p_staff:user.id,p_body:message})
+          if (note.error) {response.status(503).json({error:'Internal notes are not available.'}); return}
+          response.status(201).json({message:{id:note.data}}); return
         }
         const { data, error } = await client.from('support_messages').insert({
           conversation_id: conversationId,
@@ -201,6 +231,7 @@ export default async function handler(request: RequestLike, response: ResponseLi
         return
       }
       const updates: Record<string, string | null> = {}
+      if (body?.assignSelf === true) updates.assigned_to = user.id
       if (body?.status !== undefined) {
         const status = getString(body.status, 32)
         if (!status || !['open', 'pending_member', 'pending_support', 'resolved', 'closed'].includes(status)) {

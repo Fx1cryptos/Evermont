@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { getGmailContext } from './gmail.js'
+import { canManageSupport } from './support.js'
+import { getGmailContext, supportMailbox, notificationReference } from './gmail.js'
 
 const GMAIL_API = 'https://gmail.googleapis.com/gmail/v1/users/me'
 const MAX_MESSAGES_PER_RUN = 25
@@ -20,11 +21,13 @@ type GmailPayloadPart = {
   parts?: GmailPayloadPart[]
 }
 type GmailFullMessage = {
+  labelIds?: string[]
   id?: string
   threadId?: string
   internalDate?: string
   snippet?: string
   payload?: {
+    mimeType?: string
     headers?: Array<{ name?: string; value?: string }>
     body?: { data?: string }
     parts?: GmailPayloadPart[]
@@ -223,7 +226,16 @@ async function conversationForThread(
   throw new Error('Gmail support conversation could not be created')
 }
 
-async function importMessage(client: SupabaseClient, ref: GmailMessageRef, mailbox: string, accessToken: string): Promise<'imported' | 'ignored'> {
+export function publishedReply(text: string): string | null {
+  const match = /^MEMBER REPLY[ \t]*\r?\n([\s\S]{1,4000}?)\r?\nEND REPLY[ \t]*(?:\r?\n|$)/.exec(text.trimStart())
+  return match?.[1].trim() || null
+}
+function plainReply(part: GmailPayloadPart): string {
+  if (part.mimeType === 'text/plain' && part.body?.data) return decodeBase64Url(part.body.data)
+  return part.mimeType?.startsWith('multipart/') ? (part.parts || []).map(plainReply).find(Boolean) || '' : ''
+}
+
+export async function importMessage(client: SupabaseClient, ref: GmailMessageRef, mailbox: string, accessToken: string): Promise<'imported' | 'ignored'> {
   if (!ref.id || !ref.threadId) return 'ignored'
   const { data: existing, error: existingError } = await client.from('support_messages')
     .select('id')
@@ -236,7 +248,32 @@ async function importMessage(client: SupabaseClient, ref: GmailMessageRef, mailb
   if (!gmailMessage?.payload) return 'ignored'
   const headers = gmailMessage.payload.headers || []
   const senderEmail = parseEmail(headerValue(headers, 'From'))
-  if (!senderEmail || senderEmail === mailbox) return 'ignored'
+  if (!senderEmail) return 'ignored'
+  const recipient = headerValue(headers,'To')
+  if (parseEmail(recipient) !== mailbox || /[,;]/.test(recipient)) return 'ignored'
+  if (senderEmail === mailbox) {
+    if (mailbox !== supportMailbox || !gmailMessage.labelIds?.includes('SENT') || headerValue(headers,'Cc') || headerValue(headers,'Bcc')) return 'ignored'
+    const body = publishedReply(plainReply(gmailMessage.payload))
+    if (!body) return 'ignored'
+    const parent = headerValue(headers,'In-Reply-To')
+    const noticeId = /^<notice\.([a-f0-9-]{36})@evermontcredit\.online>$/i.exec(parent)?.[1]
+    if (!noticeId || parent !== notificationReference(noticeId)) return 'ignored'
+    const {data:notice,error} = await client.from('support_notification_outbox').select('conversation_id').eq('id',noticeId)
+      .eq('event_type','support_message').eq('status','sent').eq('payload->>notification_thread',ref.threadId).maybeSingle()
+    if (error) throw new Error('Notification reference lookup failed')
+    if (!notice) return 'ignored'
+    const staff = await findVerifiedMember(client,mailbox)
+    if (!staff) return 'ignored'
+    const role = await client.from('admin_roles').select('role').eq('user_id',staff).maybeSingle()
+    if (role.error) throw new Error('Staff permission lookup failed')
+    if (!canManageSupport({id:staff,role:role.data?.role})) return 'ignored'
+    const saved = await client.from('support_messages').insert({conversation_id:notice.conversation_id,sender_id:staff,
+      sender_role:'support',source:'gmail',body,is_internal:false,read_by_support:true,read_by_member:false,
+      delivery_status:'received',gmail_message_id:ref.id,gmail_thread_id:ref.threadId})
+    if (saved.error?.code === '23505') return 'ignored'
+    if (saved.error) throw new Error('Staff reply could not be saved')
+    return 'imported'
+  }
 
   const memberId = await findVerifiedMember(client, senderEmail)
   if (!memberId) return 'ignored'
@@ -259,8 +296,8 @@ async function importMessage(client: SupabaseClient, ref: GmailMessageRef, mailb
   const createdAt = gmailMessage.internalDate && Number.isFinite(Number(gmailMessage.internalDate))
     ? new Date(Number(gmailMessage.internalDate)).toISOString()
     : new Date().toISOString()
-  const rfcMessageId = headerValue(headers, 'Message-ID').replace(/[\\r\\n\\u0000-\\u001f\\u007f]/g, '').slice(0, 998) || null
-  const references = `${rawReferences} ${inReplyTo}`.replace(/[\\r\\n\\u0000-\\u001f\\u007f]/g, ' ').trim().slice(0, 2000) || null
+  const rfcMessageId = headerValue(headers, 'Message-ID').replace(/[\u0000-\u001f\u007f]/g, '').slice(0, 998) || null
+  const references = `${rawReferences} ${inReplyTo}`.replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 2000) || null
 
   const { error: insertError } = await client.from('support_messages').insert({
     conversation_id: conversation.id,
@@ -313,7 +350,7 @@ async function updateSyncState(client: SupabaseClient, values: Record<string, st
 async function listMailboxPage(accessToken: string, mailbox: string, pageToken: string | null): Promise<GmailListResponse> {
   const url = new URL(`${GMAIL_API}/messages`)
   url.searchParams.set('maxResults', String(MAX_MESSAGES_PER_RUN))
-  url.searchParams.set('q', `to:${mailbox} newer_than:30d -from:${mailbox}`)
+  url.searchParams.set('q', `to:${mailbox} newer_than:30d`)
   if (pageToken) url.searchParams.set('pageToken', pageToken)
   return gmailGet<GmailListResponse>(url, accessToken)
 }

@@ -16,6 +16,7 @@ import { HomePage } from '@/pages/HomePage'
 import { TransactionsPage } from '@/pages/TransactionsPage'
 import { FinancialInsightsPage } from '@/pages/FinancialInsightsPage'
 import { ProfilePage } from '@/pages/ProfilePage'
+import { StatementsPage } from '@/pages/StatementsPage'
 import { AccountsPage } from '@/pages/AccountsPage'
 import { BeneficiariesPage } from '@/pages/member/MemberBeneficiariesPage'
 import { ActivationPage } from '@/pages/ActivationPage'
@@ -62,7 +63,7 @@ export const AppRoutes: React.FC = () => (
     <Route path="/services/bill-pay" element={<Private title="Bill Pay"><IntegrationEntryPage title="Bill Pay" path="/services/bill-pay" /></Private>} />
     <Route path="/services/virtual-card" element={<Private title="Virtual Card"><IntegrationEntryPage title="Virtual Card" path="/services/virtual-card" /></Private>} />
     <Route path="/services/digital-assets-trade" element={<Private title="Digital Assets"><IntegrationEntryPage title="Buy & Sell Digital Assets" path="/services/digital-assets-trade" /></Private>} />
-    <Route path="/statements" element={<Private title="Statements"><IntegrationEntryPage title="Statements" path="/statements" gated={false} /></Private>} />
+    <Route path="/statements" element={<Private title="Statements"><StatementsPage /></Private>} />
     <Route path="/alerts" element={<Private title="Alerts"><AlertsPage /></Private>} />
     <Route path="/services/:service" element={<ServicePage />} />
 

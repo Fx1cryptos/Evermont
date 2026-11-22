@@ -1,17 +1,186 @@
-import React, { useCallback, useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Send } from 'lucide-react'
+import { useEffect, useState, type FormEvent } from 'react'
+import { Link, useLocation, useParams } from 'react-router-dom'
+import { ArrowLeft, Send, Headphones } from 'lucide-react'
+import useSWR from 'swr'
 import { PortalShell } from '@/components/member/PortalShell'
 import { useAuth } from '@/contexts/AuthContext'
 import { ROUTES } from '@/constants/routes'
 import { supabase } from '@/lib/supabase'
-import { supportService, type SupportConversation, type SupportMessage } from '@/services/supportService'
+import { memberAction, supportService } from '@/services/supportService'
 
-export const SupportThreadPage: React.FC = () => {
-  const { user } = useAuth(); const { id = '' } = useParams(); const [conversation, setConversation] = useState<SupportConversation | null>(null); const [messages, setMessages] = useState<SupportMessage[]>([]); const [body, setBody] = useState(''); const [error, setError] = useState(''); const [sending, setSending] = useState(false)
-  const load = useCallback(async () => { if (!user || !id) return; const [conversationResult, messageResult] = await Promise.all([supportService.getConversation(user.id, id), supportService.listMessages(user.id, id)]); if (conversationResult.error || messageResult.error) setError('We could not load this conversation.'); else { setConversation(conversationResult.data); setMessages(messageResult.data) } }, [user, id])
-  useEffect(() => { void load(); if (!id) return; const channel = supabase.channel(`support-${id}`).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'support_messages', filter: `conversation_id=eq.${id}` }, () => { void load() }).subscribe(); return () => { void supabase.removeChannel(channel) }  }, [load, id])
-  const send = async (event: React.FormEvent) => { event.preventDefault(); if (!user || !id || !body.trim()) return; setSending(true); const result = await supportService.sendMessage(user.id, id, body); setSending(false); if (result.error) setError('Message could not be sent.'); else { setBody(''); await load() } }
-  return <PortalShell title={conversation?.subject || 'Support conversation'} eyebrow="Member support"><Link to={ROUTES.SUPPORT} className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#0504AA]"><ArrowLeft className="size-4" />All conversations</Link>{error && <p role="alert" className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</p>}<section className="mt-5 flex min-h-[420px] flex-col rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="flex-1 space-y-4 p-5 sm:p-8">{messages.map(message => <div key={message.id} className={`flex ${message.sender_role === 'member' ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 ${message.sender_role === 'member' ? 'bg-[#0504AA] text-white' : 'bg-slate-100 text-[#101533]'}`}><p className="mb-1 text-[11px] font-bold uppercase tracking-wider opacity-70">{message.sender_role === 'member' ? 'You' : 'Evermont Support'}</p>{message.body}<p className="mt-2 text-[10px] opacity-60">{new Date(message.created_at).toLocaleString()}</p></div></div>)}</div><form onSubmit={send} className="flex gap-3 border-t border-slate-100 p-4"><textarea value={body} onChange={e => setBody(e.target.value)} rows={2} maxLength={4000} required placeholder="Write a secure message..." aria-label="Message" className="min-w-0 flex-1 resize-none rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-[#0504AA]" /><button disabled={sending} aria-label="Send message" className="self-end rounded-xl bg-[#0504AA] p-3 text-white disabled:opacity-60"><Send className="size-5" /></button></form></section></PortalShell>
+function Thread({ owner, id }: { owner: string; id: string }) {
+  const location = useLocation()
+  const [draft, setDraft] = useState<string>(
+    typeof location.state?.draft === 'string' ? location.state.draft : '',
+  )
+  const [busy, setBusy] = useState(false)
+  const [notice, setNotice] = useState(
+    location.state?.firstMessageFailed
+      ? 'Conversation created. Your first message was not saved; please send it here.'
+      : '',
+  )
+  const { data, error, mutate } = useSWR(
+    ['member-thread', owner, id],
+    async () => {
+      const conversation = await supportService.getConversation(owner, id)
+      if (!conversation.data || conversation.error) throw Error('This conversation is unavailable.')
+      const messages = await supportService.listMessages(owner, id)
+      if (messages.error) throw Error('Messages could not be loaded.')
+      return { conversation: conversation.data, messages: messages.data }
+    },
+    { refreshInterval: 15000 },
+  )
+  useEffect(() => {
+    const channel = supabase
+      .channel('thread-' + id)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'support_messages', filter: 'conversation_id=eq.' + id },
+        () => {
+          void mutate()
+        },
+      )
+      .subscribe()
+    return () => {
+      void supabase.removeChannel(channel)
+    }
+  }, [id, mutate])
+  useEffect(() => {
+    if (!data) return
+    const unread = data.messages
+      .filter((m) => m.sender_role !== 'member' && !m.read_by_member)
+      .map((m) => m.id)
+    for (let i = 0; i < unread.length; i += 100) void memberAction(id, 'read', unread.slice(i, i + 100))
+  }, [id, data])
+  const closed = ['resolved', 'closed'].includes(data?.conversation.status || '')
+  async function send(event: FormEvent) {
+    event.preventDefault()
+    if (!draft.trim() || busy || closed) return
+    setBusy(true)
+    try {
+      const result = await supportService.sendMessage(owner, id, draft)
+      if (result.error) throw result.error
+      setDraft('')
+      setNotice('Message saved.')
+      await mutate()
+    } catch {
+      setNotice('Message could not be sent. Your draft is still here.')
+    } finally {
+      setBusy(false)
+    }
+  }
+  async function handoff() {
+    setBusy(true)
+    const ok = await memberAction(id, 'handoff')
+    setNotice(
+      ok
+        ? 'Your request for a human agent is saved.'
+        : 'Handoff could not be confirmed. You can still send a message to the team.',
+    )
+    setBusy(false)
+  }
+  return (
+    <PortalShell title={data?.conversation.subject || 'Conversation'} eyebrow="Private correspondence">
+      <Link
+        to={ROUTES.SUPPORT}
+        className="inline-flex items-center gap-2 text-sm font-semibold text-[#0504AA]"
+      >
+        <ArrowLeft size={16} /> All conversations
+      </Link>
+      <section className="mt-4 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <header className="flex flex-wrap items-center justify-between gap-4 bg-[#07142D] p-5 text-white">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-[#C9A227]">Member services</p>
+            <h2 className="mt-1 text-xl font-semibold">Secure conversation</h2>
+          </div>
+          {data && !closed && (
+            <button
+              className="flex items-center gap-2 rounded-xl border border-white/40 px-3 py-2 text-sm"
+              onClick={() => void handoff()}
+              disabled={busy}
+            >
+              <Headphones size={16} /> Request a human
+            </button>
+          )}
+        </header>
+        <div className="space-y-4 bg-slate-50 p-4 sm:p-7">
+          {error ? (
+            <button onClick={() => void mutate()}>Unable to load this thread. Retry</button>
+          ) : !data ? (
+            'Loading messages…'
+          ) : !data.messages.length ? (
+            'No messages yet.'
+          ) : (
+            data.messages.map((m) => (
+              <article
+                key={m.id}
+                className={
+                  'w-fit max-w-[90%] whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-sm shadow-sm ' +
+                  (m.sender_role === 'member'
+                    ? 'ml-auto bg-[#0504AA] text-white'
+                    : 'border bg-white text-[#07142D]')
+                }
+              >
+                <strong className="block text-xs">
+                  {m.sender_role === 'member'
+                    ? 'You'
+                    : m.sender_role === 'system'
+                      ? m.body.startsWith('EVERMONT AI Support: ')
+                        ? 'EVERMONT AI Support · AI-generated'
+                        : 'System notice'
+                      : 'EVERMONT Support'}
+                </strong>
+                <p className="my-1">
+                  {m.sender_role === 'system' ? m.body.replace(/^EVERMONT AI Support: /, '') : m.body}
+                </p>
+                <time className="text-xs opacity-75">{new Date(m.created_at).toLocaleString()}</time>
+              </article>
+            ))
+          )}
+        </div>
+        {notice && (
+          <p role="status" className="px-5 py-2 text-sm">
+            {notice}
+          </p>
+        )}
+        {closed ? (
+          <p className="p-5 text-sm">
+            This conversation is closed. Start a new conversation for further help.
+          </p>
+        ) : (
+          data && (
+            <form onSubmit={send} className="grid gap-3 border-t p-4">
+              <label className="text-sm font-semibold" htmlFor="reply">
+                Message the support team
+              </label>
+              <textarea
+                id="reply"
+                className="rounded-xl border p-3"
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                maxLength={4000}
+                rows={3}
+                required
+              />
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <small>Never share passwords, PINs or sign-in codes.</small>
+                <button
+                  disabled={busy || !draft.trim()}
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#0504AA] px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
+                >
+                  <Send size={15} /> {busy ? 'Working…' : 'Send message'}
+                </button>
+              </div>
+            </form>
+          )
+        )}
+      </section>
+    </PortalShell>
+  )
+}
+export function SupportThreadPage() {
+  const { user } = useAuth()
+  const { id } = useParams()
+  return user && id ? <Thread key={user.id + id} owner={user.id} id={id} /> : null
 }
 export default SupportThreadPage

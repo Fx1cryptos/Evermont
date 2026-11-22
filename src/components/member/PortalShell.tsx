@@ -5,6 +5,8 @@ import { ROUTES } from '@/constants/routes'
 import { LOGO_PATH, SITE_NAME, SITE_TAGLINE, SITE_TAGLINE_SECOND, SITE_URL, SUPPORT_EMAIL } from '@/config/site'
 import { useAuth } from '@/contexts/AuthContext'
 
+import { useNotifications } from '@/hooks/useNotifications'
+
 const groups = [
   { label: 'Main', items: [
     { label: 'Dashboard', to: ROUTES.DASHBOARD, icon: LayoutDashboard },
@@ -33,6 +35,7 @@ const navClass = ({ isActive }: { isActive: boolean }) => `flex min-h-10 items-c
 
 export const PortalShell: React.FC<React.PropsWithChildren<{ title: string; eyebrow?: string }>> = ({ title, eyebrow = 'Member portal', children }) => {
   const { signOut, user } = useAuth()
+  const { unreadCount } = useNotifications(user?.id)
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const handleSignOut = async () => { try { await signOut(); navigate(ROUTES.LOGIN, { replace: true }) } catch { /* AuthContext retains the error. */ } }
@@ -81,7 +84,7 @@ export const PortalShell: React.FC<React.PropsWithChildren<{ title: string; eyeb
           <Link to={ROUTES.DASHBOARD} className="lg:hidden" aria-label="Evermont member dashboard"><img src={LOGO_PATH} alt="" width={34} height={34} className="size-[34px] rounded-lg object-contain" /></Link>
           <div className="min-w-0"><p className="text-[10px] font-bold uppercase tracking-[.15em] text-[#C9A227]">{eyebrow}</p><h1 className="truncate text-base font-semibold tracking-tight text-[#07142D] sm:text-lg">{title}</h1></div>
         </div>
-        <div className="flex shrink-0 items-center gap-2 sm:gap-3"><Link to="/alerts" className="relative rounded-xl p-2.5 text-slate-500 transition hover:bg-slate-100 hover:text-[#0504AA]" aria-label="Notifications"><Bell className="size-5" aria-hidden="true" /></Link><span className="hidden items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800 sm:flex"><span className="size-1.5 rounded-full bg-emerald-500" />Secure session</span><Link to={ROUTES.PROFILE} className="hidden size-9 items-center justify-center rounded-full bg-[#07142D] text-sm font-semibold text-white sm:flex" aria-label={`Profile: ${displayName}`}>{displayName.charAt(0).toUpperCase()}</Link></div>
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3"><Link to="/alerts" className="relative rounded-xl p-2.5 text-slate-500 transition hover:bg-slate-100 hover:text-[#0504AA]" aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : "Notifications"}>{unreadCount > 0 && <small className="absolute right-0 top-0 rounded-full bg-[#0504AA] px-1 text-white">{unreadCount}</small>}<Bell className="size-5" aria-hidden="true" /></Link><span className="hidden items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800 sm:flex"><span className="size-1.5 rounded-full bg-emerald-500" />Secure session</span><Link to={ROUTES.PROFILE} className="hidden size-9 items-center justify-center rounded-full bg-[#07142D] text-sm font-semibold text-white sm:flex" aria-label={`Profile: ${displayName}`}>{displayName.charAt(0).toUpperCase()}</Link></div>
       </div>
     </header>
 
