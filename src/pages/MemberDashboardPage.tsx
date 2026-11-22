@@ -1,3 +1,4 @@
+import { activityDate, activityDescription, activityDisclosure, activityMoney } from '@/utils/activityPresentation'
 import React, { useEffect, useMemo, useState } from 'react'
 import { ArrowDownLeft, ArrowUpRight, Bell, Building2, CreditCard, Eye, EyeOff, FileText, Headphones, Landmark, Receipt, Send, Smartphone, UserRound, WalletCards } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -31,8 +32,8 @@ const ActivityList: React.FC<{ rows: LedgerActivity[]; empty: string; format: (v
     const credit = row.direction === 'credit'
     return (
       <li key={row.id} className="grid gap-3 px-4 py-3.5 sm:grid-cols-[auto_1fr_auto] sm:items-center">
-        <span className={`flex size-9 items-center justify-center rounded-full ${credit ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`} aria-label={row.direction}>{row.direction === 'unknown' ? '—' : credit ? <ArrowUpRight className="size-4" aria-hidden="true" /> : <ArrowDownLeft className="size-4" aria-hidden="true" />}</span>
-        <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><p className="truncate text-sm font-semibold text-[#07142D]">{row.description || 'Ledger entry'}</p></div><p className="mt-1 text-xs text-slate-500">{formatActivityDate(row.createdAt)} · <span className="capitalize">{row.entryType || row.category || row.direction}</span>{row.referenceId ? ` · ${row.referenceId}` : ''}</p></div>
+        <span className={`flex size-9 items-center justify-center rounded-full ${credit ? 'bg-emerald-50 text-emerald-700' : row.direction === 'debit' ? 'bg-rose-50 text-rose-700' : 'bg-slate-100 text-slate-600'}`} aria-label={row.direction}>{row.direction === 'unknown' ? '—' : credit ? <ArrowUpRight className="size-4" aria-hidden="true" /> : <ArrowDownLeft className="size-4" aria-hidden="true" />}</span>
+        <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><p className="truncate text-sm font-semibold text-[#07142D]">{activityDescription(row)}</p></div><p className="mt-1 text-xs text-slate-500">{activityDate(row.createdAt)} · <span className="capitalize">{row.entryType || row.category || row.direction}</span>{row.referenceId ? ` · ${row.referenceId}` : ''}</p></div>
         <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end"><p className={`text-sm font-semibold tabular-nums ${credit ? 'text-emerald-700' : 'text-rose-800'}`}>{row.displayAmount && (credit ? '+' : row.direction === 'debit' ? '−' : '')}{format(row.displayAmount,row.accountId)}</p>{row.balanceAfter != null && <small>Balance {format(row.balanceAfter,row.accountId)}</small>}<span className={`rounded-full px-2 py-1 text-[11px] font-semibold capitalize ${row.status === 'completed' || row.status === 'posted' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>{row.status || 'Status not returned'}</span></div>
       </li>
     )
@@ -86,7 +87,7 @@ export const MemberDashboardPage: React.FC = () => {
     void Promise.all([
       profileService.getProfile(user.id).then(p=>{if(active) setProfile(p)}),
       accountService.getAccounts(user.id).then(a=>{if(active) setAccounts(a)}).catch(()=>{if(active){setAccounts([]);setError('We could not load your accounts.')}}),
-      transactionService.getTransactions(user.id,{limit:40}).then(rows=>{if(active) setRows(rows)}).catch(()=>{if(active){setRows([]);setActivityError(true)}})
+      transactionService.getMemberActivity(user.id,{limit:8}).then(rows=>{if(active) setRows(rows)}).catch(()=>{if(active){setRows([]);setActivityError(true)}})
     ]).finally(()=>{if(active) setLoading(false)})
     return () => { active = false }
   }, [user,historyAttempt])
@@ -161,8 +162,9 @@ export const MemberDashboardPage: React.FC = () => {
 
       <section className="private-surface p-5"><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="private-overline">Private correspondence</p><h2 className="private-heading">Member support</h2></div><button className="rounded-full bg-[#0504AA] px-5 py-3 text-sm font-semibold text-white" aria-expanded={supportOpen} onClick={()=>setSupportOpen(!supportOpen)}>{supportOpen ? 'Close inbox' : 'Open your inbox'}</button></div>{supportOpen && <div className="mt-5"><SupportPage embedded /></div>}</section>
       <div className="grid gap-5">
-        <Panel title="Recent activity" action={<Link to={ROUTES.TRANSACTIONS} className="text-sm font-semibold text-[#0504AA]">Full history</Link>}>
-          {activityError ? <p className="px-4 py-6 text-sm text-slate-500">Activity was not loaded. <button className="font-semibold underline" onClick={()=>retryHistory(n=>n+1)}>Retry history</button></p> : <ActivityList format={(value,id) => shown(value, accounts.find(a => a.id === id)?.currency || null)} rows={recent} empty="Posted ledger entries and transactions will appear here." />}
+        <Panel title="Recent activity" action={<Link to={ROUTES.TRANSACTIONS} className="text-sm font-semibold text-[#0504AA]">View All Transactions</Link>}>
+          {recent.some(row=>row.isSample) && <p className="border-b border-[#C9A227]/40 bg-amber-50 px-4 py-3 text-sm text-[#07142D]">{activityDisclosure}</p>}
+          {activityError ? <p className="px-4 py-6 text-sm text-slate-500">Activity was not loaded. <button className="font-semibold underline" onClick={()=>retryHistory(n=>n+1)}>Retry history</button></p> : <ActivityList format={(value,id) => hidden ? '••••••' : activityMoney(value,accounts.find(a=>a.id===id)?.currency)} rows={recent} empty="Posted ledger entries and transactions will appear here." />}
         </Panel>
       </div>
 

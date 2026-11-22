@@ -1,6 +1,6 @@
 import { Transaction } from '@/types'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
-import { LEDGER_ENTRY_COLUMNS, LedgerDirection, mapLedgerRow, MappedLedgerEntry } from '@/utils/ledgerMapping'
+import { asLedgerDecimal, LedgerDirection, mapLedgerRow, MappedLedgerEntry } from '@/utils/ledgerMapping'
 
 export interface TransactionFilters {
   accountId?: string
@@ -15,6 +15,8 @@ export interface TransactionFilters {
 export interface LedgerActivity extends Transaction {
   memberId: string
   isSample?: boolean
+  is_demo?: boolean | null
+  source?: 'ledger_entries' | 'transactions' | 'demo_ledger_entries'
   referenceId: string
   entryType: string
   category: string
@@ -44,6 +46,7 @@ const toActivity = (entry: MappedLedgerEntry): LedgerActivity => ({
   credit: entry.credit,
   balanceAfter: entry.balanceAfter,
   isSample: false,
+  source: 'ledger_entries',
 })
 
 
@@ -51,7 +54,7 @@ const mapTransactionRow = (row: Parameters<typeof mapLedgerRow>[0] & {user_id?: 
   const direction = String(row.direction || '').toLowerCase()
   const side = ['credit','deposit','in','incoming'].includes(direction) ? 'credit' :
     ['debit','withdrawal','out','outgoing'].includes(direction) ? 'debit' : undefined
-  return toActivity(mapLedgerRow({...row, member_id:row.user_id, entry_type:row.entry_type || side}))
+  return {...toActivity(mapLedgerRow({...row, member_id:row.user_id, entry_type:row.entry_type || side})), source:'transactions' as const}
 }
 
 /** Ledger rows win when the same id is present in both tables. */
@@ -84,6 +87,44 @@ export function isTransferActivity(row: Pick<LedgerActivity, 'entryType' | 'cate
 export function isDepositActivity(row: Pick<LedgerActivity, 'entryType' | 'direction'>): boolean {
   const type = row.entryType.trim().toLowerCase()
   return row.direction === 'credit' || type === 'deposit' || type === 'interest' || type === 'opening_balance' || type === 'inheritance'
+}
+
+type DemoRow = Parameters<typeof mapLedgerRow>[0] & {is_demo?: boolean | null}
+
+function demoActivity(row: DemoRow): LedgerActivity {
+  const entry = toActivity(mapLedgerRow(row))
+  const token = (entry.entryType + ' ' + entry.category).toLowerCase()
+  const transfer = /transfer|wire|ach/.test(token) || /\btransfer\b/i.test(entry.description)
+  if (transfer) {
+    const debit = asLedgerDecimal(row.debit)
+    const credit = asLedgerDecimal(row.credit)
+    const amount = asLedgerDecimal(row.amount)
+    const nonzero = (value: string | null) => value != null && /[1-9]/.test(value)
+    const side = nonzero(debit) === nonzero(credit) ? 'unknown' : nonzero(debit) ? 'debit' : 'credit'
+    entry.direction = entry.type = side
+    entry.displayAmount = (side === 'debit' ? debit : side === 'credit' ? credit : amount ?? debit ?? credit)?.replace(/^-/,'') ?? ''
+  }
+  return {...entry, isSample:true, is_demo:row.is_demo, source:'demo_ledger_entries'}
+}
+
+async function readDemoLedger(memberId: string, accountIds: string[], filters: TransactionFilters): Promise<LedgerActivity[]> {
+  const rows: LedgerActivity[] = []
+  const allowed = new Set(accountIds)
+  for (let offset = 0;;) {
+    const query = supabase.from('demo_ledger_entries').select('*',{count:'exact'})
+      .eq('member_id',memberId).in('account_id',accountIds)
+      .order('created_at',{ascending:false}).order('id',{ascending:false})
+    if (filters.status) query.eq('status',filters.status)
+    if (filters.startDate) query.gte('created_at',filters.startDate.toISOString())
+    if (filters.endDate) query.lte('created_at',filters.endDate.toISOString())
+    const {data,error,count} = await query.range(offset,offset+199)
+    if (error || !data || data.some(row=>row.member_id !== memberId || !allowed.has(row.account_id))) {
+      throw new Error('Unable to load authorized demo activity.')
+    }
+    rows.push(...data.map(demoActivity))
+    offset += data.length
+    if (!data.length || (count == null ? data.length < 200 : offset >= count)) return rows
+  }
 }
 
 export const transactionService = {
@@ -138,21 +179,27 @@ export const transactionService = {
     }
   },
 
-  /** Sample records are read-only and intentionally kept separate from genuine member activity. */
-  async getSampleTransactions(userId: string, accountIds: string[]): Promise<LedgerActivity[]> {
-    if (!userId || !accountIds.length || !isSupabaseConfigured) return []
-    const { data, error } = await supabase
-      .from('demo_ledger_entries')
-      .select(LEDGER_ENTRY_COLUMNS)
-      .eq('member_id', userId)
-      .in('account_id', accountIds)
-      .order('created_at', { ascending: false })
-      .order('id', { ascending: false })
-    if (error) {
-      console.error('Failed to fetch sample ledger entries')
-      throw new Error('Unable to load sample transaction history.')
-    }
-    return ((data || []) as Parameters<typeof mapLedgerRow>[0][]).map((row) => ({ ...toActivity(mapLedgerRow(row)), isSample: true }))
+  /** Member activity views only. Financial reports and insights use getTransactions. */
+  async getMemberActivity(expectedMember: string, filters: TransactionFilters = {}): Promise<LedgerActivity[]> {
+    const {data: auth,error: authError} = await supabase.auth.getUser()
+    if (authError || !auth.user || auth.user.id !== expectedMember) throw new Error('Unable to verify member session.')
+    const memberId = auth.user.id
+    const {data: accounts,error} = await supabase.from('accounts').select('id,user_id').eq('user_id',memberId)
+    if (error || !accounts || accounts.some(account => account.user_id !== memberId)) throw new Error('Unable to verify account access.')
+    const owned = new Set<string>(accounts.map(account => account.id))
+    if (filters.accountId && !owned.has(filters.accountId)) throw new Error('Unable to verify account access.')
+    const allowedIds = filters.accountId ? [filters.accountId] : [...owned]
+    if (!allowedIds.length) return []
+
+    const unbounded = {...filters,limit:undefined,offset:undefined,type:undefined}
+    const [recorded, samples] = await Promise.all([
+      this.getTransactions(memberId,unbounded),
+      readDemoLedger(memberId,allowedIds,unbounded),
+    ])
+    if (recorded.some(row=>!owned.has(row.accountId))) throw new Error('Unable to verify transaction ownership.')
+    const references = new Set(recorded.filter(row=>row.referenceId).map(row=>JSON.stringify([row.accountId,row.referenceId])))
+    const uniqueSamples = samples.filter(row=>!row.referenceId || !references.has(JSON.stringify([row.accountId,row.referenceId])))
+    return applyWindow(mergeActivity(recorded,uniqueSamples).filter(row=>!filters.type || row.direction === filters.type),filters)
   },
 
   async getTransactionById(transactionId: string, userId: string): Promise<LedgerActivity | null> {

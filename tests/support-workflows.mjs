@@ -410,3 +410,52 @@ test('public-key selection prefers an accepted publishable key and falls back to
  assert.equal(await resolveSupabaseAnonKey({VITE_SUPABASE_ANON_KEY:anon},url),anon)
  assert.throws(()=>createClient(url,''));assert.ok(createClient(url,pub,{auth:{persistSession:false,autoRefreshToken:false}}).auth)
 })
+
+test('member views read 18 authorized demo rows across pages and preserve provenance, amounts and posted fields',async()=>{
+  const {transactionService}=await load('/src/services/transactionService.ts')
+  const {activityDescription,activityMoney}=await load('/src/utils/activityPresentation.ts')
+  const savedGetUser=client.auth.getUser
+  client.auth.getUser=async()=>({data:{user:{id:member}},error:null})
+  const rows=Array.from({length:18},(_,i)=>({
+    id:'demo-'+i, member_id:member, account_id:'owned', is_demo:true,
+    reference_id:'REF-'+i, description:i===0?'[DEMO] Transfer – Fixed Asset':'[DEMO] Deposit',
+    entry_type:i<3?'transfer':i===3?'withdrawal':'deposit',
+    amount:i===0?'0.00':'12.34', debit:i===1?'12.34':'0.00', credit:i===2?'12.34':'0.00',
+    status:i===4?null:'completed', created_at:new Date(Date.UTC(2026,0,18-i)).toISOString(),
+  }))
+  let requests=0, foreign=false
+  transport=async url=>{
+    requests++
+    if(url.pathname.endsWith('/accounts')){
+      assert.equal(url.searchParams.get('user_id'),'eq.'+member)
+      return json([{id:'owned',user_id:member}])
+    }
+    if(!url.pathname.endsWith('/demo_ledger_entries')) return json([])
+    assert.equal(url.searchParams.get('member_id'),'eq.'+member)
+    assert.equal(url.searchParams.get('account_id'),'in.(owned)')
+    const offset=Number(url.searchParams.get('offset'))
+    const page=rows.slice(offset,offset+7)
+    if(foreign && page.length) page[0]={...page[0],account_id:'foreign'}
+    return new Response(JSON.stringify(page),{headers:{'content-type':'application/json','content-range':offset+'-'+(offset+page.length-1)+'/18'}})
+  }
+  try {
+    await assert.rejects(transactionService.getMemberActivity('another-member'),/session/)
+    assert.equal(requests,0)
+    await assert.rejects(transactionService.getMemberActivity(member,{accountId:'foreign'}),/account access/)
+    const activity=await transactionService.getMemberActivity(member)
+    assert.equal(activity.length,18)
+    assert.deepEqual(activity.slice(0,5).map(row=>row.direction),['unknown','debit','credit','debit','credit'])
+    assert.deepEqual(activity.map(row=>row.referenceId),rows.map(row=>row.reference_id))
+    assert.deepEqual(activity.map(row=>row.createdAt),rows.map(row=>row.created_at))
+    assert.ok(activity.every(row=>row.is_demo && row.isSample && row.source==='demo_ledger_entries'))
+    assert.equal(activity[0].description,rows[0].description)
+    assert.equal(activityDescription(activity[0]),'Transfer – Fixed Asset')
+    assert.equal(activityMoney(activity[0].displayAmount,'USD'),'$0.00')
+    assert.equal(activityMoney('9007199254740993.13','USD'),'$9,007,199,254,740,993.13')
+    assert.equal(activity[4].status,'')
+    assert.equal(activity[4].balanceAfter,null)
+    assert.equal((await transactionService.getMemberActivity(member,{limit:8})).length,8)
+    foreign=true
+    await assert.rejects(transactionService.getMemberActivity(member),/authorized demo activity/)
+  } finally {client.auth.getUser=savedGetUser}
+})

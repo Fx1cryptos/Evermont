@@ -1,6 +1,7 @@
+import { activityDate, activityDescription, activityDisclosure, activityMoney } from '@/utils/activityPresentation'
 import { useSearchParams } from 'react-router-dom'
 import React, { useEffect, useMemo, useState } from 'react'
-import { Search } from 'lucide-react'
+import { Search, ArrowDownLeft, ArrowUpRight, Minus } from 'lucide-react'
 import { PortalShell } from '@/components/member/PortalShell'
 import { useAuth } from '@/contexts/AuthContext'
 import { accountService } from '@/services/accountService'
@@ -37,7 +38,7 @@ export const TransactionsPage: React.FC = () => {
       try {
         const [owned, activity] = await Promise.all([
           accountService.getAccounts(user.id).catch(() => [] as Account[]),
-          transactionService.getTransactions(user.id),
+          transactionService.getMemberActivity(user.id),
         ])
         if (!active) return
         setAccounts(owned)
@@ -61,7 +62,7 @@ export const TransactionsPage: React.FC = () => {
 
   const filtered = useMemo(() => rows.filter(row => {
     const matchesStatus = status === 'all' || row.status === status
-    const haystack = `${row.description} ${row.category} ${row.entryType} ${row.referenceId}`.toLowerCase()
+    const haystack = `${activityDescription(row)} ${row.category} ${row.entryType} ${row.referenceId}`.toLowerCase()
     const matchesQuery = haystack.includes(query.trim().toLowerCase())
     const created = row.createdAt ? new Date(row.createdAt).getTime() : 0
     const matchesStart = !startDate || created >= new Date(`${startDate}T00:00:00`).getTime()
@@ -109,6 +110,7 @@ export const TransactionsPage: React.FC = () => {
       <label className="grid gap-1 text-xs font-semibold text-slate-500">To<input type="date" aria-label="Filter to date" value={endDate} onChange={event => setEndDate(event.target.value)} className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-normal text-slate-700" /></label>
     </div>
     {error && <p role="alert" className="mt-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{error} <button onClick={()=>retry(n=>n+1)} className="font-semibold underline">Retry history</button></p>}
+    {!loading && rows.some(row=>row.isSample) && <p className="mt-4 rounded-xl border border-[#C9A227]/40 bg-amber-50 p-4 text-sm text-[#07142D]">{activityDisclosure}</p>}
     <section className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       {loading ? <p className="p-8 text-slate-500">Loading your activity...</p> : error ? null : !filtered.length ? <p className="p-8 text-slate-500">{emptyMessage}</p> : <>
         <div className="hidden grid-cols-[140px_1.4fr_.8fr_.8fr_.7fr_140px] gap-3 border-b border-slate-100 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-400 lg:grid">
@@ -116,17 +118,19 @@ export const TransactionsPage: React.FC = () => {
         </div>
         <div className="divide-y divide-slate-100">
           {visible.map(row => {
-            const money = (value: unknown) => value != null && value !== '' && Number.isFinite(Number(value)) && account?.currency && /^[A-Z]{3}$/.test(account.currency) ? new Intl.NumberFormat('en-US',{style:'currency',currency:account.currency}).format(Number(value)) : 'Unavailable'
+            const account = accounts.find(item => item.id === row.accountId)
+            const money = (value: unknown) => activityMoney(value,account?.currency)
             const posted = (value: string | null) => value == null ? '—' : money(value)
             const credit = row.direction === 'credit'
-            const account = accounts.find(item => item.id === row.accountId)
+            const debit = row.direction === 'debit'
+            const DirectionIcon = credit ? ArrowDownLeft : debit ? ArrowUpRight : Minus
             const open = openId === row.id
             const detailId = `transaction-${row.id}`
-            return <div key={row.id} className="p-5">
+            return <div key={row.id} className="p-5 transition-colors hover:bg-slate-50/70">
               <div className="grid gap-2 lg:grid-cols-[140px_1.4fr_.8fr_.8fr_.7fr_140px] lg:items-center">
-                <p className="text-sm text-slate-500">{row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '—'}</p>
+                <p className="text-sm text-slate-500">{activityDate(row.createdAt)}</p>
                 <div>
-                  <p className="font-semibold">{row.description || 'Ledger entry'}</p>
+                  <p className="flex items-center gap-2 break-words font-semibold text-[#07142D]"><DirectionIcon aria-label={credit ? "Credit" : debit ? "Debit" : "No direction"} className={`size-5 shrink-0 ${credit ? "text-emerald-700" : debit ? "text-rose-700" : "text-slate-500"}`} />{activityDescription(row)}</p>
                   <p className="mt-1 text-xs text-slate-400">{row.referenceId || 'Reference unavailable'}</p>
                   <p className="mt-1 text-xs text-slate-400 lg:hidden">{row.category || '—'} · {account?.accountNumber ? maskAccount(account.accountNumber) : account?.accountType || 'Account'}</p>
                 </div>
@@ -147,7 +151,7 @@ export const TransactionsPage: React.FC = () => {
                 <div><dt className="text-xs uppercase tracking-wide text-slate-400">Debit</dt><dd className="mt-1 text-slate-700">{posted(row.debit)}</dd></div>
                 <div><dt className="text-xs uppercase tracking-wide text-slate-400">Credit</dt><dd className="mt-1 text-slate-700">{posted(row.credit)}</dd></div>
                 <div><dt className="text-xs uppercase tracking-wide text-slate-400">Balance after</dt><dd className="mt-1 text-slate-700">{posted(row.balanceAfter)}</dd></div>
-                <div><dt className="text-xs uppercase tracking-wide text-slate-400">Posted</dt><dd className="mt-1 text-slate-700">{row.createdAt ? new Date(row.createdAt).toLocaleString() : '—'}</dd></div>
+                <div><dt className="text-xs uppercase tracking-wide text-slate-400">Posted</dt><dd className="mt-1 text-slate-700">{activityDate(row.createdAt)}</dd></div>
                 <div><dt className="text-xs uppercase tracking-wide text-slate-400">Status</dt><dd className="mt-1 capitalize text-slate-700">{row.status || '—'}</dd></div>
               </dl>}
             </div>
