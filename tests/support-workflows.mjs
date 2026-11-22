@@ -459,3 +459,52 @@ test('member views read 18 authorized demo rows across pages and preserve proven
     await assert.rejects(transactionService.getMemberActivity(member),/authorized demo activity/)
   } finally {client.auth.getUser=savedGetUser}
 })
+
+test('staff retry reconciles an accepted Gmail notification before attempting another send', async () => {
+  const { default: handler } = await load('/api/support.ts')
+  const { supportMailbox } = await load('/api/_lib/gmail.ts')
+  env('SUPABASE_URL', origin)
+  env('SUPABASE_SERVICE_ROLE_KEY', 'fixture')
+  for (const key of ['GOOGLE_CLIENT_ID','GOOGLE_CLIENT_SECRET','GOOGLE_REFRESH_TOKEN']) env(key,'fixture')
+  env('GMAIL_FROM_EMAIL',supportMailbox)
+  env('SUPPORT_NOTIFICATION_EMAIL',supportMailbox)
+  let attempts = 6
+  let reconciled = false
+  let recorded = false
+  transport = async (url, opt) => {
+    if (url.hostname === 'oauth2.googleapis.com') return json({access_token:'fixture'})
+    if (url.pathname.endsWith('/profile')) return json({emailAddress:supportMailbox})
+    if (url.hostname === 'gmail.googleapis.com') {
+      assert.equal(url.pathname,'/gmail/v1/users/me/messages','must not send again')
+      assert.match(url.searchParams.get('q'),/rfc822msgid:notice\./)
+      reconciled = true
+      return json({messages:[{id:'already-sent',threadId:'existing-thread'}]})
+    }
+    if (url.pathname.endsWith('/auth/v1/user')) return json({id:member})
+    if (url.pathname.includes('/auth/v1/admin/users/')) return json({id:member})
+    if (url.pathname.endsWith('/admin_roles')) return json([{role:'SUPPORT'}])
+    if (url.pathname.endsWith('/support_conversations')) {
+      const row = {id:ticket,user_id:member,subject:'Statements'}
+      return json(url.searchParams.get('select') === 'id,user_id' ? [row] : row)
+    }
+    if (url.pathname.endsWith('/support_messages')) return json({id:notice,sender_role:'member',is_internal:false})
+    if (url.pathname.endsWith('/claim_support_notification_for_conversation')) {
+      assert.ok(attempts<6)
+      return json([{ id: notice, conversation_id:ticket, message_id:notice, event_type:'support_message', attempt_count:++attempts }])
+    }
+    assert.ok(url.pathname.endsWith('/support_notification_outbox'))
+    const patch = JSON.parse(opt.body)
+    if (patch.status === 'pending') attempts = patch.attempt_count
+    else {
+      assert.equal(patch.status,'sent')
+      assert.equal(patch.payload.notification_message,'already-sent')
+      recorded = true
+    }
+    return json(null)
+  }
+  const res = {status(n){this.code=n;return this},json(body){this.body=body},setHeader(){}}
+  await handler({method:'POST',headers:{authorization:'Bearer fixture'},body:{action:'retry',conversationId:ticket}},res)
+  assert.equal(res.code,200)
+  assert.deepEqual(res.body.result,{sent:1,failed:0})
+  assert.ok(reconciled && recorded)
+})

@@ -204,7 +204,8 @@ export default async function handler(request: RequestLike, response: ResponseLi
       if (action === 'retry') {
         const { error } = await client.from('support_notification_outbox').update({
           status: 'pending',
-          attempt_count: 0,
+          // Keep this marked as a retry so Gmail checks for an already accepted send.
+          attempt_count: 1,
           available_at: new Date().toISOString(),
           locked_at: null,
           last_error: null,
