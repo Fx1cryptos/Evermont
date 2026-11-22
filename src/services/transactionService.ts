@@ -1,6 +1,6 @@
 import { Transaction } from '@/types'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
-import { asLedgerDecimal, LEDGER_ENTRY_COLUMNS, LedgerDirection, mapLedgerRow, MappedLedgerEntry } from '@/utils/ledgerMapping'
+import { LEDGER_ENTRY_COLUMNS, LedgerDirection, mapLedgerRow, MappedLedgerEntry } from '@/utils/ledgerMapping'
 
 export interface TransactionFilters {
   accountId?: string
@@ -46,43 +46,12 @@ const toActivity = (entry: MappedLedgerEntry): LedgerActivity => ({
   isSample: false,
 })
 
-const TRANSACTION_COLUMNS = 'id,user_id,account_id,amount,description,status,created_at,direction'
 
-const mapTransactionRow = (row: {
-  id?: string | null
-  user_id?: string | null
-  account_id?: string | null
-  amount?: string | number | null
-  description?: string | null
-  status?: string | null
-  created_at?: string | null
-  direction?: string | null
-}): LedgerActivity => {
-  const amount = asLedgerDecimal(row.amount)
-  const rawDirection = String(row.direction || '').trim().toLowerCase()
-  const direction: LedgerDirection = ['debit', 'withdrawal', 'out', 'outgoing'].includes(rawDirection) || Boolean(amount?.startsWith('-'))
-    ? 'debit'
-    : 'credit'
-  const display = amount ? amount.replace(/^-/, '') : '0.00'
-  return {
-    id: String(row.id || ''),
-    accountId: String(row.account_id || ''),
-    memberId: String(row.user_id || ''),
-    type: direction,
-    direction,
-    amount: amount ?? display,
-    displayAmount: display,
-    description: row.description ? String(row.description) : '',
-    status: row.status ? String(row.status) : '',
-    createdAt: row.created_at ? String(row.created_at) : '',
-    completedAt: String(row.status || '').toLowerCase() === 'completed' && row.created_at ? String(row.created_at) : null,
-    referenceId: '',
-    entryType: direction === 'credit' ? 'deposit' : 'withdrawal',
-    category: '',
-    debit: direction === 'debit' ? display : null,
-    credit: direction === 'credit' ? display : null,
-    balanceAfter: null,
-  }
+const mapTransactionRow = (row: Parameters<typeof mapLedgerRow>[0] & {user_id?: string; direction?: string}) => {
+  const direction = String(row.direction || '').toLowerCase()
+  const side = ['credit','deposit','in','incoming'].includes(direction) ? 'credit' :
+    ['debit','withdrawal','out','outgoing'].includes(direction) ? 'debit' : undefined
+  return toActivity(mapLedgerRow({...row, member_id:row.user_id, entry_type:row.entry_type || side}))
 }
 
 /** Ledger rows win when the same id is present in both tables. */
@@ -95,15 +64,14 @@ export function mergeActivity(ledger: LedgerActivity[], transactions: LedgerActi
     if (row.id) byId.set(row.id, row)
   }
   return [...byId.values()].sort((a, b) => {
-    const time = b.createdAt.localeCompare(a.createdAt)
+    const time = (Date.parse(b.createdAt) || 0) - (Date.parse(a.createdAt) || 0)
     return time || b.id.localeCompare(a.id)
   })
 }
 
 const applyWindow = (rows: LedgerActivity[], filters: TransactionFilters) => {
-  if (!filters.limit || filters.limit < 1) return rows
   const offset = filters.offset && filters.offset > 0 ? filters.offset : 0
-  return rows.slice(offset, offset + filters.limit)
+  return rows.slice(offset, filters.limit && filters.limit > 0 ? offset + filters.limit : undefined)
 }
 
 export function isTransferActivity(row: Pick<LedgerActivity, 'entryType' | 'category' | 'direction'>): boolean {
@@ -124,51 +92,41 @@ export const transactionService = {
    * Where an id exists in both, the ledger row is kept. An empty result stays empty.
    */
   async getTransactions(userId: string, filters: TransactionFilters = {}): Promise<LedgerActivity[]> {
-    if (!userId || !isSupabaseConfigured) return []
+    if (!userId || !isSupabaseConfigured) throw new Error('Sign in to load transaction history.')
 
     try {
-      const ledgerByMember = supabase
-        .from('ledger_entries')
-        .select(LEDGER_ENTRY_COLUMNS)
-        .eq('member_id', userId)
-        .order('created_at', { ascending: false })
-        .order('id', { ascending: false })
-      const transactionQuery = supabase
-        .from('transactions')
-        .select(TRANSACTION_COLUMNS)
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-
+      // Use the member JWT and owner predicate on every page. Optional columns differ across
+      // historical records; their absence must not invalidate the entire projection.
       if (filters.accountId) {
-        ledgerByMember.eq('account_id', filters.accountId)
-        transactionQuery.eq('account_id', filters.accountId)
+        const owned = await supabase.from('accounts').select('id,user_id').eq('user_id',userId).eq('id',filters.accountId).maybeSingle()
+        if (owned.error || owned.data?.id !== filters.accountId || owned.data?.user_id !== userId) throw new Error('Unable to load transaction history.')
       }
-      if (filters.status) {
-        ledgerByMember.eq('status', filters.status)
-        transactionQuery.eq('status', filters.status)
+      const read = async (table: 'ledger_entries' | 'transactions') => {
+        const entries: LedgerActivity[] = []
+        let offset = 0
+        const cap = filters.limit && !filters.type ? Math.max(0, filters.offset || 0) + filters.limit : Infinity
+        while (offset < cap) {
+          const size = Math.min(200, cap-offset)
+          const query = supabase.from(table).select('*',{count:'exact'})
+            .eq(table === 'ledger_entries' ? 'member_id' : 'user_id',userId)
+            .order('created_at',{ascending:false}).order('id',{ascending:false})
+          if (filters.accountId) query.eq('account_id',filters.accountId)
+          if (filters.status) query.eq('status',filters.status)
+          if (filters.startDate) query.gte('created_at',filters.startDate.toISOString())
+          if (filters.endDate) query.lte('created_at',filters.endDate.toISOString())
+          const {data,error,count} = await query.range(offset,offset+size-1)
+          if (error) {
+            if (table === 'transactions' && ['42P01','PGRST205'].includes(error.code)) break
+            throw new Error('Unable to load transaction history.')
+          }
+          if (!data?.length) break
+          for (const row of data) entries.push(table === 'ledger_entries' ? toActivity(mapLedgerRow(row)) : mapTransactionRow(row))
+          offset += data.length
+          if (count == null ? data.length < size : offset >= count) break
+        }
+        return entries
       }
-      if (filters.startDate) {
-        const start = filters.startDate.toISOString()
-        ledgerByMember.gte('created_at', start)
-        transactionQuery.gte('created_at', start)
-      }
-      if (filters.endDate) {
-        const end = filters.endDate.toISOString()
-        ledgerByMember.lte('created_at', end)
-        transactionQuery.lte('created_at', end)
-      }
-
-      const [ledgerResult, transactionResult] = await Promise.all([
-        ledgerByMember,
-        transactionQuery,
-      ])
-      if (ledgerResult.error) {
-        console.error('Failed to fetch ledger entries')
-        throw new Error('Unable to load transaction history.')
-      }
-
-      const ledger = ((ledgerResult.data || []) as Parameters<typeof mapLedgerRow>[0][]).map((row) => toActivity(mapLedgerRow(row)))
-      const transactions = transactionResult.error ? [] : ((transactionResult.data || []) as Parameters<typeof mapTransactionRow>[0][]).map(mapTransactionRow)
+      const [ledger,transactions] = await Promise.all([read('ledger_entries'),read('transactions')])
       if ([...ledger,...transactions].some(row => row.memberId !== userId)) throw new Error('Unable to load transaction history.')
       let rows = mergeActivity(ledger, transactions)
       if (filters.type) rows = rows.filter((row) => row.direction === filters.type)
@@ -198,11 +156,11 @@ export const transactionService = {
   },
 
   async getTransactionById(transactionId: string, userId: string): Promise<LedgerActivity | null> {
-    if (!transactionId || !userId || !isSupabaseConfigured) return null
+    if (!transactionId || !userId || !isSupabaseConfigured) throw new Error('Unable to load transaction.')
 
     const { data, error } = await supabase
       .from('ledger_entries')
-      .select(LEDGER_ENTRY_COLUMNS)
+      .select('*')
       .eq('id', transactionId)
       .eq('member_id', userId)
       .maybeSingle()
@@ -212,7 +170,12 @@ export const transactionService = {
       throw new Error('Unable to load transaction.')
     }
 
-    return data ? toActivity(mapLedgerRow(data)) : null
+    if (data && data.member_id !== userId) throw new Error('Unable to load transaction.')
+    if (data) return toActivity(mapLedgerRow(data))
+    const legacy = await supabase.from('transactions').select('*').eq('id',transactionId).eq('user_id',userId).maybeSingle()
+    if (legacy.error && !['42P01','PGRST205'].includes(legacy.error.code)) throw new Error('Unable to load transaction.')
+    if (legacy.data && legacy.data.user_id !== userId) throw new Error('Unable to load transaction.')
+    return legacy.data ? mapTransactionRow(legacy.data) : null
   },
 
   /**

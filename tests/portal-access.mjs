@@ -23,6 +23,7 @@ globalThis.fetch = async (input, options) => {
     assert.equal(url.searchParams.get('user_id'), 'eq.' + member)
     return roleUnavailable ? json({ message: 'unavailable' }, 503) : json(role ? [{ role }] : [])
   }
+  if (url.pathname === "/rest/v1/accounts" && url.searchParams.has("id")) return json([{id:"requested-account",user_id:url.searchParams.get("user_id").slice(3)}])
   return json([])
 }
 const oldEnv = [process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY]

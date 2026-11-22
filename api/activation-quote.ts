@@ -3,6 +3,9 @@ import { createClient } from '@supabase/supabase-js'
 import { getBearerToken, setJsonHeaders, type RequestLike, type ResponseLike } from './_lib/support.js'
 import { defaultActivationPercent, defaultFeeMinorUnits } from '../shared/activationFee.js'
 
+import { resolveSupabaseAnonKey, resolveSupabaseUrl } from '../shared/supabasePublicConfig.js'
+
+let verifiedKey: Promise<string> | undefined
 export function minor(value: string, digits: number): bigint {
   if (!/^\d+(\.\d+)?$/.test(value)) throw Error('Unsupported amount')
   const [whole, fraction = ''] = value.split('.')
@@ -19,7 +22,9 @@ export default async function handler(req: RequestLike, res: ResponseLike) {
   const token = getBearerToken(req)
   if(!token) return res.status(401).end()
   try {
-    const client = createClient((process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL)!, (process.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY)!, {global:{headers:{Authorization:'Bearer '+token}},auth:{persistSession:false,autoRefreshToken:false}})
+    const url = resolveSupabaseUrl(process.env)
+    verifiedKey ??= resolveSupabaseAnonKey(process.env,url).catch(error=>{verifiedKey=undefined; throw error})
+    const client = createClient(url, await verifiedKey, {global:{headers:{Authorization:'Bearer '+token}},auth:{persistSession:false,autoRefreshToken:false}})
     const {data,error} = await client.auth.getUser(token)
     if(error || !data.user) return res.status(401).end()
     const owner = data.user.id

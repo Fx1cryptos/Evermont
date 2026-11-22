@@ -364,9 +364,10 @@ test('account quote examples use database decimal strings and currency precision
 
 test('trusted quote endpoint uses verified identity and database balance, never client-supplied amounts',async()=>{
   const {default:handler}=await load('/api/activation-quote.ts')
-  env('SUPABASE_URL',origin);env('VITE_SUPABASE_ANON_KEY','fixture-public')
+  env('SUPABASE_URL','https://gdodqiwjcezdznzroupw.supabase.co');env('VITE_SUPABASE_PUBLISHABLE_KEY','sb_publishable_fixture')
   let calls=0
   transport=async url=>{
+    if(url.pathname.endsWith('/auth/v1/health')) return json({})
     if(url.pathname.endsWith('/auth/v1/user')) return json({id:member})
     assert.equal(url.searchParams.get('user_id'),'eq.'+member); calls++
     if(url.pathname.endsWith('/accounts')) return json([{id:'owned',account_type:'savings',currency:'USD',balance:'5000.00'}])
@@ -377,4 +378,35 @@ test('trusted quote endpoint uses verified identity and database balance, never 
   assert.equal(res.code,401)
   await handler({method:'GET',headers:{authorization:'Bearer fixture'},query:{balance:'1',user_id:'other'}},res)
   assert.equal(res.code,200);assert.equal(res.body.quotes[0].fee,'40.00');assert.equal(calls,2)
+})
+
+test('history walks capped pages, preserves missing fields and reports denied reads',async()=>{
+ const {transactionService}=await load('/src/services/transactionService.ts')
+ let deny=false
+ transport=async url=>{
+   if(url.pathname.endsWith('/transactions')) return deny ? json({code:'42501'},403) : json([])
+   assert.equal(url.searchParams.get('member_id'),'eq.'+member)
+   const offset=Number(url.searchParams.get('offset'))
+   return new Response(JSON.stringify([{id:'record'+offset,member_id:member,account_id:'owned',created_at:'2026-01-01',...(offset===1?{amount:'-5.00'}:{})}]),{headers:{'content-type':'application/json','content-range':offset+'-'+offset+'/2'}})
+ }
+ const rows=await transactionService.getTransactions(member)
+ assert.equal(rows.length,2)
+ assert.equal(rows.find(r=>r.id==='record0').displayAmount,'')
+ assert.equal(rows.find(r=>r.id==='record1').displayAmount,'5.00')
+ deny=true
+ await assert.rejects(transactionService.getTransactions(member),/Unable to load/)
+})
+
+test('public-key selection prefers an accepted publishable key and falls back to the same-project anon key',async()=>{
+ const {resolveSupabaseAnonKey}=await load('/shared/supabasePublicConfig.ts')
+ const ref='gdodqiwjcezdznzroupw',url='https://'+ref+'.supabase.co'
+ const anon='eyJ0.'+Buffer.from(JSON.stringify({role:'anon',ref})).toString('base64url')+'.fixture'
+ const pub='sb_publishable_fixture'
+ const env={VITE_SUPABASE_ANON_KEY:anon,VITE_SUPABASE_PUBLISHABLE_KEY:pub}
+ transport=async u=>{assert.equal(u.origin,url);return json({})}
+ assert.equal(await resolveSupabaseAnonKey(env,url),pub)
+ transport=async()=>json({},401)
+ assert.equal(await resolveSupabaseAnonKey(env,url),anon)
+ assert.equal(await resolveSupabaseAnonKey({VITE_SUPABASE_ANON_KEY:anon},url),anon)
+ assert.throws(()=>createClient(url,''));assert.ok(createClient(url,pub,{auth:{persistSession:false,autoRefreshToken:false}}).auth)
 })

@@ -57,7 +57,7 @@ export interface Account {
 export interface Transaction {
   id: string
   accountId: string
-  type: 'debit' | 'credit'
+  type: 'debit' | 'credit' | 'unknown'
   amount: string
   description: string
   status: string

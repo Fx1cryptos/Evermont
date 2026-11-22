@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router-dom'
 import React, { useEffect, useMemo, useState } from 'react'
 import { Search } from 'lucide-react'
 import { PortalShell } from '@/components/member/PortalShell'
@@ -14,7 +15,8 @@ export const TransactionsPage: React.FC = () => {
   const { user } = useAuth()
   const [rows, setRows] = useState<LedgerActivity[]>([])
   const [accounts, setAccounts] = useState<Account[]>([])
-  const [accountFilter,setAccountFilter] = useState('all')
+  const [params] = useSearchParams()
+  const [accountFilter,setAccountFilter] = useState(params.get('account') || 'all')
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState('all')
   const [activityType, setActivityType] = useState<ActivityType>('all')
@@ -23,6 +25,7 @@ export const TransactionsPage: React.FC = () => {
   const [page, setPage] = useState(0)
   const [openId, setOpenId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [attempt,retry] = useState(0)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -49,7 +52,7 @@ export const TransactionsPage: React.FC = () => {
       }
     })()
     return () => { active = false }
-  }, [user])
+  }, [user,attempt])
 
   useEffect(() => {
     setPage(0)
@@ -71,7 +74,7 @@ export const TransactionsPage: React.FC = () => {
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const safePage = Math.min(page, pageCount - 1)
   const visible = filtered.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE)
-  const filtersActive = Boolean(query.trim()) || status !== 'all' || activityType !== 'all' || Boolean(startDate || endDate)
+  const filtersActive = accountFilter !== 'all' || Boolean(query.trim()) || status !== 'all' || activityType !== 'all' || Boolean(startDate || endDate)
   const emptyMessage = !rows.length && !filtersActive
     ? 'No transactions yet. Posted ledger activity will appear here.'
     : query.trim()
@@ -105,7 +108,7 @@ export const TransactionsPage: React.FC = () => {
       <label className="grid gap-1 text-xs font-semibold text-slate-500">From<input type="date" aria-label="Filter from date" value={startDate} onChange={event => setStartDate(event.target.value)} className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-normal text-slate-700" /></label>
       <label className="grid gap-1 text-xs font-semibold text-slate-500">To<input type="date" aria-label="Filter to date" value={endDate} onChange={event => setEndDate(event.target.value)} className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-normal text-slate-700" /></label>
     </div>
-    {error && <p role="alert" className="mt-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</p>}
+    {error && <p role="alert" className="mt-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{error} <button onClick={()=>retry(n=>n+1)} className="font-semibold underline">Retry history</button></p>}
     <section className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       {loading ? <p className="p-8 text-slate-500">Loading your activity...</p> : error ? null : !filtered.length ? <p className="p-8 text-slate-500">{emptyMessage}</p> : <>
         <div className="hidden grid-cols-[140px_1.4fr_.8fr_.8fr_.7fr_140px] gap-3 border-b border-slate-100 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-400 lg:grid">
@@ -113,7 +116,7 @@ export const TransactionsPage: React.FC = () => {
         </div>
         <div className="divide-y divide-slate-100">
           {visible.map(row => {
-            const money = (value: unknown) => value != null && Number.isFinite(Number(value)) && account?.currency && /^[A-Z]{3}$/.test(account.currency) ? new Intl.NumberFormat('en-US',{style:'currency',currency:account.currency}).format(Number(value)) : 'Unavailable'
+            const money = (value: unknown) => value != null && value !== '' && Number.isFinite(Number(value)) && account?.currency && /^[A-Z]{3}$/.test(account.currency) ? new Intl.NumberFormat('en-US',{style:'currency',currency:account.currency}).format(Number(value)) : 'Unavailable'
             const posted = (value: string | null) => value == null ? '—' : money(value)
             const credit = row.direction === 'credit'
             const account = accounts.find(item => item.id === row.accountId)
@@ -125,13 +128,13 @@ export const TransactionsPage: React.FC = () => {
                 <div>
                   <p className="font-semibold">{row.description || 'Ledger entry'}</p>
                   <p className="mt-1 text-xs text-slate-400">{row.referenceId || 'Reference unavailable'}</p>
-                  <p className="mt-1 text-xs text-slate-400 lg:hidden">{row.category || 'General'} · {account?.accountNumber ? maskAccount(account.accountNumber) : account?.accountType || 'Account'}</p>
+                  <p className="mt-1 text-xs text-slate-400 lg:hidden">{row.category || '—'} · {account?.accountNumber ? maskAccount(account.accountNumber) : account?.accountType || 'Account'}</p>
                 </div>
-                <p className="hidden text-sm capitalize text-slate-600 lg:block">{row.category || 'General'}</p>
+                <p className="hidden text-sm capitalize text-slate-600 lg:block">{row.category || '—'}</p>
                 <p className="hidden text-sm text-slate-600 lg:block">{account?.accountNumber ? maskAccount(account.accountNumber) : account?.accountType || 'Account'}</p>
                 <p className={`w-fit rounded-full px-3 py-1 text-xs font-semibold capitalize ${row.status === 'completed' ? 'bg-emerald-50 text-emerald-800' : row.status === 'pending' ? 'bg-amber-50 text-amber-900' : ['failed','reversed'].includes(row.status || '') ? 'bg-red-50 text-red-800' : 'bg-slate-100 text-slate-700'}`}>{row.status || '—'}</p>
                 <div className="flex items-center justify-between gap-3 lg:block lg:text-right">
-                  <p className={`text-lg font-semibold ${credit ? 'text-emerald-700' : 'text-slate-900'}`}>{credit ? '+' : '−'}{money(row.displayAmount)}</p>
+                  <p className={`text-lg font-semibold ${credit ? 'text-emerald-700' : 'text-slate-900'}`}>{row.displayAmount && (credit ? '+' : row.direction === 'debit' ? '−' : '')}{money(row.displayAmount)}</p>
                   <button type="button" aria-expanded={open} aria-controls={detailId} onClick={() => setOpenId(open ? null : row.id)} className="text-xs font-semibold text-[#0504AA] lg:mt-1">
                     {open ? 'Hide details' : 'View details'}
                   </button>

@@ -10,7 +10,7 @@
  * amount). Nothing here recomputes balance_after or invents a transaction.
  */
 
-export type LedgerDirection = 'debit' | 'credit'
+export type LedgerDirection = 'debit' | 'credit' | 'unknown'
 
 export interface LedgerRowInput {
   id?: string | null
@@ -92,18 +92,11 @@ export function classifyLedgerEntry(row: LedgerRowInput): { direction: LedgerDir
   else if (DEBIT_CATEGORIES.has(category)) direction = 'debit'
 
   // An unclassified row is not presented as a deposit.
-  const resolved: LedgerDirection = direction ?? 'debit'
-  const matchingSide = resolved === 'credit' ? credit : debit
-  const otherSide = resolved === 'credit' ? debit : credit
-  const stored =
-    (isPositiveLedgerAmount(amount) ? amount : null) ||
-    (isPositiveLedgerAmount(matchingSide) ? matchingSide : null) ||
-    (isPositiveLedgerAmount(otherSide) ? otherSide : null)
+  const resolved = direction ?? (amount?.startsWith('-') ? 'debit' : 'unknown')
+  const matchingSide = resolved === 'credit' ? credit : resolved === 'debit' ? debit : null
+  const stored = isPositiveLedgerAmount(matchingSide) ? matchingSide : amount ?? matchingSide
+  return {direction: resolved, displayAmount: stored == null ? '' : magnitude(stored)}
 
-  return {
-    direction: resolved,
-    displayAmount: stored ? magnitude(stored) : '0.00',
-  }
 }
 
 export function mapLedgerRow(row: LedgerRowInput): MappedLedgerEntry {
