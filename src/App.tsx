@@ -5,6 +5,7 @@ import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage'
 import { MemberDetailPage } from '@/pages/admin/MemberDetailPage'
 import { AccountHistoryPage } from '@/pages/admin/AccountHistoryPage'
 import { AdminComingSoonPage } from '@/pages/admin/AdminComingSoonPage'
+import { AdminAutomationPage } from '@/pages/admin/AdminAutomationPage'
 import { AdminSupportPage } from '@/pages/admin/AdminSupportPage'
 import { Login } from '@/pages/auth/Login'
 import { Register } from '@/pages/auth/Register'
@@ -90,6 +91,7 @@ export const AppRoutes: React.FC = () => (
     <Route path="/admin/members/:id" element={<Admin title="Member Detail"><MemberDetailPage /></Admin>} />
     <Route path="/admin/accounts/:id" element={<Admin title="Account History"><AccountHistoryPage /></Admin>} />
     <Route path="/admin/support/:id" element={<Admin title="Support"><AdminSupportPage /></Admin>} />
+    <Route path="/admin/automation" element={<Admin title="Automation"><AdminAutomationPage /></Admin>} />
     <Route path="/admin/support" element={<Admin title="Support"><AdminSupportPage /></Admin>} />
     {ADMIN_SOON.map(s => <Route key={s} path={`/admin/${s}`} element={<Admin title="Admin"><AdminComingSoonPage section={s} /></Admin>} />)}
 

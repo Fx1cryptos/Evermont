@@ -62,7 +62,6 @@ export async function approvedAnswer(messages: string[]): Promise<string | null>
 }
 
 export async function assistMember(client: SupabaseClient, ticket: string, member: string) {
-  if (!process.env.GEMINI_API_KEY || !process.env.GEMINI_MODEL) return false
   const { data: conversation, error } = await client
     .from('support_conversations')
     .select('id,human_requested,status,assigned_to')
@@ -86,6 +85,11 @@ export async function assistMember(client: SupabaseClient, ticket: string, membe
     .order('id', { ascending: false })
     .limit(5)
   if (readError || turns?.[0]?.sender_role !== 'member') return false
+  if (!process.env.GEMINI_API_KEY || !process.env.GEMINI_MODEL) {
+    await client.from('support_conversations').update({human_requested:true,status:'pending_support'})
+      .eq('id',ticket).eq('user_id',member).is('assigned_to',null).not('status','in','(resolved,closed)')
+    return false
+  }
   const claim = await client.rpc('claim_support_assistant', {
     p_ticket: ticket,
     p_member: member,

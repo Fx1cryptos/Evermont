@@ -508,3 +508,73 @@ test('staff retry reconciles an accepted Gmail notification before attempting an
   assert.deepEqual(res.body.result,{sent:1,failed:0})
   assert.ok(reconciled && recorded)
 })
+
+test('automation health is restricted to administrators and reports checks without secret values', async () => {
+  const { default:handler } = await load('/api/automation-health.ts')
+  env('SUPABASE_URL',origin);env('SUPABASE_SERVICE_ROLE_KEY','fixture-secret-value')
+  env('GEMINI_API_KEY','fixture-model-secret');env('GEMINI_MODEL','gemini-fixture')
+  env('GOOGLE_CLIENT_ID','fixture-client');env('GOOGLE_CLIENT_SECRET','fixture-oauth-secret')
+  env('GOOGLE_REFRESH_TOKEN','fixture-refresh-secret');env('GMAIL_FROM_EMAIL','evermontcreditunion@gmail.com')
+  env('SUPPORT_NOTIFICATION_EMAIL','evermontcreditunion@gmail.com')
+  let role='SUPPORT', providers=0, geminiOk=true, queueOk=true
+  transport=async (url,opt)=>{
+    if (url.hostname==='generativelanguage.googleapis.com') {
+      providers++
+      assert.equal(opt.headers['x-goog-api-key'],'fixture-model-secret')
+      return geminiOk ? json({supportedGenerationMethods:['generateContent']}) : json({error:'secret'},429)
+    }
+    if (url.hostname==='oauth2.googleapis.com') {providers++;return json({access_token:'fixture-access-secret'})}
+    if (url.hostname==='gmail.googleapis.com') {providers++;return json({emailAddress:'evermontcreditunion@gmail.com'})}
+    if (url.pathname.endsWith('/auth/v1/user')) return json({id:member})
+    if (url.pathname.endsWith('/admin_roles')) return json([{role}])
+    if (url.pathname.endsWith('/support_gmail_sync_state')) return json([{last_synced_at:'2026-01-01T00:00:00Z'}])
+    if (url.pathname.endsWith('/support_notification_outbox') && !queueOk) return json({message:'denied'},403)
+    if (opt.method==='HEAD') return new Response(null,{status:200,headers:{'content-range':'0-0/3'}})
+    throw Error('Unexpected health request')
+  }
+  async function run(headers={authorization:'Bearer fixture'}) {
+    const res={status(n){this.code=n;return this},json(value){this.body=value},setHeader(){},end(){}}
+    await handler({method:'GET',headers},res)
+    return res
+  }
+  assert.equal((await run({})).code,401)
+  assert.equal((await run()).code,403)
+  assert.equal(providers,0)
+  role='ADMIN'
+  const result=await run()
+  assert.equal(result.code,200)
+  assert.equal(result.body.gemini.state,'available')
+  assert.equal(result.body.gmail.state,'available')
+  assert.equal(result.body.supportOpen,3)
+  assert.equal(result.body.failedNotifications,3)
+  assert.match(result.body.gmail.detail,/delivery has not been checked/)
+  assert.ok(!JSON.stringify(result.body).includes('fixture-'))
+  geminiOk=false;queueOk=false
+  const failed=await run()
+  assert.equal(failed.code,200)
+  assert.equal(failed.body.gemini.state,'unavailable')
+  assert.equal(failed.body.failedNotifications,null)
+  assert.ok(!JSON.stringify(failed.body).includes('secret'))
+})
+
+test('missing Gemini configuration requests human support for the owned active ticket', async () => {
+  const {assistMember}=await load('/api/_lib/assistant.ts')
+  env('GEMINI_API_KEY','')
+  env('GEMINI_MODEL','')
+  let handoffs=0
+  transport=async(url,opt)=>{
+    if(url.pathname.endsWith('/support_conversations') && opt.method==='PATCH') {
+      assert.equal(url.searchParams.get('id'),'eq.'+ticket)
+      assert.equal(url.searchParams.get('user_id'),'eq.'+member)
+      assert.equal(url.searchParams.get('status'),'not.in.(resolved,closed)')
+      assert.deepEqual(JSON.parse(opt.body),{human_requested:true,status:'pending_support'})
+      handoffs++
+      return json(null)
+    }
+    if(url.pathname.endsWith('/support_conversations')) return json([{id:ticket,human_requested:false,status:'open',assigned_to:null}])
+    if(url.pathname.endsWith('/support_messages')) return json([{id:notice,sender_role:'member',body:'Help'}])
+    throw Error('Unexpected request')
+  }
+  assert.equal(await assistMember(client,ticket,member),false)
+  assert.equal(handoffs,1)
+})

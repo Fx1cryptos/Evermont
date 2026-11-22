@@ -30,6 +30,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     { label: 'Members', path: '/admin/members', icon: '👥' },
     { label: 'Accounts', path: '/admin/accounts', icon: '💰' },
     { label: 'Transactions', path: '/admin/transactions', icon: '📝' },
+    { label: 'Automation', path: '/admin/automation', icon: '⚙️' },
     { label: 'Support', path: '/admin/support', icon: '🎧' },
     { label: 'Audit Logs', path: '/admin/audit-logs', icon: '📋' },
     { label: 'Security', path: '/admin/security', icon: '🔒' },
