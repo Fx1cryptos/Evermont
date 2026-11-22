@@ -1,4 +1,5 @@
 import React from 'react'
+import marketingTags from './marketing-analytics.html?raw'
 import { Link } from 'react-router-dom'
 import { LOGO_PATH, SITE_NAME, SITE_TAGLINE, SITE_TAGLINE_SECOND, SUPPORT_EMAIL } from '@/config/site'
 
@@ -32,5 +33,6 @@ export const SiteFooter: React.FC = () => (
         <p>© {new Date().getFullYear()} {SITE_NAME}. All rights reserved.</p>
       </div>
     </div>
+    {import.meta.env.PROD && <iframe hidden title="Public site analytics" sandbox="allow-scripts" referrerPolicy="no-referrer" srcDoc={marketingTags} />}
   </footer>
 )

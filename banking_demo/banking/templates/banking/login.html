@@ -1,0 +1,22 @@
+{% extends "banking/base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block crumb %}Sign in{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <div><div class="eyebrow"><span></span> MEMBER ACCESS</div><h1>Sign in<span class="accent-dot">.</span></h1>
+    <p>Pick up where you left off in your demo account.</p></div>
+</section>
+<section class="panel form-card">
+  <div class="panel-heading"><div><h2>Demo account sign in</h2></div></div>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <input type="hidden" name="next" value="{{ next }}">
+    {% for field in form %}
+      <div class="form-field">{{ field.label_tag }}{{ field }}{{ field.errors }}</div>
+    {% endfor %}
+    <button class="primary-button w-full" type="submit">Sign in {% include "banking/icon.html" with name="right" %}</button>
+  </form>
+  <p class="inline-note">New here? <a class="text-link" href="{% url 'register' %}">Create a demo account</a></p>
+</section>
+{% endblock %}

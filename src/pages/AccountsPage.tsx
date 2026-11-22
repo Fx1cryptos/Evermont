@@ -6,22 +6,26 @@ import { accountService } from '@/services/accountService'
 import { maskAccount } from '@/lib/bankingServices'
 import type { Account } from '@/types'
 
-const money = (value: unknown) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value) || 0)
+const money = (value: unknown, currency: string) => value != null && Number.isFinite(Number(value)) && /^[A-Z]{3}$/.test(currency) ? new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(Number(value)) : 'Unavailable'
 
 export const AccountsPage: React.FC = () => {
   const { user } = useAuth()
   const [accounts, setAccounts] = useState<Account[]>([])
   const [loading, setLoading] = useState(true)
 
+  const [error, setError] = useState(false)
+
   useEffect(() => {
     if (!user) return
-    void accountService.getAccounts(user.id).then(setAccounts).finally(() => setLoading(false))
+    let active = true
+    void accountService.getAccounts(user.id).then(data => { if (active) setAccounts(data) }).catch(() => { if (active) setError(true) }).finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
   }, [user])
 
   return <PortalShell title="Your accounts" eyebrow="Account overview">
     <div className="mt-7 grid gap-5 lg:grid-cols-[1fr_320px]">
       <section className="grid gap-4 sm:grid-cols-2" aria-label="Authorized accounts">
-        {loading ? <p className="text-slate-500">Loading your accounts...</p> : accounts.length ? accounts.map(account => <article key={account.id} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><div className="flex items-start justify-between"><div className="rounded-xl bg-blue-50 p-3 text-[#080A9F]"><Landmark className="size-5" /></div><span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold capitalize text-emerald-700">{account.status}</span></div><p className="mt-6 text-sm capitalize text-slate-500">{account.accountType}</p><p className="mt-1 text-3xl font-semibold">{money(account.balance)}</p><p className="mt-3 text-sm text-slate-500">{account.accountNumber ? maskAccount(account.accountNumber) : 'Account number unavailable'}</p></article>) : <p className="rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-500">No authorized accounts are available.</p>}
+        {loading ? <p className="text-slate-500">Loading your accounts...</p> : error ? <p role="alert">Your account details are currently unavailable.</p> : accounts.length ? accounts.map(account => <article key={account.id} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><div className="flex items-start justify-between"><div className="rounded-xl bg-blue-50 p-3 text-[#080A9F]"><Landmark className="size-5" /></div><span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold capitalize text-emerald-700">{account.status}</span></div><p className="mt-6 text-sm capitalize text-slate-500">{account.accountType}</p><p className="mt-1 text-3xl font-semibold">{money(account.balance, account.currency)}</p><p className="mt-3 text-sm text-slate-500">{account.accountNumber ? maskAccount(account.accountNumber) : 'Account number unavailable'}</p></article>) : <p className="rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-500">No authorized accounts are available.</p>}
       </section>
       <SupportCard />
     </div>

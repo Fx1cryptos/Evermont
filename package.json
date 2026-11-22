@@ -10,7 +10,9 @@
     "preview": "node scripts/serve-dist.mjs",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives",
     "type-check": "tsc --noEmit",
-    "preview:vite": "vite preview"
+    "preview:vite": "vite preview",
+    "demo:css": "tailwindcss -c banking_demo/tailwind.config.cjs -i banking_demo/banking/static/banking/source.css -o banking_demo/banking/static/banking/demo.css --minify",
+    "test:portal": "node --test tests/portal-access.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.38.0",

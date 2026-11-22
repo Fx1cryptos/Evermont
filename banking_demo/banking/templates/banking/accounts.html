@@ -1,0 +1,29 @@
+{% extends "banking/base.html" %}
+{% load money %}
+{% block title %}Accounts{% endblock %}
+{% block crumb %}Accounts{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <div><div class="eyebrow"><span></span> ACCOUNT MANAGEMENT</div><h1>Your accounts<span class="accent-dot">.</span></h1>
+    <p>See balances, interest rates and limits for each demo account.</p></div>
+</section>
+<div class="account-grid">
+  {% for account in accounts %}
+  <section class="panel account-tile">
+    <div class="panel-heading"><div><span class="action-icon account-{{ account.kind }}">{% include "banking/icon.html" with name=account.kind %}</span>
+      <h2>{{ account.get_kind_display }} account</h2><p>Account {{ account.number }}</p></div><span class="rate-pill">{{ account.rate|floatformat:2 }}% p.a.</span></div>
+    <div class="tile-balance"><p>Available balance</p><strong>{{ account.balance|usd }}</strong></div>
+    <div class="tile-footer"><p>Per transaction <strong>{{ account.minimum|usd }}–{{ account.maximum|usd }}</strong></p>
+      <a href="{% url 'report' %}?account={{ account.pk }}" class="text-link">Activity {% include "banking/icon.html" with name="right" %}</a></div>
+  </section>
+  {% empty %}<div class="panel empty">Open an account to get started.</div>{% endfor %}
+</div>
+<section class="panel form-card mt-6" id="open-account">
+  <div class="panel-heading"><div><h2>Open a simulated account</h2><p>You can open one Savings and one Current account.</p></div></div>
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-field">{{ open_form.kind.label_tag }}{{ open_form.kind }}{{ open_form.kind.errors }}</div>
+    <button class="primary-button">{% include "banking/icon.html" with name="plus" %} Open account</button>
+  </form>
+</section>
+{% endblock %}

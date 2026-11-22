@@ -1,5 +1,5 @@
 import type { RequestLike, ResponseLike } from './_lib/support.js'
-import { authenticateSupportUser, canManageSupport, canViewSupport, getQueryString, getString, getSupabaseAdmin, setJsonHeaders } from './_lib/support.js'
+import { getBearerToken, authenticateSupportUser, canManageSupport, canViewSupport, getQueryString, getString, getSupabaseAdmin, setJsonHeaders } from './_lib/support.js'
 import { processConversationNotification } from './_lib/notifications.js'
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -15,6 +15,10 @@ export default async function handler(request: RequestLike, response: ResponseLi
     return
   }
 
+  if (!getBearerToken(request)) {
+    response.status(401).json({ error: 'Sign in to continue.' })
+    return
+  }
   let client
   try {
     client = getSupabaseAdmin()

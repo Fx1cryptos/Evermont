@@ -1,0 +1,206 @@
+@font-face {
+  font-family: Manrope;
+  src: url("./manrope-latin.woff2") format("woff2");
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: swap;
+}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body { @apply bg-canvas font-sans text-ink antialiased; }
+  a, button, summary { -webkit-tap-highlight-color: transparent; }
+  :focus-visible { outline: 2px solid #7950d8; outline-offset: 3px; }
+}
+@layer components {
+  .icon { @apply shrink-0; }
+  .skip { @apply fixed left-3 top-3 z-50 -translate-y-28 rounded-lg bg-white p-3 focus:translate-y-0; }
+  .app-shell { display:grid; grid-template-columns: 232px minmax(0,1fr); min-height:100svh; }
+  .sidebar { @apply sticky top-0 flex flex-col border-r bg-white; height:100svh; border-color:#eeeaf5; padding:30px 19px 24px; }
+  .brand { @apply flex items-center gap-3 font-extrabold; font-size:22px; letter-spacing:-.8px; line-height:1.1; margin:0 7px; }
+  .brand-mark { @apply grid h-10 w-10 shrink-0 place-items-center rounded-xl text-white; background:#693bd6; box-shadow:0 4px 10px #693bd633; }
+  .brand-mark .icon { width:25px; height:25px; }
+  .brand-sub { @apply block font-extrabold; color:#756c88; font-size:9px; letter-spacing:1.75px; margin-top:5px; }
+  .main-nav { @apply grid gap-1.5; margin-top:48px; }
+  .nav-label { @apply mb-2 px-3 text-[10px] font-extrabold; color:#776d89; letter-spacing:1.5px; }
+  .main-nav a { @apply flex items-center gap-3 rounded-xl px-3 py-3 text-[13px] font-bold text-muted; }
+  .main-nav a:hover { background:#f7f4fc; color:#5b2dbf; }
+  .main-nav a[aria-current] { background:#efe8fe; color:#5c32bc; }
+  .main-nav .icon { width:18px; height:18px; }
+  .sidebar-foot { @apply mt-auto; }
+  .sandbox { @apply rounded-2xl p-3.5; background:#f8f4ff; border:1px solid #efe7fc; }
+  .sandbox-title { @apply flex items-center gap-2 text-[12px] font-extrabold; }
+  .sandbox-mark { @apply grid h-7 w-7 place-items-center rounded-lg; color:#652fc9; background:#ece0fc; }
+  .sandbox-mark .icon { @apply h-4 w-4; }
+  .sandbox p { @apply mt-2 text-[11px] leading-relaxed text-muted; }
+  .sidebar-caption { @apply mt-5 flex items-center gap-2 px-1 text-[11px] font-bold text-muted; }
+  .sidebar-caption span, .preview-pill span { @apply h-1.5 w-1.5 rounded-full; background:#8b5bdf; }
+  .app-body { @apply min-w-0; }
+  .topbar { @apply flex items-center justify-between gap-3 border-b bg-white; height:74px; padding:0 clamp(20px, 3.2vw, 50px); border-color:#eeeaf5; }
+  .breadcrumb { @apply flex items-center gap-2 text-[12px] font-semibold text-muted; }
+  .breadcrumb .icon { @apply h-3 w-3; color:#948ba3; }
+  .breadcrumb strong { @apply font-extrabold text-ink; }
+  .top-tools { @apply flex items-center gap-5; }
+  .preview-pill { @apply flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1.5 text-[9px] font-extrabold; background:#f3edff; color:#5f36b0; letter-spacing:.9px; }
+  .profile { @apply relative; }
+  .profile summary { @apply flex cursor-pointer list-none items-center gap-2.5; }
+  .profile summary::-webkit-details-marker { display:none; }
+  .profile summary > .icon { @apply h-3.5 w-3.5 text-muted; }
+  .avatar { @apply grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-extrabold; color:#5b2aa9; background:#eae0fc; border:1px solid #e2d1f8; }
+  .profile-copy strong, .profile-copy small { @apply block whitespace-nowrap; }
+  .profile-copy strong { @apply text-[11px] font-extrabold; }
+  .profile-copy small { @apply mt-0.5 text-[10px] text-muted; }
+  .profile-menu { @apply absolute right-0 top-full z-20 mt-3 grid w-48 gap-1 rounded-xl border bg-white p-2 text-xs font-bold shadow-lg; border-color:#ebe6f2; }
+  .profile-menu a, .profile-menu button { @apply block w-full rounded-lg px-2.5 py-2 text-left hover:bg-canvas; }
+  .page { max-width:1350px; margin:0 auto; padding:32px clamp(20px, 3.2vw, 50px) 0; }
+  .page-heading { @apply mb-7 flex items-end justify-between gap-4; }
+  .eyebrow { @apply mb-2 flex items-center gap-2 text-[10px] font-extrabold; letter-spacing:1.75px; color:#6539bb; }
+  .eyebrow > span { @apply h-1.5 w-1.5 rounded-full; background:#8752e4; }
+  .page-heading h1 { @apply font-extrabold; font-size:clamp(30px,3.15vw,43px); line-height:1.15; letter-spacing:-.052em; }
+  .page-heading p { @apply mt-2 text-[13px] font-semibold text-muted; }
+  .accent-dot { color:#8251df; }
+  .date-pill { @apply flex shrink-0 items-center gap-2 rounded-xl border bg-white px-3 py-2 text-[11px] font-extrabold text-muted; border-color:#ece7f3; }
+  .date-pill .icon { @apply h-4 w-4; color:#7849ce; }
+  .dashboard-grid { @apply grid gap-5; grid-template-columns:minmax(0,1.86fr) minmax(270px,1fr); align-items:start; }
+  .balance-card { @apply relative isolate overflow-hidden text-white; min-height:267px; background:linear-gradient(117deg,#412087 0%,#532a9e 51%,#713ecb 100%); box-shadow:0 7px 17px #3d1c8a22; padding:22px 25px 17px; }
+  .balance-card::before { content:""; position:absolute; z-index:-1; width:460px; height:460px; top:-305px; right:-160px; border-radius:50%; opacity:.38; background:repeating-radial-gradient(circle,transparent 0 16px,#cfb7ff56 17px 18px); pointer-events:none; }
+  .balance-copy h2 { @apply text-[12px] font-bold; color:#e4d8fa; }
+  .hero-amount { @apply mt-1 font-extrabold tabular-nums; font-size:clamp(28px,4vw,47px); line-height:1.15; letter-spacing:-.055em; overflow-wrap:anywhere; }
+  .balance-caption { @apply mt-2.5 flex items-center gap-2.5 text-[10px] font-semibold; color:#e3d5ff; }
+  .change-pill { @apply flex items-center gap-1 rounded-full px-2 py-1 font-extrabold; color:#e4ffef; background:#ffffff29; }
+  .change-pill .icon { @apply h-3.5 w-3.5; }
+  .balance-currency { @apply absolute rounded-lg border px-2 py-1.5 text-[10px] font-extrabold; right:24px; top:23px; background:#ffffff19; border-color:#ffffff3d; letter-spacing:1px; }
+  .balance-chart { @apply mt-3.5; }
+  .balance-chart svg { display:block; width:100%; height:92px; overflow:visible; }
+  .chart-labels { @apply mt-1.5 flex justify-between gap-1 text-[9px] font-bold; color:#ebdefe; }
+  .panel { @apply min-w-0 rounded-2xl border bg-white; border-color:#ece7f3; box-shadow:0 2px 4px #392c5504; }
+  .quick-panel, .accounts-panel { padding:20px; }
+  .quick-panel { min-height:267px; }
+  .panel-heading { @apply flex items-start justify-between gap-3; }
+  .panel-heading h2 { @apply text-[17px] font-extrabold leading-tight; letter-spacing:-.42px; }
+  .panel-heading p { @apply mt-1 text-[11px] font-semibold leading-relaxed text-muted; }
+  .action-list { @apply mt-3.5 grid gap-2.5; }
+  .action-card { @apply grid w-full items-center gap-2.5 rounded-xl border py-2.5 pl-2.5 pr-3 text-left; grid-template-columns:auto 1fr auto; border-color:#eeeaf5; }
+  .action-card:hover, .account-line:hover { background:#fbf9ff; border-color:#dfd3f7; }
+  .action-icon { @apply grid h-9 w-9 shrink-0 place-items-center rounded-xl; }
+  .action-icon .icon { @apply h-[18px] w-[18px]; }
+  .action-deposit { background:#e9f8f1; color:#187453; }
+  .action-withdrawal { background:#f0e9fe; color:#683ac8; }
+  .action-card strong, .account-line strong { @apply block text-[12px] font-extrabold; }
+  .action-card small, .account-line small { @apply mt-0.5 block text-[10px] font-semibold text-muted; }
+  .action-chevron { @apply h-3.5 w-3.5; color:#8a7d9a; }
+  .quick-note { @apply mt-3.5 flex items-center gap-1.5 text-[10px] font-semibold text-muted; }
+  .quick-note .icon { @apply h-3.5 w-3.5; color:#8060b1; }
+  .activity-panel > .panel-heading { padding:20px 20px 14px; }
+  .text-link, .accounts-link { @apply inline-flex items-center gap-1.5 whitespace-nowrap text-[11px] font-extrabold hover:underline; color:#6438be; }
+  .text-link .icon, .accounts-link .icon { @apply h-3.5 w-3.5; }
+  .activity-panel .text-link { @apply mt-1; }
+  .table-scroll { @apply overflow-x-auto; }
+  .table-scroll:focus-visible { outline-offset:-3px; }
+  .ledger-table { @apply w-full text-left text-[11px] font-semibold text-muted; }
+  .ledger-table th, .ledger-table td { @apply whitespace-nowrap px-2 py-2.5; }
+  .ledger-table th:first-child, .ledger-table td:first-child { padding-left:20px; }
+  .ledger-table th:last-child, .ledger-table td:last-child { padding-right:20px; }
+  .ledger-table th { @apply text-[10px] font-extrabold; background:#f9f7fc; }
+  .ledger-table th:nth-last-child(-n+2), .ledger-table td:nth-last-child(-n+2) { text-align:right; }
+  .ledger-table td { border-bottom:1px solid #f1edf7; }
+  .ledger-table tr:last-child td { border-bottom:0; }
+  .table-item { @apply flex items-center gap-2.5; }
+  .table-item strong { @apply block text-[11px] font-extrabold text-ink; }
+  .table-item small { @apply mt-0.5 block text-[10px]; }
+  .entry-icon { @apply grid h-8 w-8 shrink-0 place-items-center rounded-full; }
+  .entry-icon .icon { @apply h-3.5 w-3.5; }
+  .entry-deposit { background:#eaf8f0; color:#187453; }
+  .entry-withdrawal { background:#f2ecfc; color:#6b43bc; }
+  .entry-interest { background:#fcf0dc; color:#855b11; }
+  .table-money { @apply font-extrabold tabular-nums text-ink; }
+  .table-money.positive { color:#13704f; }
+  .small-button { @apply grid h-8 w-8 shrink-0 place-items-center rounded-lg border; border-color:#eee6fa; color:#6a3ec7; background:#f8f4ff; }
+  .small-button:hover { background:#eee4ff; }
+  .small-button .icon { @apply h-4 w-4; }
+  .account-list { @apply mt-3.5 grid gap-2; }
+  .account-line { @apply grid items-center gap-2 rounded-xl border p-2.5; grid-template-columns:auto 1fr auto; border-color:#eeeaf5; }
+  .account-savings { color:#683ac8; background:#eee6fe; }
+  .account-current { color:#26786c; background:#e6f6f2; }
+  .account-line .account-value { @apply text-right tabular-nums; }
+  .account-line small span { @apply mx-0.5; }
+  .accounts-link { @apply mt-4 flex justify-center border-t pt-3; border-color:#f1edf7; }
+  .page-footer { @apply mt-5 flex flex-wrap items-center justify-between gap-2 border-t py-4 text-[10px] font-bold text-muted; border-color:#eeeaf5; }
+  .page-footer span:last-child { @apply flex items-center gap-1.5; }
+  .page-footer .icon { @apply h-3 w-3; }
+  .primary-button { @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-4 py-2 text-center text-xs font-extrabold text-white; background:#6638cb; }
+  .primary-button:hover { background:#5128af; }
+  .primary-button .icon { @apply h-4 w-4; }
+  .form-field { @apply grid min-w-0 gap-1.5; }
+  .form-field label { @apply text-[12px] font-extrabold; }
+  .form-field input, .form-field select { @apply w-full min-w-0 rounded-xl border bg-white px-3 py-2.5 text-[13px] font-semibold; border-color:#dfd6ed; }
+  .form-field small, .inline-note { @apply text-[11px] leading-relaxed text-muted; }
+  .form-field small ul { @apply list-disc pl-4; }
+  .errorlist { @apply text-xs font-bold; color:#a12646; }
+  .move-dialog { @apply m-auto w-[min(440px,calc(100%-30px))] rounded-2xl border bg-white p-6 text-ink shadow-xl; border-color:#ece7f3; }
+  .move-dialog::backdrop { background:#20143480; }
+  .move-dialog form, .form-card form { @apply grid gap-4; }
+  .form-card, .report-panel, .account-tile { @apply p-5 sm:p-6; }
+  .form-card { @apply max-w-lg; }
+  .form-card form { @apply mt-4; }
+  .form-card > .inline-note { @apply mt-4; }
+  .filter-form { @apply mt-4 grid items-start gap-3; grid-template-columns:1.1fr 1fr 1fr auto; }
+  .filter-form > .errorlist { grid-column:1/-1; }
+  .filter-buttons { @apply flex items-center gap-3 pt-5; }
+  .pagination { @apply flex items-center justify-end gap-4 border-t p-4 text-xs text-muted; border-color:#eeeaf5; }
+  .empty { @apply grid justify-items-center gap-2 p-8 text-center text-xs font-bold text-muted; }
+  .empty .icon { color:#7950c4; }
+  .empty small { @apply font-semibold; }
+  .account-grid { @apply grid items-start gap-5 sm:grid-cols-2; }
+  .account-tile .action-icon { @apply mb-3; }
+  .rate-pill { @apply rounded-full px-2.5 py-1 text-[10px] font-extrabold; background:#f3edff; color:#6339b7; }
+  .tile-balance { @apply py-4; }
+  .tile-balance p, .tile-footer p { @apply text-[11px] font-semibold text-muted; }
+  .tile-balance strong { @apply text-2xl font-extrabold tabular-nums; }
+  .tile-footer { @apply flex flex-wrap items-center justify-between gap-2 border-t pt-3; border-color:#eeeaf5; }
+  .tile-footer p strong { @apply ml-1 text-ink; }
+  .term-row { @apply my-4 flex items-center gap-3; }
+  .term-row h3 { @apply text-sm font-extrabold; }
+  .term-row p { @apply mt-0.5 text-xs text-muted; }
+  .flash-list { @apply mb-4 grid gap-2; }
+  .flash { @apply flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold; background:#e9f8f0; color:#166547; }
+  .flash .icon { @apply h-4 w-4; }
+}
+@media (min-width: 1450px) {
+  .dashboard-grid { grid-template-columns:minmax(0,1.8fr) minmax(320px,1fr); }
+}
+@media (max-width: 1100px) {
+  .app-shell { grid-template-columns:190px minmax(0,1fr); }
+  .sidebar { padding-inline:13px; }
+  .dashboard-grid { gap:14px; grid-template-columns:minmax(0,1.55fr) minmax(248px,1fr); }
+  .quick-panel, .accounts-panel { padding-inline:14px; }
+}
+@media (max-width: 950px) {
+  .app-shell { grid-template-columns:1fr; }
+  .sidebar { position:static; height:auto; flex-direction:row; align-items:center; justify-content:space-between; gap:14px; border-right:0; border-bottom:1px solid #eeeaf5; padding:12px 20px; }
+  .brand { margin:0; }
+  .main-nav { display:flex; margin:0; gap:4px; }
+  .main-nav a { padding:9px; }
+  .nav-label, .sidebar-foot { display:none; }
+  .topbar { height:58px; }
+}
+@media (max-width: 640px) {
+  .sidebar { flex-direction:column; align-items:stretch; }
+  .main-nav { justify-content:space-between; }
+  .main-nav a { gap:5px; font-size:11px; }
+  .main-nav .icon { width:15px; height:15px; }
+  .page { padding-top:22px; }
+  .page-heading { align-items:flex-start; flex-direction:column; margin-bottom:20px; gap:12px; }
+  .dashboard-grid, .account-grid { grid-template-columns:minmax(0,1fr); }
+  .activity-panel { order:1; }
+  .quick-panel { min-height:0; }
+  .filter-form { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .filter-form > :first-child, .filter-buttons { grid-column:1/-1; }
+  .filter-buttons { padding-top:0; }
+  .top-tools { gap:8px; }
+  .profile-copy { display:none; }
+  .ledger-table th:first-child, .ledger-table td:first-child { padding-left:12px; }
+  .ledger-table th:last-child, .ledger-table td:last-child { padding-right:12px; }
+}

@@ -1,0 +1,32 @@
+{% extends "banking/base.html" %}
+{% load money %}
+{% block title %}Create a demo account{% endblock %}
+{% block crumb %}Create account{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <div><div class="eyebrow"><span></span> GET STARTED</div><h1>Create a demo account<span class="accent-dot">.</span></h1>
+    <p>Choose your first account and start with a simulated balance of $0.00.</p></div>
+</section>
+<div class="account-grid">
+  <section class="panel form-card">
+    <div class="panel-heading"><div><h2>Account details</h2><p>Use an invented name and username for the demo.</p></div></div>
+    <form method="post">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      {% for field in form %}
+        <div class="form-field">{{ field.label_tag }}{{ field }}{{ field.errors }}{% if field.help_text and field.name == "password1" %}<small>{{ field.help_text }}</small>{% endif %}</div>
+      {% endfor %}
+      <button class="primary-button w-full" type="submit">Create account {% include "banking/icon.html" with name="right" %}</button>
+    </form>
+  </section>
+  <section class="panel form-card terms-card">
+    <div class="panel-heading"><div><h2>Choose how you bank</h2><p>Each account earns interest at its own annual rate.</p></div></div>
+    {% for term in terms %}
+    <div class="term-row"><span class="action-icon account-{{ term.kind }}">{% include "banking/icon.html" with name=term.kind %}</span>
+      <div><h3>{{ term.get_kind_display }}</h3><p>{{ term.rate|floatformat:2 }}% annual interest · {{ term.minimum|usd }}–{{ term.maximum|usd }} per transaction.</p></div>
+    </div>
+    {% endfor %}
+    <p class="inline-note">Already have a demo account? <a class="text-link" href="{% url 'login' %}">Sign in</a></p>
+  </section>
+</div>
+{% endblock %}

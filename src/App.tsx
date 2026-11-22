@@ -17,7 +17,7 @@ import { TransactionsPage } from '@/pages/TransactionsPage'
 import { FinancialInsightsPage } from '@/pages/FinancialInsightsPage'
 import { ProfilePage } from '@/pages/ProfilePage'
 import { AccountsPage } from '@/pages/AccountsPage'
-import { BeneficiariesPage } from '@/pages/BeneficiariesPage'
+import { BeneficiariesPage } from '@/pages/member/MemberBeneficiariesPage'
 import { ActivationPage } from '@/pages/ActivationPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { SupportPage } from '@/pages/SupportPage'
@@ -36,13 +36,16 @@ import { ROUTES } from '@/constants/routes'
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth()
   if (loading) return <main className="flex min-h-screen items-center justify-center text-sm text-slate-600">Loading member portal...</main>
-  return user ? <>{children}</> : <Navigate to={ROUTES.LOGIN} replace />
+  return user ? <React.Fragment key={user.id}>{children}</React.Fragment> : <Navigate to={ROUTES.LOGIN} replace />
 }
 
 /** Private screens: protected + noindex. */
 const Private: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => <><NoIndex title={title} /><ProtectedRoute>{children}</ProtectedRoute></>
 const Auth: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => <><NoIndex title={title} />{children}</>
-const Admin: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => <><NoIndex title={title} /><AdminRoute>{children}</AdminRoute></>
+const Admin: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => {
+  const { user } = useAuth()
+  return <><NoIndex title={title} /><AdminRoute key={user?.id}>{children}</AdminRoute></>
+}
 
 const ADMIN_SOON = ['members', 'accounts', 'transactions', 'audit-logs', 'security', 'settings']
 

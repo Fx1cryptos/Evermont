@@ -1,0 +1,20 @@
+{% load money %}
+{% if rows %}
+<div class="table-scroll" tabindex="0" role="region" aria-label="Transactions and running balances">
+  <table class="ledger-table">
+    <thead><tr><th scope="col">Transaction</th>{% if not compact %}<th scope="col">Account</th>{% endif %}<th scope="col">Date</th><th scope="col">Amount</th><th scope="col">Running balance</th></tr></thead>
+    <tbody>
+      {% for entry in rows %}
+      <tr>
+        <td><div class="table-item"><span class="entry-icon entry-{{ entry.kind }}">{% include "banking/icon.html" with name=entry.kind %}</span>
+          <span><strong>{{ entry.label }}</strong>{% if compact %}<small>{{ entry.account.get_kind_display }}</small>{% elif entry.interest_month %}<small>{{ entry.interest_month|date:"F Y" }}</small>{% endif %}</span></div></td>
+        {% if not compact %}<td>{{ entry.account.get_kind_display }} · {{ entry.account.number|slice:"-4:" }}</td>{% endif %}
+        <td><time datetime="{{ entry.posted_at|date:'c' }}">{{ entry.posted_at|date:"M j, Y" }}</time></td>
+        <td class="table-money {% if entry.kind != 'withdrawal' %}positive{% endif %}">{% if entry.kind == 'withdrawal' %}−{% else %}+{% endif %}{{ entry.amount|usd }}</td>
+        <td class="table-money">{{ entry.balance_after|usd }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}<div class="empty">{% include "banking/icon.html" with name="transactions" %}<p>No transactions to show.</p><small>{% if compact %}Deposits, withdrawals and interest will appear here.{% else %}Try changing or clearing the filters.{% endif %}</small></div>{% endif %}

@@ -17,6 +17,8 @@
 -- deposit. Apply this script only when new transfer posts should debit
 -- the account through the database function.
 
+begin;
+
 create or replace function public.create_ledger_entry(
   p_account_id uuid,
   p_member_id uuid,
@@ -30,7 +32,7 @@ create or replace function public.create_ledger_entry(
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = pg_catalog
 as $$
 declare
   v_current_balance numeric(12,2);
@@ -38,6 +40,12 @@ declare
   v_debit numeric(12,2);
   v_credit numeric(12,2);
 begin
+  -- Require a verified staff identity so the audit row can retain its actor.
+  if not exists (select 1 from public.admin_roles where user_id = auth.uid()
+                 and role in ('SUPER_ADMIN', 'ADMIN')) then
+    raise exception 'ledger posting is restricted to authorized staff' using errcode = '42501';
+  end if;
+
   if p_amount is null or p_amount <= 0 then
     raise exception 'amount must be positive';
   end if;
@@ -49,7 +57,7 @@ begin
   select balance
     into v_current_balance
   from public.accounts
-  where id = p_account_id
+  where id = p_account_id and user_id = p_member_id
   for update;
 
   if v_current_balance is null then
@@ -140,3 +148,8 @@ begin
   );
 end;
 $$;
+
+revoke all on function public.create_ledger_entry(uuid, uuid, text, text, numeric, text, text, text) from public, anon, authenticated;
+grant execute on function public.create_ledger_entry(uuid, uuid, text, text, numeric, text, text, text) to authenticated;
+
+commit;

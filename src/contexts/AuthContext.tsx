@@ -36,11 +36,7 @@ function memberFromRow(profile: {
   }
 }
 
-/**
- * Reads the member profile. If the auth user has no profile yet, associates
- * one using only existing profiles columns. Never writes admin roles, accounts,
- * or balances.
- */
+/** Read the profile without writing to the member record during login. */
 async function resolveMember(sessionUser: SessionUser): Promise<User> {
   const { data: profile } = await supabase
     .from('profiles')
@@ -50,29 +46,12 @@ async function resolveMember(sessionUser: SessionUser): Promise<User> {
 
   if (profile) return memberFromRow(profile)
 
-  const phone = textMeta(sessionUser.user_metadata, 'phone')
-  const row: { id: string; email: string; first_name: string; last_name: string; phone?: string } = {
-    id: sessionUser.id,
-    email: sessionUser.email || '',
-    first_name: textMeta(sessionUser.user_metadata, 'first_name'),
-    last_name: textMeta(sessionUser.user_metadata, 'last_name'),
-  }
-  if (phone) row.phone = phone
-
-  const { data: saved } = await supabase
-    .from('profiles')
-    .upsert(row, { onConflict: 'id' })
-    .select('id, email, first_name, last_name, created_at, updated_at')
-    .maybeSingle()
-
-  if (saved) return memberFromRow(saved)
-
   const createdAt = sessionUser.created_at || new Date().toISOString()
   return {
     id: sessionUser.id,
     email: sessionUser.email || '',
-    firstName: row.first_name,
-    lastName: row.last_name,
+    firstName: textMeta(sessionUser.user_metadata, 'first_name'),
+    lastName: textMeta(sessionUser.user_metadata, 'last_name'),
     createdAt,
     updatedAt: sessionUser.updated_at || createdAt,
   }
@@ -88,30 +67,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
-
-        if (session?.user) setUser(await resolveMember(session.user))
-      } catch (err) {
-        console.error('Auth initialization error:', err)
-      } finally {
+    let generation = 0
+    let memberId: string | undefined
+    // INITIAL_SESSION covers restoration. Leave the auth callback before making SDK requests.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const current = ++generation
+      if (!session || !isSupabaseConfigured) {
+        memberId = undefined
+        setUser(null)
         setLoading(false)
+        return
       }
-    }
-
-    initializeAuth()
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) setUser(await resolveMember(session.user))
-      else setUser(null)
+      if (memberId !== session.user.id) {
+        setUser(null)
+        setLoading(true)
+      }
+      memberId = session.user.id
+      void Promise.resolve().then(async () => {
+        const { data, error } = await supabase.auth.getUser(session.access_token)
+        if (error || !data.user || data.user.id !== session.user.id) throw new Error('Session unavailable')
+        const member = await resolveMember(data.user)
+        if (current === generation) setUser(member)
+      }).catch(() => {
+        if (current === generation) setUser(null)
+      }).finally(() => {
+        if (current === generation) setLoading(false)
+      })
     })
-
-    return () => subscription.unsubscribe()
+    return () => { ++generation; subscription.unsubscribe() }
   }, [])
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string, phone?: string) => {

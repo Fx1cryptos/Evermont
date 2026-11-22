@@ -1,0 +1,70 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{% block title %}Overview{% endblock %} · Evermont Demo</title>
+  <link rel="icon" href="{% static 'banking/mark.svg' %}" type="image/svg+xml">
+  <link rel="stylesheet" href="{% static 'banking/demo.css' %}">
+  <script defer src="{% static 'banking/demo.js' %}"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+<div class="app-shell">
+  <aside class="sidebar">
+    <a class="brand" href="{% url 'dashboard' %}">
+      <span class="brand-mark">{% include "banking/icon.html" with name="logo" %}</span>
+      <span>Evermont<span class="brand-sub">BANKING DEMO</span></span>
+    </a>
+    <nav class="main-nav" aria-label="Main navigation">
+      <div class="nav-label">WORKSPACE</div>
+      {% with route=request.resolver_match.url_name %}
+      <a {% if route == "dashboard" or route == "move_funds" or route == "start_demo" %}aria-current="page"{% endif %} href="{% url 'dashboard' %}">{% include "banking/icon.html" with name="overview" %}<span>Overview</span></a>
+      <a {% if route == "accounts" %}aria-current="page"{% endif %} href="{% url 'accounts' %}">{% include "banking/icon.html" with name="wallet" %}<span>Accounts</span></a>
+      <a {% if route == "report" %}aria-current="page"{% endif %} href="{% url 'report' %}">{% include "banking/icon.html" with name="transactions" %}<span>Transactions</span></a>
+      {% endwith %}
+    </nav>
+    <div class="sidebar-foot">
+      <div class="sandbox">
+        <div class="sandbox-title"><span class="sandbox-mark">{% include "banking/icon.html" with name="lab" %}</span> Demo workspace</div>
+        <p>Explore banking with simulated funds.</p>
+      </div>
+      <div class="sidebar-caption"><span></span> Simulation mode</div>
+    </div>
+  </aside>
+  <div class="app-body">
+    <header class="topbar">
+      <div class="breadcrumb"><span>Workspace</span>{% include "banking/icon.html" with name="chevron" %}<strong>{% block crumb %}Overview{% endblock %}</strong></div>
+      <div class="top-tools">
+        <span class="preview-pill"><span></span> {% if user.is_authenticated and user.has_usable_password %}DEMO ACCOUNT{% else %}SAMPLE DATA{% endif %}</span>
+        <details class="profile">
+          <summary>
+            <span class="avatar">{% if user.is_authenticated and user.has_usable_password %}{{ user.first_name|default:user.username|slice:":1"|upper }}{% else %}AM{% endif %}</span>
+            <span class="profile-copy"><strong>{% if user.is_authenticated and user.has_usable_password %}{{ user.first_name|default:user.username|truncatechars:22 }}{% else %}Alex Morgan{% endif %}</strong><small>{% if user.is_authenticated and user.has_usable_password %}Demo member{% else %}Sample profile{% endif %}</small></span>
+            {% include "banking/icon.html" with name="down" %}
+          </summary>
+          <div class="profile-menu">
+            {% if not user.is_authenticated or not user.has_usable_password %}
+            <a href="{% url 'accounts' %}#open-account">Create a demo account</a>
+            {% endif %}
+            {% if user.is_staff %}<a href="{% url 'admin:index' %}">Django admin</a>{% endif %}
+            {% if user.is_authenticated %}<form method="post" action="{% url 'logout' %}">{% csrf_token %}<button>Sign out</button></form>{% endif %}
+          </div>
+        </details>
+      </div>
+    </header>
+    <main id="main" class="page">
+      {% if messages %}
+      <div class="flash-list" role="status">
+        {% for message in messages %}<div class="flash">{% include "banking/icon.html" with name="check" %}{{ message }}</div>{% endfor %}
+      </div>
+      {% endif %}
+      {% block content %}{% endblock %}
+      <footer class="page-footer"><span>© {% now "Y" %} Evermont Banking Demo</span><span>{% include "banking/icon.html" with name="lock" %} Simulated funds only</span></footer>
+    </main>
+  </div>
+</div>
+</body>
+</html>

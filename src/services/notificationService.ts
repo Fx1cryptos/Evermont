@@ -24,8 +24,7 @@ export const notificationService = {
         .range(offset, offset + limit - 1)
 
       if (error) {
-        console.warn('Failed to fetch notifications from Supabase:', error)
-        return []
+        throw error
       }
 
       return (
@@ -42,8 +41,7 @@ export const notificationService = {
         })) || []
       )
     } catch (error) {
-      console.error('Error fetching notifications:', error)
-      return []
+      throw new Error('Notifications are currently unavailable.')
     }
   },
 

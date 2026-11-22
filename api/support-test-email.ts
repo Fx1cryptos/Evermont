@@ -1,5 +1,5 @@
 import type { RequestLike, ResponseLike } from './_lib/support.js'
-import { authenticateSupportUser, canManageSupport, getSupabaseAdmin, setJsonHeaders } from './_lib/support.js'
+import { getBearerToken, authenticateSupportUser, canManageSupport, getSupabaseAdmin, setJsonHeaders } from './_lib/support.js'
 import { sendSupportTestEmail } from './_lib/gmail.js'
 
 export default async function handler(request: RequestLike, response: ResponseLike): Promise<void> {
@@ -11,6 +11,10 @@ export default async function handler(request: RequestLike, response: ResponseLi
   if (request.method !== 'POST') {
     response.setHeader('Allow', 'POST, OPTIONS')
     response.status(405).json({ error: 'Method not allowed.' })
+    return
+  }
+  if (!getBearerToken(request)) {
+    response.status(401).json({ error: 'Sign in to continue.' })
     return
   }
   try {

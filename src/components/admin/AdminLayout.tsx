@@ -1,4 +1,6 @@
 import React from 'react'
+import { useAuth } from '@/contexts/AuthContext'
+import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { Bell, LogOut, Menu, X } from 'lucide-react'
 
 interface AdminLayoutProps {
@@ -10,10 +12,15 @@ interface AdminLayoutProps {
 
 export const AdminLayout: React.FC<AdminLayoutProps> = ({
   children,
-  staffName = 'Admin User',
-  staffRole = 'ADMIN',
+  staffName: suppliedName,
+  staffRole: suppliedRole,
   onLogout,
 }) => {
+  const { user, signOut } = useAuth()
+  const { role } = useAdminAuth()
+  const staffName = user?.firstName || user?.email || suppliedName || 'Staff'
+  const staffRole = role || suppliedRole || 'Staff'
+  const [logoutError, setLogoutError] = React.useState(false)
   const [sidebarOpen, setSidebarOpen] = React.useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
 
@@ -99,13 +106,14 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             </div>
 
             <button
-              onClick={onLogout}
+              onClick={onLogout ?? (() => { void signOut().catch(() => setLogoutError(true)) })}
               className="p-2 hover:bg-gray-100 rounded text-gray-600"
               title="Logout"
             >
               <LogOut size={20} />
             </button>
           </div>
+          {logoutError && <p role="alert">Sign out failed. Please try again.</p>}
         </header>
 
         {/* Page content */}

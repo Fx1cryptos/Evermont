@@ -1,3 +1,5 @@
+begin;
+
 create extension if not exists pgcrypto;
 
 create table if not exists public.profiles (
@@ -167,7 +169,7 @@ create or replace function public.set_admin_role(p_user_id uuid, p_role text)
 returns void
 language plpgsql
 security definer
-set search_path = public
+set search_path = pg_catalog
 as $$
 begin
   insert into public.admin_roles(user_id, role)
@@ -190,7 +192,7 @@ create or replace function public.create_ledger_entry(
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = pg_catalog
 as $$
 declare
   v_current_balance numeric(12,2);
@@ -198,6 +200,12 @@ declare
   v_debit numeric(12,2);
   v_credit numeric(12,2);
 begin
+  -- Require a verified staff identity so the audit row can retain its actor.
+  if not exists (select 1 from public.admin_roles where user_id = auth.uid()
+                 and role in ('SUPER_ADMIN', 'ADMIN')) then
+    raise exception 'ledger posting is restricted to authorized staff' using errcode = '42501';
+  end if;
+
   if p_amount is null or p_amount <= 0 then
     raise exception 'amount must be positive';
   end if;
@@ -209,7 +217,7 @@ begin
   select balance
     into v_current_balance
   from public.accounts
-  where id = p_account_id
+  where id = p_account_id and user_id = p_member_id
   for update;
 
   if v_current_balance is null then
@@ -304,8 +312,14 @@ end;
 $$;
 
 grant usage on schema public to anon, authenticated;
-grant all on public.profiles to authenticated;
-grant all on public.accounts to authenticated;
-grant all on public.ledger_entries to authenticated;
-grant all on public.audit_logs to authenticated;
-grant all on public.admin_roles to authenticated;
+revoke all on public.profiles, public.accounts, public.ledger_entries, public.audit_logs, public.admin_roles
+  from public, anon, authenticated;
+grant select, insert, update on public.profiles to authenticated;
+grant select on public.accounts, public.ledger_entries, public.audit_logs, public.admin_roles to authenticated;
+revoke all on function public.set_admin_role(uuid, text) from public, anon, authenticated;
+grant execute on function public.set_admin_role(uuid, text) to service_role;
+
+revoke all on function public.create_ledger_entry(uuid, uuid, text, text, numeric, text, text, text) from public, anon, authenticated;
+grant execute on function public.create_ledger_entry(uuid, uuid, text, text, numeric, text, text, text) to authenticated;
+
+commit;

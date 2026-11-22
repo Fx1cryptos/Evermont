@@ -1,0 +1,30 @@
+{% extends "banking/base.html" %}
+{% block title %}Transaction report{% endblock %}
+{% block crumb %}Transactions{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <div><div class="eyebrow"><span></span> ACCOUNT ACTIVITY</div><h1>Transaction report<span class="accent-dot">.</span></h1>
+    <p>Review deposits, withdrawals and interest with the balance after every transaction.</p></div>
+</section>
+<section class="panel report-panel">
+  <div class="panel-heading"><div><h2>Filter transactions</h2><p>Dates are inclusive and use UTC.</p></div></div>
+  <form method="get" class="filter-form">
+    <div class="form-field"><label for="{{ filters.account.id_for_label }}">Account</label>{{ filters.account }}{{ filters.account.errors }}</div>
+    <div class="form-field"><label for="{{ filters.start.id_for_label }}">Start date</label>{{ filters.start }}{{ filters.start.errors }}</div>
+    <div class="form-field"><label for="{{ filters.end.id_for_label }}">End date</label>{{ filters.end }}{{ filters.end.errors }}</div>
+    <div class="filter-buttons"><button class="primary-button">Apply filters</button><a class="text-link" href="{% url 'report' %}">Clear</a></div>
+    {{ filters.non_field_errors }}
+  </form>
+</section>
+<section class="panel activity-panel mt-6">
+  <div class="panel-heading"><div><h2>Transaction history</h2><p>{{ page.paginator.count }} transaction{{ page.paginator.count|pluralize }} found</p></div></div>
+  {% include "banking/table.html" with rows=page.object_list %}
+  {% if page.has_other_pages %}
+  <nav class="pagination" aria-label="Report pages">
+    {% if page.has_previous %}<a class="text-link" href="?{% if query %}{{ query }}&amp;{% endif %}page={{ page.previous_page_number }}">Previous</a>{% endif %}
+    <span>Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+    {% if page.has_next %}<a class="text-link" href="?{% if query %}{{ query }}&amp;{% endif %}page={{ page.next_page_number }}">Next</a>{% endif %}
+  </nav>
+  {% endif %}
+</section>
+{% endblock %}

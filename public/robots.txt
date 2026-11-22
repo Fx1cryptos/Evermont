@@ -11,6 +11,7 @@ Disallow: /reset-password
 Disallow: /auth/callback
 Disallow: /dashboard
 Disallow: /accounts
+Disallow: /beneficiaries
 Disallow: /activation
 Disallow: /transactions
 Disallow: /insights

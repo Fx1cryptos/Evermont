@@ -51,11 +51,11 @@
       "destination": "/app"
     },
     {
-      "source": "/(login|sign-in|register|signup|forgot-password|reset-password|auth/callback|dashboard|accounts|activation|transactions|insights|profile|settings|support|admin)",
+      "source": "/(login|sign-in|register|signup|forgot-password|reset-password|auth/callback|dashboard|accounts|beneficiaries|activation|transactions|insights|profile|settings|support|admin)",
       "destination": "/app"
     },
     {
-      "source": "/(login|sign-in|register|signup|forgot-password|reset-password|dashboard|accounts|activation|transactions|insights|profile|settings|support|admin)/:rest*",
+      "source": "/(login|sign-in|register|signup|forgot-password|reset-password|dashboard|accounts|beneficiaries|activation|transactions|insights|profile|settings|support|admin)/:rest*",
       "destination": "/app"
     }
   ],
@@ -79,7 +79,7 @@
       ]
     },
     {
-      "source": "/(login|sign-in|register|signup|forgot-password|reset-password|auth/callback|dashboard|accounts|activation|transactions|insights|profile|settings|support|admin)",
+      "source": "/(login|sign-in|register|signup|forgot-password|reset-password|auth/callback|dashboard|accounts|beneficiaries|activation|transactions|insights|profile|settings|support|admin)",
       "headers": [
         {
           "key": "X-Robots-Tag",
@@ -88,7 +88,7 @@
       ]
     },
     {
-      "source": "/(login|sign-in|register|signup|forgot-password|reset-password|dashboard|accounts|activation|transactions|insights|profile|settings|support|admin)/:rest*",
+      "source": "/(login|sign-in|register|signup|forgot-password|reset-password|dashboard|accounts|beneficiaries|activation|transactions|insights|profile|settings|support|admin)/:rest*",
       "headers": [
         {
           "key": "X-Robots-Tag",

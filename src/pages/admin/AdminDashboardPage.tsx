@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { MetricCard } from '@/components/admin/MetricCard'
 import { adminDashboardService } from '@/services/adminDashboardService'
 import { DashboardMetrics } from '@/types/admin'
 
 export const AdminDashboardPage: React.FC = () => {
+  const { role } = useAdminAuth()
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -25,7 +27,7 @@ export const AdminDashboardPage: React.FC = () => {
 
   if (loading) {
     return (
-      <AdminLayout staffName="Administrator" staffRole="ADMIN">
+      <AdminLayout staffName="Administrator" staffRole={role || 'Staff'}>
         <div className="p-6">Loading dashboard...</div>
       </AdminLayout>
     )
@@ -33,20 +35,20 @@ export const AdminDashboardPage: React.FC = () => {
 
   if (!metrics) {
     return (
-      <AdminLayout staffName="Administrator" staffRole="ADMIN">
-        <div className="p-6">Unable to load dashboard metrics.</div>
+      <AdminLayout staffName="Administrator" staffRole={role || 'Staff'}>
+        <div className="p-6">Staff metrics are currently unavailable.</div>
       </AdminLayout>
     )
   }
 
   return (
-    <AdminLayout staffName="Administrator" staffRole="ADMIN">
+    <AdminLayout staffName="Administrator" staffRole={role || 'Staff'}>
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
             <p className="mt-1 text-sm font-semibold text-red-600">
-              SIMULATED DATA NOTICE: Prototype financial figures shown here are demo-only and not live customer records.
+              Authorized staff reporting.
             </p>
           </div>
         </div>

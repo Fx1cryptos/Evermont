@@ -16,17 +16,13 @@ const posted = (value: string | null) => (value == null ? '—' : money(value))
 export const TransactionsPage: React.FC = () => {
   const { user } = useAuth()
   const [rows, setRows] = useState<LedgerActivity[]>([])
-  const [sampleRows, setSampleRows] = useState<LedgerActivity[]>([])
   const [accounts, setAccounts] = useState<Account[]>([])
-  const [sampleLoading, setSampleLoading] = useState(true)
-  const [sampleError, setSampleError] = useState('')
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState('all')
   const [activityType, setActivityType] = useState<ActivityType>('all')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [page, setPage] = useState(0)
-  const [samplePage, setSamplePage] = useState(0)
   const [openId, setOpenId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -36,9 +32,7 @@ export const TransactionsPage: React.FC = () => {
     let active = true
     void (async () => {
       setLoading(true)
-      setSampleLoading(true)
       setError('')
-      setSampleError('')
       try {
         const [owned, activity] = await Promise.all([
           accountService.getAccounts(user.id).catch(() => [] as Account[]),
@@ -47,15 +41,6 @@ export const TransactionsPage: React.FC = () => {
         if (!active) return
         setAccounts(owned)
         setRows(activity)
-        setSampleLoading(true)
-        try {
-          const samples = await transactionService.getSampleTransactions(user.id, owned.map(account => account.id))
-          if (active) setSampleRows(samples)
-        } catch {
-          if (active) { setSampleRows([]); setSampleError('Sample transaction history is unavailable right now.') }
-        } finally {
-          if (active) setSampleLoading(false)
-        }
       } catch {
         if (active) {
           setRows([])
@@ -70,7 +55,6 @@ export const TransactionsPage: React.FC = () => {
 
   useEffect(() => {
     setPage(0)
-    setSamplePage(0)
     setOpenId(null)
   }, [query, status, activityType, startDate, endDate])
 
@@ -80,24 +64,16 @@ export const TransactionsPage: React.FC = () => {
     const matchesQuery = haystack.includes(query.trim().toLowerCase())
     const created = row.createdAt ? new Date(row.createdAt).getTime() : 0
     const matchesStart = !startDate || created >= new Date(`${startDate}T00:00:00`).getTime()
-    const matchesEnd = !endDate || created <= new Date(`${endDate}T23:59:59`).getTime()
+    const matchesEnd = !endDate || created <= new Date(`${endDate}T23:59:59.999`).getTime()
     const matchesType = activityType === 'all' || (activityType === 'deposits' ? row.direction === 'credit' : row.direction === 'debit')
     return matchesStatus && matchesQuery && matchesType && matchesStart && matchesEnd
   }), [rows, query, status, activityType, startDate, endDate])
 
-  const filteredSamples = useMemo(() => sampleRows.filter(row => {
-    const value = `${row.description} ${row.category} ${row.entryType} ${row.referenceId}`.toLowerCase()
-    const created = row.createdAt ? new Date(row.createdAt).getTime() : 0
-    return value.includes(query.trim().toLowerCase()) && (!startDate || created >= new Date(`${startDate}T00:00:00`).getTime()) && (!endDate || created <= new Date(`${endDate}T23:59:59`).getTime())
-  }), [sampleRows, query, startDate, endDate])
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const safePage = Math.min(page, pageCount - 1)
   const visible = filtered.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE)
-  const samplePageCount = Math.max(1, Math.ceil(filteredSamples.length / PAGE_SIZE))
-  const safeSamplePage = Math.min(samplePage, samplePageCount - 1)
-  const visibleSamples = filteredSamples.slice(safeSamplePage * PAGE_SIZE, safeSamplePage * PAGE_SIZE + PAGE_SIZE)
-  const filtersActive = Boolean(query.trim()) || status !== 'all' || activityType !== 'all'
+  const filtersActive = Boolean(query.trim()) || status !== 'all' || activityType !== 'all' || Boolean(startDate || endDate)
   const emptyMessage = !rows.length && !filtersActive
     ? 'No transactions yet. Posted ledger activity will appear here.'
     : query.trim()
@@ -154,7 +130,7 @@ export const TransactionsPage: React.FC = () => {
                 <p className="text-xs font-semibold capitalize text-slate-500 lg:text-sm">{row.status || '—'}</p>
                 <div className="flex items-center justify-between gap-3 lg:block lg:text-right">
                   <p className={`text-lg font-semibold ${credit ? 'text-emerald-700' : 'text-slate-900'}`}>{credit ? '+' : '−'}{money(row.displayAmount)}</p>
-                  <button type="button" aria-expanded={open} aria-controls={detailId} onClick={() => setOpenId(open ? null : row.id)} className="text-xs font-semibold text-[#080A9F] lg:mt-1">
+                  <button type="button" aria-expanded={open} aria-controls={detailId} onClick={() => setOpenId(open ? null : row.id)} className="text-xs font-semibold text-[#0504AA] lg:mt-1">
                     {open ? 'Hide details' : 'View details'}
                   </button>
                 </div>
@@ -175,15 +151,11 @@ export const TransactionsPage: React.FC = () => {
         <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-5 py-3 text-sm text-slate-500">
           <p>Showing {safePage * PAGE_SIZE + 1}–{safePage * PAGE_SIZE + visible.length} of {filtered.length}</p>
           <div className="flex gap-2">
-            <button type="button" onClick={() => setPage(current => Math.max(0, current - 1))} disabled={safePage === 0} className="rounded-lg border border-slate-200 px-3 py-1.5 font-semibold text-[#080A9F] disabled:opacity-40">Previous</button>
-            <button type="button" onClick={() => setPage(current => Math.min(pageCount - 1, current + 1))} disabled={safePage >= pageCount - 1} className="rounded-lg border border-slate-200 px-3 py-1.5 font-semibold text-[#080A9F] disabled:opacity-40">Next</button>
+            <button type="button" onClick={() => setPage(current => Math.max(0, current - 1))} disabled={safePage === 0} className="rounded-lg border border-slate-200 px-3 py-1.5 font-semibold text-[#0504AA] disabled:opacity-40">Previous</button>
+            <button type="button" onClick={() => setPage(current => Math.min(pageCount - 1, current + 1))} disabled={safePage >= pageCount - 1} className="rounded-lg border border-slate-200 px-3 py-1.5 font-semibold text-[#0504AA] disabled:opacity-40">Next</button>
           </div>
         </div>
       </>}
-    </section>
-    <section className="mt-6 overflow-hidden rounded-2xl border border-amber-200 bg-white shadow-sm" aria-labelledby="sample-history-title">
-      <div className="border-b border-amber-100 bg-amber-50 px-5 py-4"><p className="text-xs font-bold uppercase tracking-[.16em] text-amber-700">Clearly separated sample data</p><h2 id="sample-history-title" className="mt-1 text-lg font-semibold text-amber-950">Sample Transaction History</h2><p className="mt-1 text-sm text-amber-900/75">Read-only sample records returned for the authenticated member and account. These entries are excluded from balances, statements, and verified financial history.</p></div>
-      {sampleLoading ? <p className="p-6 text-sm text-slate-500">Loading sample transactions...</p> : sampleError ? <p role="alert" className="p-6 text-sm text-red-700">{sampleError}</p> : !visibleSamples.length ? <p className="p-6 text-sm text-slate-500">No sample transactions match the current filters.</p> : <><div className="divide-y divide-slate-100">{visibleSamples.map(row => <div key={`sample-${row.id}`} className="grid gap-2 px-5 py-4 sm:grid-cols-[150px_1fr_150px_130px] sm:items-center"><div><p className="text-sm text-slate-500">{row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '—'}</p><p className="mt-1 text-xs text-slate-400">{row.referenceId || 'Reference unavailable'}</p></div><div><p className="font-semibold text-[#172033]">{row.description || 'Sample ledger entry'}</p><p className="mt-1 text-xs capitalize text-slate-500">{row.entryType || row.category || 'Transaction'}</p></div><p className="text-sm capitalize text-slate-600">{row.status || 'Sample'}</p><p className={`text-lg font-semibold sm:text-right ${row.direction === 'credit' ? 'text-emerald-700' : 'text-slate-900'}`}>{row.direction === 'credit' ? '+' : '−'}{money(row.displayAmount)}</p></div>)}</div><div className="flex items-center justify-between border-t border-slate-100 px-5 py-3 text-sm text-slate-500"><span>{filteredSamples.length} sample record{filteredSamples.length === 1 ? '' : 's'}</span><div className="flex gap-2"><button type="button" onClick={() => setSamplePage(current => Math.max(0, current - 1))} disabled={safeSamplePage === 0} className="rounded-lg border border-slate-200 px-3 py-1.5 font-semibold text-[#080A9F] disabled:opacity-40">Previous</button><button type="button" onClick={() => setSamplePage(current => Math.min(samplePageCount - 1, current + 1))} disabled={safeSamplePage >= samplePageCount - 1} className="rounded-lg border border-slate-200 px-3 py-1.5 font-semibold text-[#080A9F] disabled:opacity-40">Next</button></div></div></>}
     </section>
   </PortalShell>
 }

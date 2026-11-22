@@ -51,7 +51,7 @@ export const MemberDetailPage: React.FC = () => {
           email: memberData.email,
           first_name: memberData.first_name,
           last_name: memberData.last_name,
-          status: 'active',
+          status: memberData.status || 'Unavailable',
           created_at: memberData.created_at,
           accounts: (accountData ?? []).map((account) => ({
             id: account.id,
@@ -98,7 +98,7 @@ export const MemberDetailPage: React.FC = () => {
             <div>Email: {member.email}</div>
             <div>Member ID: {member.id}</div>
             <div>
-              Account status: <StatusBadge status="active" label={member.status} />
+              Member status: {member.status}
             </div>
           </div>
         </div>

@@ -137,12 +137,14 @@ async function resolveSupabaseAnonKey(env: Record<string, string>, supabaseUrl: 
   throw new Error(`[evermont] ${reason}`)
 }
 
-export default defineConfig(async ({ mode }): Promise<UserConfig> => {
+export default defineConfig(async ({ command, mode }): Promise<UserConfig> => {
   const env = loadEnv(mode, process.cwd(), '')
   const supabaseUrl = resolveSupabaseUrl(env)
-  const supabaseAnonKey = await resolveSupabaseAnonKey(env, supabaseUrl)
+  const supabaseAnonKey = command === 'serve' && mode === 'offline' ? '' : await resolveSupabaseAnonKey(env, supabaseUrl)
 
   return {
+    // Only the two explicitly classified public values below enter browser code.
+    envPrefix: [],
     plugins: [react()],
     ssr: { noExternal: ['react-helmet-async'] },
     resolve: {

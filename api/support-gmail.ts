@@ -1,5 +1,5 @@
 import type { RequestLike, ResponseLike } from './_lib/support.js'
-import { authenticateSupportUser, canManageSupport, canViewSupport, getSupabaseAdmin, setJsonHeaders } from './_lib/support.js'
+import { getBearerToken, authenticateSupportUser, canManageSupport, canViewSupport, getSupabaseAdmin, setJsonHeaders } from './_lib/support.js'
 import { getGmailConnectionStatus } from './_lib/gmail.js'
 import { syncSupportMailbox } from './_lib/gmailSync.js'
 
@@ -17,6 +17,10 @@ export default async function handler(request: RequestLike, response: ResponseLi
     return
   }
 
+  if (!getBearerToken(request)) {
+    response.status(401).json({ error: 'Sign in to continue.' })
+    return
+  }
   try {
     const client = getSupabaseAdmin()
     const user = await authenticateSupportUser(client, request)
@@ -62,8 +66,7 @@ export default async function handler(request: RequestLike, response: ResponseLi
 
     response.setHeader('Allow', 'GET, POST, OPTIONS')
     response.status(405).json({ error: 'Method not allowed.' })
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'The Gmail service could not complete this request.'
-    response.status(500).json({ error: message })
+  } catch {
+    response.status(500).json({ error: 'The Gmail service could not complete this request.' })
   }
 }
