@@ -53,7 +53,7 @@ type SyncResult = { imported: number; ignored: number; nextPagePending: boolean;
 type DetailResult = {
   notification?: string
   conversation: Conversation
-  member: { name: string | null; email: string | null }
+  member: { name: string | null; email: string | null; accountRefs?: string[] }
   messages: TicketMessage[]
 }
 
@@ -135,7 +135,7 @@ export const AdminSupportPage: React.FC = () => {
   const { data: inboxData, error: inboxError, isLoading: inboxLoading, mutate: refreshInbox } = useSWR<InboxResult>(
     inboxKey,
     () => supportRequest<InboxResult>(`/api/support?q=${encodeURIComponent(search)}&status=${statusFilter}&priority=${priorityFilter}&page=${page}`),
-    { refreshInterval: 30000, revalidateOnFocus: true },
+    { refreshInterval: 5000, revalidateOnFocus: true },
   )
   const { data: detail, error: detailError, isLoading: detailLoading, mutate: refreshDetail } = useSWR<DetailResult>(
     id ? ['support-ticket', user?.id, id] : null,
@@ -216,7 +216,7 @@ export const AdminSupportPage: React.FC = () => {
         method: 'POST',
         body: JSON.stringify({ action: 'retry', conversationId: id }),
       })
-      if (result.result.failed) setActionError('Email delivery is still failing. The notification will retry automatically.')
+      if (result.result.failed) setActionError('Email delivery is still failing. The saved conversation is available here.')
       await Promise.all([refreshDetail(), refreshInbox()])
     } catch (error) {
       setActionError(error instanceof Error ? error.message : 'Notification retry failed.')
@@ -320,7 +320,7 @@ export const AdminSupportPage: React.FC = () => {
                   <label className="relative"><span className="sr-only">Ticket priority</span><select disabled={working || !ticket} value={ticket?.priority || 'normal'} onChange={event => void updateTicket({ priority: event.target.value as Priority })} className="h-9 appearance-none rounded-lg border border-slate-200 bg-white pl-3 pr-8 text-xs font-medium text-slate-700 outline-none disabled:opacity-60"><option value="low">Low</option><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select><ChevronDown size={13} className="pointer-events-none absolute right-2.5 top-3 text-slate-400" aria-hidden="true" /></label>
                 </div>
               </div>
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 bg-white px-4 py-3 text-xs text-slate-500 sm:px-6"><div className="flex min-w-0 items-center gap-2"><Mail size={14} className="shrink-0" aria-hidden="true" /><span className="truncate">{detail?.member.email || 'Member email unavailable'}</span></div><button type="button" onClick={() => void retryNotifications()} disabled={working} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium text-[#0504AA] hover:bg-blue-50 disabled:opacity-50"><RotateCw size={13} aria-hidden="true" /> Retry email</button></div>
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 bg-white px-4 py-3 text-xs text-slate-500 sm:px-6"><div className="flex min-w-0 items-center gap-2"><Mail size={14} className="shrink-0" aria-hidden="true" /><span className="truncate">{[detail?.member.email, ...(detail?.member.accountRefs || [])].filter(Boolean).join(" · ") || "Member details unavailable"}</span></div><button type="button" onClick={() => void retryNotifications()} disabled={working} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium text-[#0504AA] hover:bg-blue-50 disabled:opacity-50"><RotateCw size={13} aria-hidden="true" /> Retry email</button></div>
               <label className="grid gap-1 border-b bg-white px-5 py-3 text-xs font-semibold text-slate-600">Find in this conversation<input type="search" className="rounded-lg border px-3 py-2" value={messageSearch} onChange={e=>setMessageSearch(e.target.value)} placeholder="Search messages and staff notes" /></label>
               <div className="min-h-[220px] flex-1 space-y-4 overflow-y-auto p-4 sm:p-6">
                 {detail && messageSearch.trim() && !detail.messages.some(m=>m.body.toLowerCase().includes(messageSearch.trim().toLowerCase())) && <p>No matching messages.</p>}

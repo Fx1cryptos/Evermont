@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import useSWR from 'swr'
 import { MessageCircle, Plus } from 'lucide-react'
@@ -17,6 +17,8 @@ const labels: Record<SupportStatus, string> = {
 export const SupportPage: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const attempt = useRef<{ draft: string; key: string } | null>(null)
+  const sending = useRef(false)
   const [search, setSearch] = useState('')
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
@@ -37,13 +39,19 @@ export const SupportPage: React.FC<{ embedded?: boolean }> = ({ embedded = false
   const matches = rows.filter((row) => row.subject.toLowerCase().includes(search.trim().toLowerCase()))
   const create = async (event: React.FormEvent) => {
     event.preventDefault()
-    if (creating || !user || !subject.trim() || !body.trim()) return
+    if (sending.current || creating || !user || !subject.trim() || !body.trim()) return
+    sending.current = true
+    const draft = JSON.stringify([user.id, subject, body])
+    if (attempt.current?.draft !== draft) attempt.current = { draft, key: crypto.randomUUID() }
+    const key = attempt.current.key
     setCreating(true)
     setError('')
-    const result = await supportService
-      .createConversation(user.id, subject, body)
+    const result = await supportService.submit(key, null, subject, body)
+      .then(async r => r.error?.code === 'PGRST202'
+        ? supportService.createConversation(user.id, subject, body)
+        : { data: typeof r.data === 'string' ? { id: r.data } : null, error: r.error })
       .catch(() => ({ data: null, error: true }))
-      .finally(() => setCreating(false))
+      .finally(() => { sending.current = false; setCreating(false) })
     if (result.data && result.error) {
       navigate(`${ROUTES.SUPPORT}/${result.data.id}`, { state: { firstMessageFailed: true, draft: body } })
       return

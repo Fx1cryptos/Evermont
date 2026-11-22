@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { ArrowLeft, Send, Headphones } from 'lucide-react'
 import useSWR from 'swr'
@@ -10,13 +10,15 @@ import { memberAction, supportService } from '@/services/supportService'
 
 function Thread({ owner, id }: { owner: string; id: string }) {
   const location = useLocation()
+  const attempt = useRef<{ draft: string; key: string } | null>(null)
+  const sending = useRef(false)
   const [draft, setDraft] = useState<string>(
     typeof location.state?.draft === 'string' ? location.state.draft : '',
   )
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState(
     location.state?.firstMessageFailed
-      ? 'Conversation created. Your first message was not saved; please send it here.'
+      ? 'Conversation created. Your first message could not be confirmed; please send it here.'
       : location.state?.received ? 'Your support request has been received.' : '',
   )
   const { data, error, mutate } = useSWR(
@@ -55,17 +57,22 @@ function Thread({ owner, id }: { owner: string; id: string }) {
   const closed = ['resolved', 'closed'].includes(data?.conversation.status || '')
   async function send(event: FormEvent) {
     event.preventDefault()
-    if (!draft.trim() || busy || closed) return
+    if (!draft.trim() || sending.current || busy || closed) return
+    sending.current = true
+    if (attempt.current?.draft !== draft) attempt.current = { draft, key: crypto.randomUUID() }
     setBusy(true)
     try {
-      const result = await supportService.sendMessage(owner, id, draft)
+      let result: { error: unknown } = await supportService.submit(attempt.current.key, id, null, draft)
+      if ((result.error as {code?: string} | null)?.code === 'PGRST202') result = await supportService.sendMessage(owner, id, draft)
       if (result.error) throw result.error
+      attempt.current = null
       setDraft('')
       setNotice('Message saved.')
-      await mutate()
+      void mutate().catch(() => undefined)
     } catch {
-      setNotice('Message could not be sent. Your draft is still here.')
+      setNotice('Delivery could not be confirmed. Your draft is still here.')
     } finally {
+      sending.current = false
       setBusy(false)
     }
   }

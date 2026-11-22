@@ -578,3 +578,17 @@ test('missing Gemini configuration requests human support for the owned active t
   assert.equal(await assistMember(client,ticket,member),false)
   assert.equal(handoffs,1)
 })
+
+test('atomic member submission keeps identity server-side and retries an ambiguous acknowledgement with the same key', async () => {
+  const {supportService} = await load('/src/services/supportService.ts')
+  const requests = []
+  client.auth.getSession = async () => ({ data: { session: null } })
+  transport = async (url, opt) => {
+    assert.ok(url.pathname.endsWith('/rpc/submit_member_support_message'))
+    requests.push(JSON.parse(opt.body))
+    return requests.length === 1 ? json({message:'Acknowledgement unavailable'}, 503) : json(ticket)
+  }
+  assert.ok((await supportService.submit(notice, null, 'Question', ' Hello ')).error)
+  assert.equal((await supportService.submit(notice, null, 'Question', ' Hello ')).data, ticket)
+  assert.deepEqual(requests, Array(2).fill({p_request:notice,p_ticket:null,p_subject:'Question',p_body:'Hello'}))
+})

@@ -91,6 +91,14 @@ export const supportService = {
     }
     return { data: messages, error: null }
   },
+  // The database commits the ticket, message and outbox event before acknowledging.
+  async submit(requestId: string, ticket: string | null, subject: string | null, body: string) {
+    const result = await supabase.rpc('submit_member_support_message', {
+      p_request: requestId, p_ticket: ticket, p_subject: subject, p_body: body.trim(),
+    })
+    if (!result.error && typeof result.data === 'string') void memberAction(result.data, 'notify')
+    return result
+  },
   async createConversation(userId: string, subject: string, body: string) {
     const { data: conversation, error: conversationError } = await supabase
       .from('support_conversations')

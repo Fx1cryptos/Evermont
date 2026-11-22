@@ -35,6 +35,7 @@ async function completeJob(client: SupabaseClient, id: string, binding?: {thread
     updated_at: new Date().toISOString(),
   }).eq('id', id)
   if (error) throw new Error('Could not record notification delivery')
+  console.info({event:'support.notification.completed'})
 }
 
 async function failJob(client: SupabaseClient, job: OutboxRow, error: unknown): Promise<void> {
@@ -100,9 +101,10 @@ export async function deliverSupportNotification(client: SupabaseClient, job: Ou
       await client.from('support_messages').update({ delivery_status: 'sending', delivery_error: null })
         .eq('id', job.message_id)
       const sent = await sendSupportReply({
+        notificationId: job.id, retry: job.attempt_count > 1,
         recipient: member.email,
-        subject: typedConversation.subject,
-        body: typedMessage.body,
+        subject: 'Your EVERMONT support conversation',
+        body: 'Your support team has replied. Sign in to the member portal and open Help & Support to read the reply.',
         threadId: typedConversation.gmail_thread_id,
         inReplyTo: latestInbound?.gmail_rfc_message_id,
         references: latestInbound?.gmail_references,
@@ -149,6 +151,7 @@ export async function deliverSupportNotification(client: SupabaseClient, job: Ou
 
     throw new Error('Support notification has an unsupported event type')
   } catch (error) {
+    console.warn({event:'support.notification.failed',attempt:job.attempt_count})
     await failJob(client, job, error)
     return false
   }

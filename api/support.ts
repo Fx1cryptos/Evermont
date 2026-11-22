@@ -49,20 +49,23 @@ export default async function handler(request: RequestLike, response: ResponseLi
           response.status(404).json({ error: 'Support ticket not found.' })
           return
         }
-        const [{ data: messages, error: messagesError }, { data: memberData }] = await Promise.all([
-          client.from('support_messages')
+        const { data: memberData } = await client.auth.admin.getUserById(conversation.user_id)
+        const messages = []
+        for (let offset = 0; ; offset += 200) {
+          const { data: page, error: loadError } = await client.from('support_messages')
             .select('id,conversation_id,sender_id,sender_role,body,is_internal,read_by_member,read_by_support,created_at')
-            .eq('conversation_id', id)
-            .order('created_at', { ascending: true })
-            .limit(500),
-          client.auth.admin.getUserById(conversation.user_id),
-        ])
-        if (messagesError) throw new Error('Unable to load ticket messages')
-        await client.from('support_messages')
-          .update({ read_by_support: true })
-          .eq('conversation_id', id)
-          .eq('read_by_support', false)
-          .eq('is_internal', false)
+            .eq('conversation_id', id).order('created_at').order('id').range(offset, offset + 199)
+          if (loadError) throw new Error('Unable to load ticket messages')
+          messages.push(...(page || []))
+          // Mark only messages included in this response.
+          const unread = (page || []).filter(m => m.sender_role === 'member' && !m.read_by_support).map(m => m.id)
+          if (unread.length) await client.from('support_messages').update({ read_by_support: true })
+            .eq('conversation_id', id).in('id', unread)
+          if (!page || page.length < 200) break
+        }
+        const accounts = await client.from('accounts').select('account_number').eq('user_id', conversation.user_id)
+        const accountRefs = (accounts.data || []).flatMap(row =>
+          typeof row.account_number === 'string' && row.account_number.length >= 4 ? ['••••' + row.account_number.slice(-4)] : [])
         const metadata = memberData.user?.user_metadata ?? {}
         const name = [metadata.first_name, metadata.last_name].filter(Boolean).join(' ')
           || metadata.full_name
@@ -71,7 +74,7 @@ export default async function handler(request: RequestLike, response: ResponseLi
         response.status(200).json({
           conversation: { ...conversation, human_requested: (await client.from('support_conversations').select('human_requested').eq('id',id).maybeSingle()).data?.human_requested },
           notification: (await client.from('support_notification_outbox').select('status').eq('conversation_id',id).order('created_at',{ascending:false}).limit(1).maybeSingle()).data?.status,
-          member: { name: typeof name === 'string' ? name : null, email: memberData.user?.email ?? null },
+          member: { accountRefs, name: typeof name === 'string' ? name : null, email: memberData.user?.email ?? null },
           messages: messages ?? [],
         })
         return
@@ -83,7 +86,10 @@ export default async function handler(request: RequestLike, response: ResponseLi
       const page = Math.max(0, Math.min(100000, Number.parseInt(getQueryString(request,'page') || '0',10) || 0))
       const pageSize = 40
       let conversationsQuery = client.from('support_conversations')
-        .select('id,user_id,subject,status,priority,assigned_to,last_message_at,created_at,updated_at')
+        .select('id,user_id,subject,status,priority,assigned_to,last_message_at,created_at,updated_at,latest:support_messages(body),unread:support_messages(count)')
+        .eq('latest.is_internal',false).order('created_at',{referencedTable:'latest',ascending:false})
+        .order('id',{referencedTable:'latest',ascending:false}).limit(1,{referencedTable:'latest'})
+        .eq('unread.is_internal',false).eq('unread.sender_role','member').eq('unread.read_by_support',false)
         .order('last_message_at', { ascending: false })
         .order('id').range(page*pageSize,(page+1)*pageSize)
       if (status && status !== 'all') conversationsQuery = conversationsQuery.eq('status', status)
@@ -100,31 +106,11 @@ export default async function handler(request: RequestLike, response: ResponseLi
       const owners = [...new Set(filtered.map(row=>row.user_id))]
       const profiles = owners.length ? await client.from('profiles').select('id,first_name,last_name').in('id',owners) : {data:[]}
       const names = new Map((profiles.data || []).map(p=>[p.id,[p.first_name,p.last_name].filter(Boolean).join(' ')]))
-      const ids = filtered.map(item => item.id)
-      const { data: messages, error: messagesError } = ids.length
-        ? await client.from('support_messages')
-          .select('conversation_id,body,sender_role,is_internal,read_by_support,created_at')
-          .in('conversation_id', ids)
-          .eq('is_internal', false)
-          .order('created_at', { ascending: false })
-          .limit(1000)
-        : { data: [], error: null }
-      if (messagesError) throw new Error('Unable to load support previews')
-      const messageSummary = new Map<string, { unread: number; latest: string | null; latestAt: string | null }>()
-      for (const message of messages ?? []) {
-        const summary = messageSummary.get(message.conversation_id) ?? { unread: 0, latest: null, latestAt: null }
-        if (!message.read_by_support && message.sender_role.toLowerCase() === 'member') summary.unread += 1
-        if (summary.latest === null) {
-          summary.latest = message.body
-          summary.latestAt = message.created_at
-        }
-        messageSummary.set(message.conversation_id, summary)
-      }
-      response.status(200).json({ hasMore:(conversations || []).length > pageSize, conversations: filtered.map(item => ({
+      response.status(200).json({ hasMore:(conversations || []).length > pageSize, conversations: filtered.map(({latest, unread, ...item}) => ({
         ...item,
         memberName:names.get(item.user_id) || null,
-        unreadCount: messageSummary.get(item.id)?.unread ?? 0,
-        preview: messageSummary.get(item.id)?.latest ?? '',
+        unreadCount: unread?.[0]?.count ?? 0,
+        preview: latest?.[0]?.body ?? '',
       })) })
       return
     }
@@ -167,6 +153,7 @@ export default async function handler(request: RequestLike, response: ResponseLi
           if (error) throw error
           response.status(200).json({read:true}); return
         }
+        console.info({event:'support.member.notification_requested'})
         const [result] = await Promise.all([processConversationNotification(client, conversationId), assistMember(client, conversationId,user.id)])
         response.status(202).json({ result })
         return
@@ -197,11 +184,13 @@ export default async function handler(request: RequestLike, response: ResponseLi
           last_message_at: data.created_at,
           updated_at: data.created_at,
         }).eq('id', conversationId)
+        console.info({event:'support.staff_reply.saved'})
         response.status(201).json({ message: data })
         return
       }
 
       if (action === 'retry') {
+        console.info({event:'support.notification.retry'})
         const { error } = await client.from('support_notification_outbox').update({
           status: 'pending',
           // Keep this marked as a retry so Gmail checks for an already accepted send.
@@ -267,6 +256,7 @@ export default async function handler(request: RequestLike, response: ResponseLi
     response.setHeader('Allow', 'GET, POST, PATCH, OPTIONS')
     response.status(405).json({ error: 'Method not allowed.' })
   } catch {
+    console.error({event:'support.request.failed',method:request.method})
     response.status(500).json({ error: 'The support service could not complete this request.' })
   }
 }

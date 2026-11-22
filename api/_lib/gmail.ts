@@ -148,6 +148,8 @@ async function sendRawGmailMessage(accessToken: string, raw: string, threadId?: 
 }
 
 export async function sendSupportReply(input: {
+  notificationId: string
+  retry: boolean
   recipient: string
   subject: string
   body: string
@@ -162,7 +164,12 @@ export async function sendSupportReply(input: {
   const context = await getGmailContext()
   assertGmailSenderMatches(context)
 
+  if (input.retry) {
+    const previous = await previousNotification(context.accessToken,context.senderEmail,recipient,input.notificationId)
+    if (previous) return previous
+  }
   const headers = [
+    `Message-ID: ${notificationReference(input.notificationId)}`,
     `From: EVERMONT Credit Union <${context.senderEmail}>`,
     `To: ${recipient}`,
     `Subject: ${encodeSubject(input.subject.startsWith('Re:') ? input.subject : `Re: ${input.subject}`)}`,
@@ -188,7 +195,7 @@ export const supportMailbox = 'evermontcreditunion@gmail.com'
 export function notificationReference(id: string) { return `<notice.${id}@evermontcredit.online>` }
 export function createRawMessage(content: SupportEmailContent, sender: string, recipient: string): string {
   const safe = (value: string) => redactSensitiveText(cleanHeader(value)).replace(/\d(?:[ -]?\d){3,}/g, '[redacted]').slice(0,120)
-  const origin = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://evermontcredit.online'
+  const origin = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://v0-evermont.vercel.app'
   // Unrestricted member prose can contain secrets even without labels. Only forward
   // verbatim questions from a small, non-sensitive allowlist; keep the rest in the portal.
   const question = content.question?.trim() || ''
@@ -236,6 +243,16 @@ export async function sendSupportTestEmail(): Promise<void> {
   }
 }
 
+async function previousNotification(accessToken: string, sender: string, recipient: string, id: string) {
+    const query = new URL('https://gmail.googleapis.com/gmail/v1/users/me/messages')
+    query.searchParams.set('q', `in:sent from:${sender} to:${recipient} rfc822msgid:${notificationReference(id).slice(1,-1)}`)
+    const response = await fetch(query, {headers:{Authorization:'Bearer '+accessToken},signal:AbortSignal.timeout(10000)})
+    if (!response.ok) throw new Error('Unable to reconcile earlier Gmail notification delivery')
+    const previous = (await response.json()).messages?.[0]
+    if (previous?.id && previous.threadId) return {id:previous.id,threadId:previous.threadId}
+    return null
+}
+
 export async function sendSupportEmail(content: SupportEmailContent, retry = false): Promise<GmailSendResult> {
   const context = await getGmailContext()
   assertGmailSenderMatches(context)
@@ -244,12 +261,8 @@ export async function sendSupportEmail(content: SupportEmailContent, retry = fal
   }
   if (retry) {
     // Reconcile an accepted send whose outbox acknowledgement may have failed.
-    const query = new URL('https://gmail.googleapis.com/gmail/v1/users/me/messages')
-    query.searchParams.set('q', `in:sent from:${supportMailbox} to:${supportMailbox} rfc822msgid:${notificationReference(content.notificationId).slice(1,-1)}`)
-    const response = await fetch(query, {headers:{Authorization:'Bearer '+context.accessToken},signal:AbortSignal.timeout(10000)})
-    if (!response.ok) throw new Error('Unable to reconcile earlier Gmail notification delivery')
-    const previous = (await response.json()).messages?.[0]
-    if (previous?.id && previous.threadId) return {id:previous.id,threadId:previous.threadId}
+    const previous = await previousNotification(context.accessToken,supportMailbox,supportMailbox,content.notificationId)
+    if (previous) return previous
   }
   return sendRawGmailMessage(context.accessToken,createRawMessage(content,supportMailbox,supportMailbox))
 }
