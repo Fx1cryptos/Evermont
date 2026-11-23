@@ -17,6 +17,7 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 
@@ -108,6 +109,7 @@ function getPriorityStyle(priority: Priority): string {
 
 export const AdminSupportPage: React.FC = () => {
   const { user } = useAuth()
+  const { role } = useAdminAuth()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
@@ -135,7 +137,7 @@ export const AdminSupportPage: React.FC = () => {
   const { data: detail, error: detailError, isLoading: detailLoading, mutate: refreshDetail } = useSWR<DetailResult>(
     id ? ['support-ticket', id] : null,
     () => supportRequest<DetailResult>(`/api/support?id=${encodeURIComponent(id as string)}`),
-    { revalidateOnFocus: true },
+    { refreshInterval: 30000, revalidateOnFocus: true },
   )
 
   useEffect(() => {
@@ -149,7 +151,12 @@ export const AdminSupportPage: React.FC = () => {
         void refreshInbox()
         if (id) void refreshDetail()
       })
-      .subscribe()
+      .subscribe(status => {
+        if (status === 'SUBSCRIBED') {
+          void refreshInbox()
+          if (id) void refreshDetail()
+        }
+      })
     return () => { void supabase.removeChannel(channel) }
   }, [user, id, refreshInbox, refreshDetail])
 
@@ -176,11 +183,12 @@ export const AdminSupportPage: React.FC = () => {
     setWorking(true)
     setActionError('')
     try {
-      await supportRequest('/api/support', {
+      const result = await supportRequest<{ notification: { sent: number; failed: number } }>('/api/support', {
         method: 'POST',
         body: JSON.stringify({ action: 'reply', conversationId: id, message: reply.trim() }),
       })
       setReply('')
+      if (result.notification?.failed) setActionError('Your reply is saved, but email delivery failed. It will retry automatically.')
       await Promise.all([refreshDetail(), refreshInbox()])
     } catch (error) {
       setActionError(error instanceof Error ? error.message : 'Your reply could not be sent.')
@@ -240,7 +248,7 @@ export const AdminSupportPage: React.FC = () => {
   const isTicketVisibleOnMobile = Boolean(id)
 
   return (
-    <AdminLayout staffName={user?.email?.split('@')[0] || 'Support team'} staffRole="Support operations">
+    <AdminLayout staffName={user?.email?.split('@')[0] || 'Support team'} staffRole={role === 'SUPER_ADMIN' ? 'Super Admin' : 'Support operations'}>
       <div className="mx-auto flex min-h-[calc(100vh-9rem)] max-w-[1500px] flex-col gap-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>

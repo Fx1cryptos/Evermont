@@ -220,13 +220,20 @@ export default async function handler(request: RequestLike, response: ResponseLi
           is_internal: false,
           read_by_member: false,
           read_by_support: true,
-        }).select('id,created_at').single()
+          delivery_status: 'queued',
+        }).select('id,created_at,delivery_status').single()
         if (error) throw new Error('Unable to save the support reply')
         await client.from('support_conversations').update({
           last_message_at: data.created_at,
           updated_at: data.created_at,
         }).eq('id', conversationId)
-        response.status(201).json({ message: data })
+        let notification = { sent: 0, failed: 0 }
+        try {
+          notification = await processConversationNotification(client, conversationId)
+        } catch {
+          // The persisted reply remains queued for the scheduled delivery worker.
+        }
+        response.status(201).json({ message: data, notification })
         return
       }
 

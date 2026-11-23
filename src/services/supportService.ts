@@ -54,7 +54,7 @@ export const supportService = {
     return { data: (data || []) as SupportMessage[], error }
   },
   async createConversation(userId: string, subject: string, body: string) {
-    const { data: conversation, error: conversationError } = await supabase.from('support_conversations').insert({ user_id: userId, subject: subject.trim(), status: 'open' }).select('id,subject,status,created_at,updated_at').single()
+    const { data: conversation, error: conversationError } = await supabase.from('support_conversations').insert({ user_id: userId, subject: subject.trim() }).select('id,subject,status,created_at,updated_at').single()
     if (conversationError || !conversation) return { data: null, error: conversationError || new Error('Conversation could not be created') }
     const { error: messageError } = await supabase.from('support_messages').insert({ conversation_id: conversation.id, sender_id: userId, sender_role: 'member', body: body.trim(), is_internal: false })
     if (!messageError) void notifySupportWorker(conversation.id)
