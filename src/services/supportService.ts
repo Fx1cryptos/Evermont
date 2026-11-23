@@ -21,6 +21,24 @@ async function notifySupportWorker(conversationId: string): Promise<void> {
 }
 
 export const supportService = {
+  async requestHuman(conversationId: string) {
+    try {
+      const { data, error } = await supabase.auth.getSession()
+      const accessToken = data.session?.access_token
+      if (error || !accessToken) return { data: null, error: new Error('Sign in again to request support.') }
+      const response = await fetch('/api/support', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'handoff', conversationId }),
+        signal: AbortSignal.timeout(15000),
+      })
+      const result = await response.json() as { handedOff?: boolean; status?: SupportStatus; requestedAt?: string; notificationQueued?: boolean; notificationDelivered?: boolean; error?: string }
+      if (!response.ok || !result.handedOff) return { data: null, error: new Error('We could not confirm your request. Please try again.') }
+      return { data: result, error: null }
+    } catch {
+      return { data: null, error: new Error('We could not confirm your request. Please try again.') }
+    }
+  },
   async listConversations(userId: string) {
     const { data, error } = await supabase.from('support_conversations').select('id,subject,status,created_at,updated_at').eq('user_id', userId).order('updated_at', { ascending: false })
     return { data: (data || []) as SupportConversation[], error }

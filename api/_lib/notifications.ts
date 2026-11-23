@@ -124,7 +124,7 @@ export async function deliverSupportNotification(client: SupabaseClient, job: Ou
       return true
     }
 
-    if (job.event_type === 'support_message' && typedMessage.sender_role.toLowerCase() === 'member') {
+    if ((job.event_type === 'support_message' || job.event_type === 'support_handoff') && typedMessage.sender_role.toLowerCase() === 'member') {
       const { data: userData, error: userError } = await client.auth.admin.getUserById(typedConversation.user_id)
       if (userError) throw new Error('Member contact information could not be loaded')
       const metadata = userData.user?.user_metadata ?? {}
@@ -132,13 +132,14 @@ export async function deliverSupportNotification(client: SupabaseClient, job: Ou
         || metadata.full_name
         || metadata.name
         || undefined
+      const isHandoff = job.event_type === 'support_handoff'
 
       await sendSupportEmail({
         ticketId: job.conversation_id,
-        subject: typedConversation.subject,
+        subject: isHandoff ? `Human support requested: ${typedConversation.subject}` : typedConversation.subject,
         memberName: typeof memberName === 'string' ? memberName.slice(0, 120) : undefined,
         memberEmail: userData.user?.email,
-        body: typedMessage.body,
+        body: isHandoff ? `The member requested a human response.\n\nLatest message:\n${typedMessage.body}` : typedMessage.body,
         createdAt: typedMessage.created_at,
         priority: typedConversation.priority,
         status: typedConversation.status,

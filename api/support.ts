@@ -94,6 +94,14 @@ export default async function handler(request: RequestLike, response: ResponseLi
           .limit(1000)
         : { data: [], error: null }
       if (messagesError) throw new Error('Unable to load support previews')
+      const { data: handoffEvents, error: handoffEventsError } = ids.length
+        ? await client.from('support_notification_outbox')
+          .select('conversation_id')
+          .in('conversation_id', ids)
+          .eq('event_type', 'support_handoff')
+        : { data: [], error: null }
+      if (handoffEventsError) throw new Error('Unable to load human-support requests')
+      const handoffConversationIds = new Set((handoffEvents ?? []).map(event => event.conversation_id))
       const messageSummary = new Map<string, { unread: number; latest: string | null; latestAt: string | null }>()
       for (const message of messages ?? []) {
         const summary = messageSummary.get(message.conversation_id) ?? { unread: 0, latest: null, latestAt: null }
@@ -108,6 +116,7 @@ export default async function handler(request: RequestLike, response: ResponseLi
         ...item,
         unreadCount: messageSummary.get(item.id)?.unread ?? 0,
         preview: messageSummary.get(item.id)?.latest ?? '',
+        humanRequested: item.status === 'pending_support' && handoffConversationIds.has(item.id),
       })) })
       return
     }
@@ -116,7 +125,7 @@ export default async function handler(request: RequestLike, response: ResponseLi
       const body = bodyRecord(request.body)
       const action = getString(body?.action, 20)
       const conversationId = getString(body?.conversationId, 36)
-      if (action !== 'notify' && !canManageSupport(user)) {
+      if (action !== 'notify' && action !== 'handoff' && !canManageSupport(user)) {
         response.status(403).json({ error: 'You do not have permission to respond to support tickets.' })
         return
       }
@@ -140,6 +149,60 @@ export default async function handler(request: RequestLike, response: ResponseLi
         }
         const result = await processConversationNotification(client, conversationId)
         response.status(202).json({ result })
+        return
+      }
+
+      if (action === 'handoff') {
+        if (conversation.user_id !== user.id) {
+          response.status(403).json({ error: 'You cannot request support for another member.' })
+          return
+        }
+
+        const requestedAt = new Date().toISOString()
+        const { data: updatedConversation, error: handoffError } = await client.from('support_conversations')
+          .update({ status: 'pending_support', updated_at: requestedAt })
+          .eq('id', conversationId)
+          .eq('user_id', user.id)
+          .select('id,status,updated_at')
+          .single()
+        if (handoffError || !updatedConversation) throw new Error('Unable to confirm human support request')
+
+        const { data: latestMemberMessage } = await client.from('support_messages')
+          .select('id')
+          .eq('conversation_id', conversationId)
+          .eq('sender_role', 'member')
+          .eq('is_internal', false)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        let notificationQueued = false
+        let notificationDelivered = false
+        if (latestMemberMessage) {
+          const { error: queueError } = await client.from('support_notification_outbox').upsert({
+            conversation_id: conversationId,
+            message_id: latestMemberMessage.id,
+            event_type: 'support_handoff',
+            dedupe_key: `support-handoff:${conversationId}:${latestMemberMessage.id}`,
+            payload: {},
+          }, { onConflict: 'dedupe_key', ignoreDuplicates: true })
+          if (!queueError) {
+            notificationQueued = true
+            try {
+              const result = await processConversationNotification(client, conversationId)
+              notificationDelivered = result.sent > 0
+            } catch {
+              // The durable handoff and queued notification remain available to the scheduled worker.
+            }
+          }
+        }
+
+        response.status(200).json({
+          handedOff: true,
+          status: updatedConversation.status,
+          requestedAt: updatedConversation.updated_at,
+          notificationQueued,
+          notificationDelivered,
+        })
         return
       }
 

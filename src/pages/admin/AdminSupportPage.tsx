@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import useSWR from 'swr'
 import {
@@ -33,6 +33,7 @@ type Conversation = {
   created_at: string
   unreadCount: number
   preview: string
+  humanRequested: boolean
 }
 type TicketMessage = {
   id: string
@@ -136,6 +137,21 @@ export const AdminSupportPage: React.FC = () => {
     () => supportRequest<DetailResult>(`/api/support?id=${encodeURIComponent(id as string)}`),
     { revalidateOnFocus: true },
   )
+
+  useEffect(() => {
+    if (!user) return
+    const channel = supabase.channel('admin-support-inbox')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'support_messages' }, () => {
+        void refreshInbox()
+        if (id) void refreshDetail()
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'support_conversations' }, () => {
+        void refreshInbox()
+        if (id) void refreshDetail()
+      })
+      .subscribe()
+    return () => { void supabase.removeChannel(channel) }
+  }, [user, id, refreshInbox, refreshDetail])
 
   const updateTicket = async (updates: { status?: Status; priority?: Priority }) => {
     if (!id) return
@@ -297,7 +313,7 @@ export const AdminSupportPage: React.FC = () => {
                 <button key={conversation.id} type="button" onClick={() => navigate(`/admin/support/${conversation.id}`)} className={`block w-full border-b border-slate-100 px-4 py-4 text-left transition hover:bg-slate-50 ${id === conversation.id ? 'bg-blue-50/60' : ''}`} aria-current={id === conversation.id ? 'page' : undefined}>
                   <div className="flex items-start justify-between gap-2"><p className="truncate text-sm font-semibold text-slate-900">{conversation.subject}</p>{conversation.unreadCount > 0 && <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#0504AA] px-1.5 text-[10px] font-bold text-white">{conversation.unreadCount}</span>}</div>
                   <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{conversation.preview || 'No messages yet'}</p>
-                  <div className="mt-3 flex flex-wrap items-center gap-1.5"><span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${getStatusStyle(conversation.status)}`}>{statusLabel[conversation.status]}</span><span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${getPriorityStyle(conversation.priority)}`}>{priorityLabel[conversation.priority]}</span><time className="ml-auto text-[10px] text-slate-400">{formatDate(conversation.last_message_at)}</time></div>
+                  <div className="mt-3 flex flex-wrap items-center gap-1.5"><span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${getStatusStyle(conversation.status)}`}>{statusLabel[conversation.status]}</span>{conversation.humanRequested && <span className="rounded-full bg-[#C9A227]/15 px-2 py-1 text-[10px] font-semibold text-[#715500]">Human requested</span>}<span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${getPriorityStyle(conversation.priority)}`}>{priorityLabel[conversation.priority]}</span><time className="ml-auto text-[10px] text-slate-400">{formatDate(conversation.last_message_at)}</time></div>
                 </button>
               ))}
             </div>
