@@ -1,5 +1,16 @@
+import { complaintCategories } from '../../shared/supportCategories.js'
+
+const staffAlerts = {
+  handoff: 'Human support requested',
+  high_priority: 'High-priority ticket',
+  overdue: 'Ticket overdue',
+  delivery_failure: 'Notification delivery failed',
+}
+
 type SupportEmailContent = {
   ticketId: string
+  alert?: keyof typeof staffAlerts
+  priority?: string
   subject: string
   memberEmail?: string
   question?: string
@@ -199,15 +210,31 @@ export function createRawMessage(content: SupportEmailContent, sender: string, r
   // Unrestricted member prose can contain secrets even without labels. Only forward
   // verbatim questions from a small, non-sensitive allowlist; keep the rest in the portal.
   const question = content.question?.trim() || ''
-  const category = /statement/i.test(question) ? 'Statements' : /beneficiar/i.test(question) ? 'Beneficiaries' : /activation/i.test(question) ? 'Activation' : 'Member support'
+  const ticketCategory = complaintCategories.find((value) => content.subject.startsWith(value + ': '))
+  const category = ticketCategory ?? (/statement/i.test(question) ? 'Statements' : /beneficiar/i.test(question) ? 'Beneficiaries' : /activation/i.test(question) ? 'Activation' : 'Member support')
   const excerpt = /^(where can i find my statements|how do i reset my password|how do i view my beneficiaries|how do i contact support)\??$/i.test(question) ? question : 'Member requested help. Read the original question and replies in the secure conversation.'
-  const plain = ['EVERMONT • Member support', `Reference: ${content.ticketId}`, `Member: ${safe(content.memberName || 'Member')}`,
-    `Category: ${category}`, `Received: ${cleanHeader(content.received || "")}`, `Status: ${safe(content.status || "Open")}`,
-    `Contact: ${cleanHeader(content.memberEmail || "See profile")}`, `Summary: ${excerpt}`, `Open securely: ${origin}/admin/support/${encodeURIComponent(content.ticketId)}`,
-    'To publish a member-visible reply, reply directly to this notification from the authorized inbox.',
-    'Put MEMBER REPLY on its own line, followed by your reply, then END REPLY on its own line. Use the portal for internal notes.'].join('\n')
+  const instructions = content.alert
+    ? ['Open the staff portal to respond to this alert.']
+    : [
+        'To publish a member-visible reply, reply directly to this notification from the authorized inbox.',
+        'Put MEMBER REPLY on its own line, followed by your reply, then END REPLY on its own line. Use the portal for internal notes.',
+      ]
+  const plain = [
+    'EVERMONT • Member support',
+    `Reference: ${content.ticketId}`,
+    `Member: ${safe(content.memberName || 'Member')}`,
+    content.alert && `Alert: ${staffAlerts[content.alert]}`,
+    content.priority && ['low', 'normal', 'high', 'urgent'].includes(content.priority) && `Priority: ${content.priority}`,
+    `Category: ${category}`,
+    `Received: ${cleanHeader(content.received || '')}`,
+    `Status: ${safe(content.status || 'Open')}`,
+    `Contact: ${cleanHeader(content.memberEmail || 'See profile')}`,
+    `Summary: ${excerpt}`,
+    `Open securely: ${origin}/admin/support/${encodeURIComponent(content.ticketId)}`,
+    ...instructions,
+  ].filter(Boolean).join('\n')
   return [`From: EVERMONT Support <${sender}>`,`To: ${recipient}`,`Message-ID: ${notificationReference(content.notificationId)}`,
-    `Subject: ${encodeSubject('EVERMONT support · ' + content.ticketId + ' · ' + category)}`,
+    `Subject: ${encodeSubject((content.alert ? staffAlerts[content.alert] : 'EVERMONT support') + ' · ' + content.ticketId + ' · ' + category)}`,
     'MIME-Version: 1.0','Content-Type: text/plain; charset="UTF-8"','Content-Transfer-Encoding: base64','', Buffer.from(plain).toString('base64')].join('\r\n')
 }
 

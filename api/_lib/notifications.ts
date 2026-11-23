@@ -6,6 +6,8 @@ type OutboxRow = {
   conversation_id: string | null
   message_id: string | null
   event_type: string
+  created_at?: string
+  payload?: { alert?: unknown }
   attempt_count: number
 }
 
@@ -59,6 +61,26 @@ async function failJob(client: SupabaseClient, job: OutboxRow, error: unknown): 
 
 export async function deliverSupportNotification(client: SupabaseClient, job: OutboxRow): Promise<boolean> {
   try {
+    if (job.event_type === 'support_staff_alert' && job.conversation_id) {
+      const alert = job.payload?.alert
+      if (alert !== 'handoff' && alert !== 'high_priority' && alert !== 'overdue' && alert !== 'delivery_failure') {
+        throw new Error('Unknown staff alert')
+      }
+      const { data: ticket, error } = await client.from('support_conversations')
+        .select('subject,priority,status').eq('id', job.conversation_id).single()
+      if (error || !ticket) throw new Error('Support ticket could not be loaded')
+      await sendSupportEmail({
+        alert,
+        ticketId: job.conversation_id,
+        notificationId: job.id,
+        received: job.created_at,
+        subject: ticket.subject,
+        priority: ticket.priority,
+        status: ticket.status,
+      }, job.attempt_count > 1)
+      await completeJob(client, job.id)
+      return true
+    }
     if (!job.conversation_id || !job.message_id) throw new Error('Support notification is missing a ticket reference')
 
     const [{ data: conversation, error: conversationError }, { data: message, error: messageError }] = await Promise.all([
@@ -140,6 +162,7 @@ export async function deliverSupportNotification(client: SupabaseClient, job: Ou
       const sent = await sendSupportEmail({
         ticketId: job.conversation_id,
         subject: typedConversation.subject,
+        priority: typedConversation.priority,
         question: typedMessage.body, received: typedMessage.created_at, status:typedConversation.status,
         memberEmail: userData.user?.email_confirmed_at ? userData.user.email : undefined,
         memberName: typeof memberName === 'string' ? memberName.slice(0, 120) : undefined,
@@ -172,16 +195,29 @@ export async function processSupportNotificationBatch(
   client: SupabaseClient,
   batchSize = 10,
 ): Promise<{ processed: number; sent: number; failed: number }> {
-  const { data, error } = await client.rpc('claim_support_notifications', {
-    p_batch_size: Math.max(1, Math.min(20, batchSize)),
-  })
-  if (error) throw new Error('Unable to claim support notifications')
-  const jobs = (data as OutboxRow[] | null) ?? []
+  const overdueHours = process.env.SUPPORT_OVERDUE_HOURS?.trim()
+  let overdueScanFailed = false
+  if (overdueHours) {
+    const hours = Number(overdueHours)
+    if (!Number.isInteger(hours) || hours < 1 || hours > 2147483647) {
+      overdueScanFailed = true
+    } else {
+      const { error } = await client.rpc('enqueue_overdue_support_alerts', { p_hours: hours })
+      overdueScanFailed = Boolean(error)
+    }
+  }
+  // Lease only the next job. A slow Gmail call must not consume the leases of waiting jobs.
+  const limit = Math.max(1, Math.min(20, batchSize))
   let sent = 0
   let failed = 0
-  for (const job of jobs) {
+  for (let index = 0; index < limit; index++) {
+    const { data, error } = await client.rpc('claim_support_notifications', { p_batch_size: 1 })
+    if (error) throw new Error('Unable to claim support notifications')
+    const job = (data as OutboxRow[] | null)?.[0]
+    if (!job) break
     if (await deliverSupportNotification(client, job)) sent += 1
     else failed += 1
   }
-  return { processed: jobs.length, sent, failed }
+  if (overdueScanFailed) throw new Error('Support overdue check failed')
+  return { processed: sent + failed, sent, failed }
 }

@@ -43,3 +43,9 @@ Staff can synchronize manually. For a private scheduled job, compile once with `
 ## Evidence required for sign-off
 
 Verify read-only account and ledger access while activation is unavailable; repeat with confirmed active, pending and incomplete staging records. Do not change balances or mark a member active to manufacture a result. With each approved staging JWT, verify own, other-member and staff-only access separately. Verify normal member messaging while Gemini is unavailable, the branded reply with Gemini enabled, handoff during an in-flight model call, and internal-note rejection. Test email recovery only with a separately approved identity and delivery authorization.
+
+## Staff alerts and worker health
+
+Review `supabase/review/support_staff_alerts.sql` against the staging outbox constraints before enabling alerts. It depends on the handoff columns in `member_support.sql`. The outbox must accept a staff-alert event with a null message ID. Check `support_message_submission.sql` for the atomic member submission contract. Set server-only `SUPPORT_OVERDUE_HOURS` to the approved response threshold to include overdue tickets in private worker runs. With it unset, the worker still processes queued mail.
+
+Review `supabase/review/support_worker_health.sql` before adding `--record-health` to the existing private worker command. Record a synthetic run and check its execution ID, timestamps and failure indicators as an administrator. The health page distinguishes queued mail outcomes from mailbox receipt. To verify delivery, open the actual notification in the authorized inbox and match the full ticket reference to the synthetic staging conversation. Repeat the worker run and count matching messages. Confirm the staff reply is visible to the originating member and inaccessible to another member. Keep the scheduler disabled against any project whose staging identity has not been verified.

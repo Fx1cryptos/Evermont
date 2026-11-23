@@ -4,8 +4,11 @@ import { AdminLayout } from '@/components/admin/AdminLayout'
 import { supabase } from '@/lib/supabase'
 
 type Check = {state:'available'|'unavailable'|'not_configured';detail:string}
+type WorkerRun = { id:string; finished_at:string; failed_checks:string[] }
 type Health = {
+  workerHealth: { latest:WorkerRun|null; lastSuccess:string|null; recentFailures:WorkerRun[] }|null
   checkedAt:string; authentication:Check; database:Check; gemini:Check; gmail:Check
+  recentNotifications: { status: 'sent' | 'failed'; attempts: number; updatedAt: string }[] | null
   supportOpen:number|null; failedNotifications:number|null; lastMailboxSync:string|null
 }
 const label = (value:number|null) => value == null ? 'Unavailable' : value.toLocaleString()
@@ -40,7 +43,43 @@ export const AdminAutomationPage: React.FC = () => {
         {([['Authentication',data.authentication],['Database',data.database],['Gemini',data.gemini],['Gmail',data.gmail]] as const).map(([name,check])=><article key={name} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><Activity className="size-5 text-[#0504AA]" /><h2 className="mt-4 font-semibold">{name}</h2><p className={`mt-2 text-sm font-semibold ${check.state==='available'?'text-emerald-700':'text-amber-800'}`}>{check.state==='available'?'Available':check.state==='not_configured'?'Not configured':'Unavailable'}</p><p className="mt-2 text-sm text-slate-600">{check.detail}</p></article>)}
       </section>
       <section className="grid gap-4 md:grid-cols-2"><div className="rounded-2xl border bg-white p-6"><h2 className="font-semibold">Support queue</h2><p className="mt-3 text-sm text-slate-600">Open tickets: <strong>{label(data.supportOpen)}</strong></p><p className="mt-2 text-sm text-slate-600">Failed notifications: <strong>{label(data.failedNotifications)}</strong></p><p className="mt-2 text-sm text-slate-600">Last mailbox sync: {data.lastMailboxSync ? new Date(data.lastMailboxSync).toLocaleString() : 'Unavailable'}</p><a href="/admin/support" className="mt-4 inline-block font-semibold text-[#0504AA]">Open support inbox →</a></div>
-      <div className="rounded-2xl border bg-white p-6"><ShieldCheck className="size-5 text-[#C9A227]"/><h2 className="mt-3 font-semibold">Scheduled and financial monitoring</h2><p className="mt-2 text-sm leading-6 text-slate-600">Job history, schedules, security alerts and ledger monitoring are unavailable until their data sources and scheduler are configured and reviewed.</p></div></section>
+      <div className="rounded-2xl border bg-white p-6">
+        <ShieldCheck className="size-5 text-[#C9A227]" />
+        <h2 className="mt-3 font-semibold">Support worker health</h2>
+        {data.workerHealth?.latest ? <>
+          <p className="mt-2 text-sm">Last completed run: {new Date(data.workerHealth.latest.finished_at).toLocaleString()}</p>
+          <p className="mt-1 text-sm">Last successful check: {data.workerHealth.lastSuccess ? new Date(data.workerHealth.lastSuccess).toLocaleString() : 'None recorded'}</p>
+          {data.workerHealth.latest.failed_checks.length > 0 ? (
+            <p role="alert" className="mt-2 font-semibold text-red-800">Latest run flagged {data.workerHealth.latest.failed_checks.join(', ')}.</p>
+          ) : <p className="mt-2 text-sm text-emerald-700">All checks passed on the last run.</p>}
+          {data.workerHealth.recentFailures.length > 0 && <details className="mt-3 text-sm">
+            <summary>Recent failed checks</summary>
+            <ul>{data.workerHealth.recentFailures.map(run => <li key={run.id}>
+              {new Date(run.finished_at).toLocaleString()} · {run.failed_checks.join(', ')}
+            </li>)}</ul>
+          </details>}
+        </> : <p className="mt-2 text-sm">{data.workerHealth ? 'No recorded worker runs.' : 'Worker history unavailable.'}</p>}
+      </div></section>
+      <section className="rounded-2xl border bg-white p-6" aria-label="Notification queue activity">
+        <h2 className="font-semibold">Recent notification jobs</h2>
+        {data.recentNotifications?.length ? (
+          <table className="mt-4 w-full text-left text-sm">
+            <caption className="sr-only">Latest queue status for up to ten sent or failed jobs</caption>
+            <thead><tr><th scope="col">Updated</th><th scope="col">Queue status</th><th scope="col">Attempts</th></tr></thead>
+            <tbody>{data.recentNotifications.map((job, index) => (
+              <tr key={index} className="border-t">
+                <td className="py-2"><time dateTime={job.updatedAt}>{new Date(job.updatedAt).toLocaleString()}</time></td>
+                <td>{job.status === 'sent' ? 'Marked sent' : 'Failed'}</td>
+                <td>{job.attempts}</td>
+              </tr>
+            ))}</tbody>
+          </table>
+        ) : (
+          <p className="mt-2 text-sm text-slate-600">
+            {data.recentNotifications ? 'No sent or failed jobs recorded.' : 'Notification job history unavailable.'}
+          </p>
+        )}
+      </section>
     </>}
   </div></AdminLayout>
 }

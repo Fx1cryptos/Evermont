@@ -19,6 +19,11 @@ export async function approvedAnswer(messages: string[]): Promise<string | null>
   const key = process.env.GEMINI_API_KEY
   const model = process.env.GEMINI_MODEL
   if (!key || !model || !/^gemini-[a-z0-9.-]+$/.test(model)) return null
+  // These requests require account-specific investigation even when they also mention a help topic.
+  const latest = messages[messages.length - 1] ?? ''
+  if (/\b(fraud(?:ulent)?|unauthori[sz]ed|disput(?:e|ed|ing)|stolen|compromised|scam(?:med)?|missing funds|double charg(?:e|ed)|charged twice)\b/i.test(latest)) {
+    return knowledge.human
+  }
   const signals = messages.map((message) =>
     Object.keys(knowledge).filter((topic) => message.toLowerCase().includes(topic.replace(/s$/, ''))),
   )
