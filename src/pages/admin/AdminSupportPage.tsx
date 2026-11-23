@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import useSWR from 'swr'
 import {
@@ -17,6 +17,7 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 
@@ -33,6 +34,7 @@ type Conversation = {
   created_at: string
   unreadCount: number
   preview: string
+  humanRequested: boolean
 }
 type TicketMessage = {
   id: string
@@ -107,6 +109,7 @@ function getPriorityStyle(priority: Priority): string {
 
 export const AdminSupportPage: React.FC = () => {
   const { user } = useAuth()
+  const { role } = useAdminAuth()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
@@ -134,8 +137,28 @@ export const AdminSupportPage: React.FC = () => {
   const { data: detail, error: detailError, isLoading: detailLoading, mutate: refreshDetail } = useSWR<DetailResult>(
     id ? ['support-ticket', id] : null,
     () => supportRequest<DetailResult>(`/api/support?id=${encodeURIComponent(id as string)}`),
-    { revalidateOnFocus: true },
+    { refreshInterval: 30000, revalidateOnFocus: true },
   )
+
+  useEffect(() => {
+    if (!user) return
+    const channel = supabase.channel('admin-support-inbox')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'support_messages' }, () => {
+        void refreshInbox()
+        if (id) void refreshDetail()
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'support_conversations' }, () => {
+        void refreshInbox()
+        if (id) void refreshDetail()
+      })
+      .subscribe(status => {
+        if (status === 'SUBSCRIBED') {
+          void refreshInbox()
+          if (id) void refreshDetail()
+        }
+      })
+    return () => { void supabase.removeChannel(channel) }
+  }, [user, id, refreshInbox, refreshDetail])
 
   const updateTicket = async (updates: { status?: Status; priority?: Priority }) => {
     if (!id) return
@@ -160,11 +183,12 @@ export const AdminSupportPage: React.FC = () => {
     setWorking(true)
     setActionError('')
     try {
-      await supportRequest('/api/support', {
+      const result = await supportRequest<{ notification: { sent: number; failed: number } }>('/api/support', {
         method: 'POST',
         body: JSON.stringify({ action: 'reply', conversationId: id, message: reply.trim() }),
       })
       setReply('')
+      if (result.notification?.failed) setActionError('Your reply is saved, but email delivery failed. It will retry automatically.')
       await Promise.all([refreshDetail(), refreshInbox()])
     } catch (error) {
       setActionError(error instanceof Error ? error.message : 'Your reply could not be sent.')
@@ -224,7 +248,7 @@ export const AdminSupportPage: React.FC = () => {
   const isTicketVisibleOnMobile = Boolean(id)
 
   return (
-    <AdminLayout staffName={user?.email?.split('@')[0] || 'Support team'} staffRole="Support operations">
+    <AdminLayout staffName={user?.email?.split('@')[0] || 'Support team'} staffRole={role === 'SUPER_ADMIN' ? 'Super Admin' : 'Support operations'}>
       <div className="mx-auto flex min-h-[calc(100vh-9rem)] max-w-[1500px] flex-col gap-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -297,7 +321,7 @@ export const AdminSupportPage: React.FC = () => {
                 <button key={conversation.id} type="button" onClick={() => navigate(`/admin/support/${conversation.id}`)} className={`block w-full border-b border-slate-100 px-4 py-4 text-left transition hover:bg-slate-50 ${id === conversation.id ? 'bg-blue-50/60' : ''}`} aria-current={id === conversation.id ? 'page' : undefined}>
                   <div className="flex items-start justify-between gap-2"><p className="truncate text-sm font-semibold text-slate-900">{conversation.subject}</p>{conversation.unreadCount > 0 && <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#0504AA] px-1.5 text-[10px] font-bold text-white">{conversation.unreadCount}</span>}</div>
                   <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{conversation.preview || 'No messages yet'}</p>
-                  <div className="mt-3 flex flex-wrap items-center gap-1.5"><span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${getStatusStyle(conversation.status)}`}>{statusLabel[conversation.status]}</span><span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${getPriorityStyle(conversation.priority)}`}>{priorityLabel[conversation.priority]}</span><time className="ml-auto text-[10px] text-slate-400">{formatDate(conversation.last_message_at)}</time></div>
+                  <div className="mt-3 flex flex-wrap items-center gap-1.5"><span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${getStatusStyle(conversation.status)}`}>{statusLabel[conversation.status]}</span>{conversation.humanRequested && <span className="rounded-full bg-[#C9A227]/15 px-2 py-1 text-[10px] font-semibold text-[#715500]">Human requested</span>}<span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${getPriorityStyle(conversation.priority)}`}>{priorityLabel[conversation.priority]}</span><time className="ml-auto text-[10px] text-slate-400">{formatDate(conversation.last_message_at)}</time></div>
                 </button>
               ))}
             </div>

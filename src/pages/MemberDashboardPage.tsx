@@ -13,8 +13,6 @@ import { useActivationGate } from '@/hooks/useActivationGate'
 import type { Account, Profile } from '@/types'
 
 const money = (value: unknown) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value) || 0)
-const SAMPLE_MEMBER_ID = '96167e4c-024d-47ba-9f43-dce4f8cf599a'
-const SAMPLE_ACCOUNT_ID = 'ee99d49d-f2df-4326-bb76-cc2801fc8448'
 const formatActivityDate = (value: string | null) => value ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(value)) : 'Date not returned'
 
 const Panel: React.FC<{ title: string; action?: React.ReactNode; children: React.ReactNode }> = ({ title, action, children }) => (
@@ -87,15 +85,12 @@ export const MemberDashboardPage: React.FC = () => {
       try {
         const activity = await transactionService.getTransactions(user.id, { limit: 40 })
         if (active) setRows(activity)
-        if (user.id === SAMPLE_MEMBER_ID && nextAccounts.some(account => account.id === SAMPLE_ACCOUNT_ID)) {
-          try {
-            const samples = await transactionService.getSampleTransactions(user.id, [SAMPLE_ACCOUNT_ID])
-            if (active) setSampleRows(samples)
-          } catch {
-            if (active) setSampleRows([])
-          }
-        } else if (active) {
-          setSampleRows([])
+        try {
+          const accountIds = nextAccounts.map(account => account.id)
+          const samples = accountIds.length ? await transactionService.getSampleTransactions(user.id, accountIds) : []
+          if (active) setSampleRows(samples)
+        } catch {
+          if (active) setSampleRows([])
         }
       } catch {
         if (active) setError('We could not load transactions from the ledger.')

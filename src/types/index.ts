@@ -23,7 +23,7 @@ export interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
-  updatePassword: (token: string, password: string) => Promise<void>
+  updatePassword: (currentPassword: string, password: string) => Promise<void>
 }
 
 export interface Profile {

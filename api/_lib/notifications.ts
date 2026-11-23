@@ -99,8 +99,9 @@ export async function deliverSupportNotification(client: SupabaseClient, job: Ou
         .eq('id', job.message_id)
       const sent = await sendSupportReply({
         recipient: member.email,
-        subject: typedConversation.subject,
-        body: typedMessage.body,
+        conversationId: job.conversation_id,
+        subject: 'New reply to your Evermont support conversation',
+        body: `Evermont Support has replied to your conversation. Sign in to view the message securely: https://evermontcredit.online/support/${encodeURIComponent(job.conversation_id)}`, 
         threadId: typedConversation.gmail_thread_id,
         inReplyTo: latestInbound?.gmail_rfc_message_id,
         references: latestInbound?.gmail_references,
@@ -124,21 +125,15 @@ export async function deliverSupportNotification(client: SupabaseClient, job: Ou
       return true
     }
 
-    if (job.event_type === 'support_message' && typedMessage.sender_role.toLowerCase() === 'member') {
-      const { data: userData, error: userError } = await client.auth.admin.getUserById(typedConversation.user_id)
-      if (userError) throw new Error('Member contact information could not be loaded')
-      const metadata = userData.user?.user_metadata ?? {}
-      const memberName = [metadata.first_name, metadata.last_name].filter(Boolean).join(' ')
-        || metadata.full_name
-        || metadata.name
-        || undefined
+    if ((job.event_type === 'support_message' || job.event_type === 'support_handoff') && typedMessage.sender_role.toLowerCase() === 'member') {
+      const isHandoff = job.event_type === 'support_handoff'
 
       await sendSupportEmail({
         ticketId: job.conversation_id,
-        subject: typedConversation.subject,
-        memberName: typeof memberName === 'string' ? memberName.slice(0, 120) : undefined,
-        memberEmail: userData.user?.email,
-        body: typedMessage.body,
+        subject: isHandoff ? 'Human support requested' : 'New member support message',
+        memberName: undefined,
+        memberEmail: undefined,
+        body: isHandoff ? 'A member requested a human response. Sign in to the staff workspace to review this conversation.' : 'A member sent a new support message. Sign in to the staff workspace to review this conversation.',
         createdAt: typedMessage.created_at,
         priority: typedConversation.priority,
         status: typedConversation.status,
