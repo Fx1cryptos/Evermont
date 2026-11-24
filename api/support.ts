@@ -2,13 +2,23 @@ import type { RequestLike, ResponseLike } from './_lib/support.js'
 import { authenticateSupportUser, canManageSupport, canViewSupport, getQueryString, getString, getSupabaseAdmin, setJsonHeaders } from './_lib/support.js'
 import { processConversationNotification } from './_lib/notifications.js'
 
+// Tests pass fakes through deps. Vercel calls the default export with the request and response only.
+export type SupportHandlerDeps = {
+  createClient?: typeof getSupabaseAdmin
+  authenticate?: typeof authenticateSupportUser
+  processNotification?: typeof processConversationNotification
+}
+
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 function bodyRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null
 }
 
-export default async function handler(request: RequestLike, response: ResponseLike): Promise<void> {
+export default async function handler(request: RequestLike, response: ResponseLike, deps: SupportHandlerDeps = {}): Promise<void> {
+  const createClient = deps.createClient ?? getSupabaseAdmin
+  const authenticate = deps.authenticate ?? authenticateSupportUser
+  const processNotification = deps.processNotification ?? processConversationNotification
   setJsonHeaders(response, 'GET, POST, PATCH, OPTIONS')
   if (request.method === 'OPTIONS') {
     response.status(204).end()
@@ -17,8 +27,8 @@ export default async function handler(request: RequestLike, response: ResponseLi
 
   let client
   try {
-    client = getSupabaseAdmin()
-    const user = await authenticateSupportUser(client, request)
+    client = createClient()
+    const user = await authenticate(client, request)
     if (!user) {
       response.status(401).json({ error: 'Sign in to continue.' })
       return
@@ -147,7 +157,7 @@ export default async function handler(request: RequestLike, response: ResponseLi
           response.status(403).json({ error: 'You cannot process notifications for another member.' })
           return
         }
-        const result = await processConversationNotification(client, conversationId)
+        const result = await processNotification(client, conversationId)
         response.status(202).json({ result })
         return
       }
@@ -173,9 +183,14 @@ export default async function handler(request: RequestLike, response: ResponseLi
           .update({ status: 'pending_support', updated_at: requestedAt })
           .eq('id', conversationId)
           .eq('user_id', user.id)
+          .neq('status', 'closed')
           .select('id,status,updated_at')
-          .single()
-        if (handoffError || !updatedConversation) throw new Error('Unable to confirm human support request')
+          .maybeSingle()
+        if (handoffError) throw new Error('Unable to confirm human support request')
+        if (!updatedConversation) {
+          response.status(409).json({ error: 'This conversation is closed. Start a new request to contact support.' })
+          return
+        }
 
         const { data: latestMemberMessage } = await client.from('support_messages')
           .select('id')
@@ -198,7 +213,7 @@ export default async function handler(request: RequestLike, response: ResponseLi
           if (!queueError) {
             notificationQueued = true
             try {
-              const result = await processConversationNotification(client, conversationId)
+              const result = await processNotification(client, conversationId)
               notificationDelivered = result.sent > 0
             } catch {
               // The durable handoff and queued notification remain available to the scheduled worker.
@@ -239,7 +254,7 @@ export default async function handler(request: RequestLike, response: ResponseLi
         }).eq('id', conversationId)
         let notification = { sent: 0, failed: 0 }
         try {
-          notification = await processConversationNotification(client, conversationId)
+          notification = await processNotification(client, conversationId)
         } catch {
           // The persisted reply remains queued for the scheduled delivery worker.
         }
@@ -257,7 +272,7 @@ export default async function handler(request: RequestLike, response: ResponseLi
           updated_at: new Date().toISOString(),
         }).eq('conversation_id', conversationId).eq('status', 'failed')
         if (error) throw new Error('Unable to schedule notification retry')
-        const result = await processConversationNotification(client, conversationId)
+        const result = await processNotification(client, conversationId)
         response.status(200).json({ result })
         return
       }

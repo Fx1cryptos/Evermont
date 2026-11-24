@@ -11,7 +11,8 @@
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives",
     "type-check": "tsc --noEmit",
     "preview:vite": "vite preview",
-    "test:db": "node --test supabase/tests/support_messaging.test.mjs"
+    "test:db": "node --test supabase/tests/support_messaging.test.mjs",
+    "test:support": "node --test tests/support/handoff-race.test.mjs tests/support/read-receipts.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.38.0",
@@ -31,6 +32,7 @@
     "@typescript-eslint/parser": "^6.10.0",
     "@vitejs/plugin-react": "^4.2.0",
     "autoprefixer": "^10.4.16",
+    "esbuild": "^0.21.5",
     "eslint": "^8.53.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^4.6.2",

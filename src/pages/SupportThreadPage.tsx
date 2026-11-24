@@ -5,11 +5,12 @@ import { PortalShell } from '@/components/member/PortalShell'
 import { useAuth } from '@/contexts/AuthContext'
 import { ROUTES } from '@/constants/routes'
 import { supabase } from '@/lib/supabase'
+import { createReadReceiptTracker } from '@/lib/supportReadReceipts'
 import { supportService, type SupportConversation, type SupportMessage } from '@/services/supportService'
 
 export const SupportThreadPage: React.FC = () => {
-  const { user } = useAuth(); const { id = '' } = useParams(); const [conversation, setConversation] = useState<SupportConversation | null>(null); const [messages, setMessages] = useState<SupportMessage[]>([]); const [body, setBody] = useState(''); const [error, setError] = useState(''); const [sending, setSending] = useState(false); const [handoffPending, setHandoffPending] = useState(false); const [handoffMessage, setHandoffMessage] = useState('')
-  const load = useCallback(async () => { if (!user || !id) return; const [conversationResult, messageResult] = await Promise.all([supportService.getConversation(user.id, id), supportService.listMessages(user.id, id)]); if (conversationResult.error || messageResult.error) setError('We could not load this conversation.'); else { setConversation(conversationResult.data); setMessages(messageResult.data); if (messageResult.data.some(message => message.sender_role === 'support')) void supportService.markRead(id) } }, [user, id])
+  const { user } = useAuth(); const { id = '' } = useParams(); const [conversation, setConversation] = useState<SupportConversation | null>(null); const [messages, setMessages] = useState<SupportMessage[]>([]); const [body, setBody] = useState(''); const [error, setError] = useState(''); const [sending, setSending] = useState(false); const [handoffPending, setHandoffPending] = useState(false); const [handoffMessage, setHandoffMessage] = useState(''); const [readTracker] = useState(() => createReadReceiptTracker((conversationId) => supportService.markRead(conversationId)))
+  const load = useCallback(async () => { if (!user || !id) return; const [conversationResult, messageResult] = await Promise.all([supportService.getConversation(user.id, id), supportService.listMessages(user.id, id)]); if (conversationResult.error || messageResult.error) setError('We could not load this conversation.'); else { setConversation(conversationResult.data); setMessages(messageResult.data); void readTracker.sync(id, messageResult.data) } }, [user, id, readTracker])
   useEffect(() => {
     void load()
     if (!id) return
