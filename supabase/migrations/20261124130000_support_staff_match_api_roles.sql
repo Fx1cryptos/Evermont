@@ -16,7 +16,7 @@ as $$
     select 1
     from public.admin_roles ar
     where ar.user_id = auth.uid()
-      and upper(ar.role) in ('SUPER_ADMIN', 'ADMIN', 'OPERATIONS', 'SUPPORT')
+      and ar.role in ('SUPER_ADMIN', 'ADMIN', 'OPERATIONS', 'SUPPORT')
   );
 $$;
 revoke all on function public.is_support_staff() from public, anon;
