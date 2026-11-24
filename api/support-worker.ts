@@ -4,9 +4,9 @@ import { getSupabaseAdmin, setJsonHeaders } from './_lib/support.js'
 import { processSupportNotificationBatch } from './_lib/notifications.js'
 
 export default async function handler(request: RequestLike, response: ResponseLike): Promise<void> {
-  setJsonHeaders(response, 'POST')
-  if (request.method !== 'POST') {
-    response.setHeader('Allow', 'POST')
+  setJsonHeaders(response, 'GET')
+  if (request.method !== 'GET') {
+    response.setHeader('Allow', 'GET')
     response.status(405).json({ error: 'Method not allowed.' })
     return
   }
