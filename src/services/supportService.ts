@@ -53,18 +53,26 @@ export const supportService = {
     const { data, error } = await supabase.from('support_messages').select('id,conversation_id,sender_role,body,created_at').eq('conversation_id', conversationId).eq('is_internal', false).order('created_at', { ascending: true })
     return { data: (data || []) as SupportMessage[], error }
   },
+  // Creates the conversation and its first message in one database transaction.
   async createConversation(userId: string, subject: string, body: string) {
-    const { data: conversation, error: conversationError } = await supabase.from('support_conversations').insert({ user_id: userId, subject: subject.trim() }).select('id,subject,status,created_at,updated_at').single()
-    if (conversationError || !conversation) return { data: null, error: conversationError || new Error('Conversation could not be created') }
-    const { error: messageError } = await supabase.from('support_messages').insert({ conversation_id: conversation.id, sender_id: userId, sender_role: 'member', body: body.trim(), is_internal: false })
-    if (!messageError) void notifySupportWorker(conversation.id)
-    return { data: conversation as SupportConversation, error: messageError }
+    const { data: conversationId, error } = await supabase.rpc('create_support_conversation', { p_subject: subject.trim(), p_body: body.trim() })
+    if (error || typeof conversationId !== 'string') return { data: null, error: error || new Error('Conversation could not be created') }
+    void notifySupportWorker(conversationId)
+    const created = await this.getConversation(userId, conversationId)
+    if (created.error || !created.data) return { data: null, error: created.error || new Error('Conversation not found') }
+    return { data: created.data as SupportConversation, error: null }
   },
   async sendMessage(userId: string, conversationId: string, body: string) {
     const conversation = await this.getConversation(userId, conversationId)
     if (conversation.error || !conversation.data) return { error: conversation.error || new Error('Conversation not found') }
+    if (conversation.data.status === 'closed') return { error: new Error('This conversation is closed. Start a new conversation to contact support.') }
     const result = await supabase.from('support_messages').insert({ conversation_id: conversationId, sender_id: userId, sender_role: 'member', body: body.trim(), is_internal: false })
     if (!result.error) void notifySupportWorker(conversationId)
     return result
+  },
+  // Marks staff replies on the member's own conversation as read. Idempotent.
+  async markRead(conversationId: string) {
+    const { error } = await supabase.rpc('support_mark_member_read', { p_conversation_id: conversationId })
+    return { error }
   },
 }

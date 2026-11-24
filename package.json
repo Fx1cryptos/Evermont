@@ -10,7 +10,9 @@
     "preview": "node scripts/serve-dist.mjs",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives",
     "type-check": "tsc --noEmit",
-    "preview:vite": "vite preview"
+    "preview:vite": "vite preview",
+    "test:db": "node --test supabase/tests/support_messaging.test.mjs",
+    "test:support": "node --test tests/support/handoff-race.test.mjs tests/support/read-receipts.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.38.0",
@@ -22,6 +24,7 @@
     "swr": "^2.5.1"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.6.0",
     "@types/node": "^20.8.0",
     "@types/react": "^18.2.37",
     "@types/react-dom": "^18.2.15",
@@ -29,6 +32,7 @@
     "@typescript-eslint/parser": "^6.10.0",
     "@vitejs/plugin-react": "^4.2.0",
     "autoprefixer": "^10.4.16",
+    "esbuild": "^0.21.5",
     "eslint": "^8.53.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^4.6.2",
