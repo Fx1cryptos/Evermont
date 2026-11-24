@@ -11,13 +11,15 @@ const MIGRATION_FILES = {
   scopedClaim: '20261121123000_support_notification_scoped_claim.sql',
   gmail: '20261121130000_support_gmail_inbox.sql',
   repair: '20261124120000_support_member_messaging_repair.sql',
+  staffRoles: '20261124130000_support_staff_match_api_roles.sql',
 }
-const ALL_MIGRATIONS = ['outbox', 'scopedClaim', 'gmail', 'repair']
+const ALL_MIGRATIONS = ['outbox', 'scopedClaim', 'gmail', 'repair', 'staffRoles']
 
 const MEMBER_A = '11111111-1111-4111-8111-111111111111'
 const MEMBER_B = '22222222-2222-4222-8222-222222222222'
 const SUPPORT_USER = '33333333-3333-4333-8333-333333333333'
 const OPERATIONS_USER = '44444444-4444-4444-8444-444444444444'
+const COMPLIANCE_USER = '55555555-5555-4555-8555-555555555555'
 
 const readText = (url) => readFile(url, 'utf8')
 
@@ -333,6 +335,40 @@ test('staff replies insert with delivery_status once the gmail migration is appl
        values ($1, $2, 'support', 'Reply', false, false, 'queued') returning id, delivery_status`,
       [conversationId, SUPPORT_USER]), 'service_role')
     assert.equal(rows[0].delivery_status, 'queued')
+  } finally {
+    await db.close()
+  }
+})
+
+test('COMPLIANCE admins get no direct support access after the staff-role migration', async () => {
+  const db = await openDb(ALL_MIGRATIONS)
+  try {
+    await db.query('insert into public.admin_roles (user_id, role) values ($1, $2)', [COMPLIANCE_USER, 'COMPLIANCE'])
+    const conversationId = await createAsMember(db, MEMBER_A)
+    const { rows } = await asUser(db, COMPLIANCE_USER, () =>
+      db.query('select count(*)::int as n from public.support_conversations'))
+    assert.equal(rows[0].n, 0)
+    await assert.rejects(
+      asUser(db, COMPLIANCE_USER, () => db.query(
+        `insert into public.support_messages (conversation_id, sender_id, sender_role, body, is_internal)
+         values ($1, $2, 'support', 'Compliance reply', false)`,
+        [conversationId, COMPLIANCE_USER],
+      )),
+      /row-level security/,
+    )
+  } finally {
+    await db.close()
+  }
+})
+
+test('SUPPORT staff keep direct read and reply access after the staff-role migration', async () => {
+  const db = await openDb(ALL_MIGRATIONS)
+  try {
+    const conversationId = await createAsMember(db, MEMBER_A)
+    await staffPost(db, conversationId, { body: 'Support reply' })
+    const { rows } = await asUser(db, SUPPORT_USER, () =>
+      db.query('select count(*)::int as n from public.support_conversations'))
+    assert.equal(rows[0].n, 1)
   } finally {
     await db.close()
   }
