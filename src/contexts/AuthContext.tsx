@@ -2,7 +2,6 @@ import React, { createContext, useContext, useEffect, useState } from 'react'
 import { AuthContextType, User } from '@/types'
 import { mapSignInError, SIGN_IN_EMAIL_REQUIRED } from '@/lib/authErrors'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
-import { strongPasswordIssue } from '@/utils/validation'
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
