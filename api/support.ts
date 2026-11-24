@@ -43,20 +43,45 @@ export default async function handler(request: RequestLike, response: ResponseLi
           response.status(404).json({ error: 'Support ticket not found.' })
           return
         }
-        const [{ data: messages, error: messagesError }, { data: memberData }] = await Promise.all([
+        const [
+          { data: messages, error: messagesError },
+          { data: memberData },
+          { data: failedNotifications, error: notificationError },
+        ] = await Promise.all([
           client.from('support_messages')
-            .select('id,conversation_id,sender_id,sender_role,body,is_internal,read_by_member,read_by_support,created_at')
+            .select('id,conversation_id,sender_id,sender_role,body,is_internal,read_by_member,read_by_support,delivery_status,delivery_error,created_at')
             .eq('conversation_id', id)
             .order('created_at', { ascending: true })
             .limit(500),
           client.auth.admin.getUserById(conversation.user_id),
+          client.from('support_notification_outbox')
+            .select('id,event_type,attempt_count,last_error,updated_at')
+            .eq('conversation_id', id)
+            .eq('status', 'failed')
+            .order('updated_at', { ascending: false })
+            .limit(50),
         ])
         if (messagesError) throw new Error('Unable to load ticket messages')
-        await client.from('support_messages')
-          .update({ read_by_support: true })
-          .eq('conversation_id', id)
-          .eq('read_by_support', false)
-          .eq('is_internal', false)
+        if (notificationError) throw new Error('Unable to load notification delivery status')
+        const loadedMemberMessageIds = (messages ?? [])
+          .filter(message => message.sender_role.toLowerCase() === 'member' && !message.is_internal)
+          .map(message => message.id)
+        let readBySupportIds: string[] = []
+        if (loadedMemberMessageIds.length) {
+          const { data: readRows } = await client.from('support_messages')
+            .update({ read_by_support: true })
+            .eq('conversation_id', id)
+            .eq('read_by_support', false)
+            .eq('is_internal', false)
+            .in('id', loadedMemberMessageIds)
+            .select('id')
+          readBySupportIds = (readRows ?? []).map(row => row.id)
+        }
+        const messageIdsReadBySupport = new Set(readBySupportIds)
+        const messagesWithReadReceipts = (messages ?? []).map(message => ({
+          ...message,
+          read_by_support: message.read_by_support || messageIdsReadBySupport.has(message.id),
+        }))
         const metadata = memberData.user?.user_metadata ?? {}
         const name = [metadata.first_name, metadata.last_name].filter(Boolean).join(' ')
           || metadata.full_name
@@ -65,7 +90,8 @@ export default async function handler(request: RequestLike, response: ResponseLi
         response.status(200).json({
           conversation,
           member: { name: typeof name === 'string' ? name : null, email: memberData.user?.email ?? null },
-          messages: messages ?? [],
+          messages: messagesWithReadReceipts,
+          failedNotifications: failedNotifications ?? [],
         })
         return
       }
@@ -125,7 +151,7 @@ export default async function handler(request: RequestLike, response: ResponseLi
       const body = bodyRecord(request.body)
       const action = getString(body?.action, 20)
       const conversationId = getString(body?.conversationId, 36)
-      if (action !== 'notify' && action !== 'handoff' && !canManageSupport(user)) {
+      if (action !== 'notify' && action !== 'handoff' && action !== 'read' && !canManageSupport(user)) {
         response.status(403).json({ error: 'You do not have permission to respond to support tickets.' })
         return
       }
@@ -139,6 +165,40 @@ export default async function handler(request: RequestLike, response: ResponseLi
         .maybeSingle()
       if (ticketError || !conversation) {
         response.status(404).json({ error: 'Support ticket not found.' })
+        return
+      }
+
+      if (action === 'read') {
+        if (conversation.user_id !== user.id) {
+          response.status(403).json({ error: 'You cannot update receipts for another member.' })
+          return
+        }
+        const requestedIds = Array.isArray(body?.messageIds)
+          ? [...new Set(body.messageIds.filter((value): value is string => typeof value === 'string' && UUID_PATTERN.test(value)))].slice(0, 500)
+          : []
+        if (!requestedIds.length) {
+          response.status(400).json({ error: 'Loaded support message IDs are required.' })
+          return
+        }
+        const { data: loadedMessages, error: loadedMessagesError } = await client.from('support_messages')
+          .select('id')
+          .eq('conversation_id', conversationId)
+          .eq('sender_role', 'support')
+          .eq('is_internal', false)
+          .in('id', requestedIds)
+        if (loadedMessagesError) throw new Error('Unable to verify loaded support messages')
+        const verifiedIds = (loadedMessages ?? []).map(message => message.id)
+        if (!verifiedIds.length) {
+          response.status(200).json({ readMessageIds: [] })
+          return
+        }
+        const { error: receiptError } = await client.from('support_messages')
+          .update({ read_by_member: true })
+          .eq('conversation_id', conversationId)
+          .eq('read_by_member', false)
+          .in('id', verifiedIds)
+        if (receiptError) throw new Error('Unable to update support read receipts')
+        response.status(200).json({ readMessageIds: verifiedIds })
         return
       }
 
@@ -163,9 +223,22 @@ export default async function handler(request: RequestLike, response: ResponseLi
           .update({ status: 'pending_support', updated_at: requestedAt })
           .eq('id', conversationId)
           .eq('user_id', user.id)
+          .neq('status', 'closed')
           .select('id,status,updated_at')
-          .single()
-        if (handoffError || !updatedConversation) throw new Error('Unable to confirm human support request')
+          .maybeSingle()
+        if (handoffError) throw new Error('Unable to confirm human support request')
+        if (!updatedConversation) {
+          const { data: currentConversation } = await client.from('support_conversations')
+            .select('status')
+            .eq('id', conversationId)
+            .eq('user_id', user.id)
+            .maybeSingle()
+          if (currentConversation?.status === 'closed') {
+            response.status(409).json({ error: 'This conversation is closed and cannot be reopened by a support request.' })
+            return
+          }
+          throw new Error('Unable to confirm human support request')
+        }
 
         const { data: latestMemberMessage } = await client.from('support_messages')
           .select('id')
@@ -208,24 +281,57 @@ export default async function handler(request: RequestLike, response: ResponseLi
 
       if (action === 'reply') {
         const message = getString(body?.message, 4000)
+        const messageId = getString(body?.messageId, 36)
         if (!message) {
           response.status(400).json({ error: 'Write a reply of 1–4,000 characters.' })
           return
         }
-        const { data, error } = await client.from('support_messages').insert({
-          conversation_id: conversationId,
-          sender_id: user.id,
-          sender_role: 'support',
-          body: message,
-          is_internal: false,
-          read_by_member: false,
-          read_by_support: true,
-          delivery_status: 'queued',
-        }).select('id,created_at,delivery_status').single()
-        if (error) throw new Error('Unable to save the support reply')
+        if (!messageId || !UUID_PATTERN.test(messageId)) {
+          response.status(400).json({ error: 'A valid reply request ID is required.' })
+          return
+        }
+        const { data: existingMessage, error: existingError } = await client.from('support_messages')
+          .select('id,body,created_at,delivery_status')
+          .eq('id', messageId)
+          .eq('conversation_id', conversationId)
+          .eq('sender_id', user.id)
+          .eq('sender_role', 'support')
+          .maybeSingle()
+        if (existingError) throw new Error('Unable to verify the support reply request')
+        if (existingMessage && existingMessage.body !== message) {
+          response.status(409).json({ error: 'This reply request ID was already used for different content.' })
+          return
+        }
+        let savedMessage = existingMessage
+        if (!savedMessage) {
+          const { data: insertedMessage, error: insertError } = await client.from('support_messages').insert({
+            id: messageId,
+            conversation_id: conversationId,
+            sender_id: user.id,
+            sender_role: 'support',
+            body: message,
+            is_internal: false,
+            read_by_member: false,
+            read_by_support: true,
+            delivery_status: 'queued',
+          }).select('id,body,created_at,delivery_status').single()
+          if (insertError || !insertedMessage) {
+            const { data: retryMessage, error: retryError } = await client.from('support_messages')
+              .select('id,body,created_at,delivery_status')
+              .eq('id', messageId)
+              .eq('conversation_id', conversationId)
+              .eq('sender_id', user.id)
+              .eq('sender_role', 'support')
+              .maybeSingle()
+            if (retryError || !retryMessage || retryMessage.body !== message) throw new Error('Unable to save the support reply')
+            savedMessage = retryMessage
+          } else {
+            savedMessage = insertedMessage
+          }
+        }
         await client.from('support_conversations').update({
-          last_message_at: data.created_at,
-          updated_at: data.created_at,
+          last_message_at: savedMessage.created_at,
+          updated_at: savedMessage.created_at,
         }).eq('id', conversationId)
         let notification = { sent: 0, failed: 0 }
         try {
@@ -233,7 +339,7 @@ export default async function handler(request: RequestLike, response: ResponseLi
         } catch {
           // The persisted reply remains queued for the scheduled delivery worker.
         }
-        response.status(201).json({ message: data, notification })
+        response.status(existingMessage ? 200 : 201).json({ message: savedMessage, notification })
         return
       }
 
