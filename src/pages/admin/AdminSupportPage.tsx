@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import useSWR from 'swr'
 import {
@@ -43,7 +43,10 @@ type TicketMessage = {
   body: string
   is_internal: boolean
   created_at: string
+  delivery_status?: 'queued' | 'sending' | 'sent' | 'failed' | null
+  delivery_error?: string | null
 }
+type FailedNotification = { id: string; event_type: string; attempt_count: number; last_error: string | null; updated_at: string }
 type InboxResult = { conversations: Conversation[] }
 type GmailStatus = {
   connection: { senderEmail: string; accountEmail: string; senderMatches: boolean; canReadInbox: boolean }
@@ -54,6 +57,7 @@ type DetailResult = {
   conversation: Conversation
   member: { name: string | null; email: string | null }
   messages: TicketMessage[]
+  failedNotifications: FailedNotification[]
 }
 
 const statusLabel: Record<Status, string> = {
@@ -116,6 +120,7 @@ export const AdminSupportPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState('all')
   const [reply, setReply] = useState('')
+  const pendingReply = useRef<{ messageId: string; body: string } | null>(null)
   const [working, setWorking] = useState(false)
   const [testSending, setTestSending] = useState(false)
   const [testMessage, setTestMessage] = useState('')
@@ -180,13 +185,17 @@ export const AdminSupportPage: React.FC = () => {
   const sendReply = async (event: React.FormEvent) => {
     event.preventDefault()
     if (!id || !reply.trim() || working) return
+    const normalizedReply = reply.trim()
+    const request = pendingReply.current?.body === normalizedReply ? pendingReply.current : { messageId: crypto.randomUUID(), body: normalizedReply }
+    pendingReply.current = request
     setWorking(true)
     setActionError('')
     try {
       const result = await supportRequest<{ notification: { sent: number; failed: number } }>('/api/support', {
         method: 'POST',
-        body: JSON.stringify({ action: 'reply', conversationId: id, message: reply.trim() }),
+        body: JSON.stringify({ action: 'reply', conversationId: id, message: request.body, messageId: request.messageId }),
       })
+      pendingReply.current = null
       setReply('')
       if (result.notification?.failed) setActionError('Your reply is saved, but email delivery failed. It will retry automatically.')
       await Promise.all([refreshDetail(), refreshInbox()])
@@ -338,6 +347,7 @@ export const AdminSupportPage: React.FC = () => {
                 </div>
               </div>
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 bg-white px-4 py-3 text-xs text-slate-500 sm:px-6"><div className="flex min-w-0 items-center gap-2"><Mail size={14} className="shrink-0" aria-hidden="true" /><span className="truncate">{detail?.member.email || 'Member email unavailable'}</span></div><button type="button" onClick={() => void retryNotifications()} disabled={working} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium text-[#0504AA] hover:bg-blue-50 disabled:opacity-50"><RotateCw size={13} aria-hidden="true" /> Retry email</button></div>
+              {Boolean(detail?.failedNotifications.length) && <div role="status" className="border-b border-rose-200 bg-rose-50 px-4 py-3 sm:px-6"><p className="text-xs font-semibold text-rose-800">Email delivery needs attention</p><ul className="mt-1 space-y-1">{detail?.failedNotifications.map(notification => <li key={notification.id} className="text-xs text-rose-700">{notification.event_type === 'support_reply' ? 'Member reply' : notification.event_type === 'support_handoff' ? 'Human-support request' : 'Support notification'} failed after {notification.attempt_count} attempt{notification.attempt_count === 1 ? '' : 's'} · {formatDate(notification.updated_at)}</li>)}</ul></div>}
               <div className="min-h-[220px] flex-1 space-y-4 overflow-y-auto p-4 sm:p-6">
                 {detailLoading && <div className="flex items-center gap-2 text-sm text-slate-500"><Loader2 size={15} className="animate-spin" /> Loading ticket</div>}
                 {detailError && <div role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{detailError.message}</div>}

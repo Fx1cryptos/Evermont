@@ -9,7 +9,9 @@
     "build": "tsc --noEmit && vite build && vite build --ssr src/entry-server.tsx --outDir dist-ssr && node scripts/prerender.mjs",
     "preview": "node scripts/serve-dist.mjs",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives",
-    "type-check": "tsc --noEmit",
+        "type-check": "tsc --noEmit",
+    "test:support": "node --experimental-strip-types --test tests/support-regressions.test.mjs"
+,
     "preview:vite": "vite preview"
   },
   "dependencies": {
