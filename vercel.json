@@ -5,12 +5,6 @@
   "outputDirectory": "dist",
   "cleanUrls": true,
   "trailingSlash": false,
-  "crons": [
-    {
-      "path": "/api/support-worker",
-      "schedule": "* * * * *"
-    }
-  ],
   "rewrites": [
     {
       "source": "/auth/callback",
