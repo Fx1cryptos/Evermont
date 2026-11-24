@@ -158,6 +158,16 @@ export default async function handler(request: RequestLike, response: ResponseLi
           return
         }
 
+        const { data: currentConversation, error: currentError } = await client.from('support_conversations')
+          .select('status')
+          .eq('id', conversationId)
+          .maybeSingle()
+        if (currentError || !currentConversation) throw new Error('Unable to read support ticket status')
+        if (currentConversation.status === 'closed') {
+          response.status(409).json({ error: 'This conversation is closed. Start a new request to contact support.' })
+          return
+        }
+
         const requestedAt = new Date().toISOString()
         const { data: updatedConversation, error: handoffError } = await client.from('support_conversations')
           .update({ status: 'pending_support', updated_at: requestedAt })
