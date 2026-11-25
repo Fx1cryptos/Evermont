@@ -136,6 +136,10 @@ test('Gemini only receives topic labels and returns approved content; provider f
     return json({ candidates: [{ content: { parts: [{ text: 'activation' }] } }] })
   }
   assert.match(await approvedAnswer(['activation private-personal-details'],articles), /^Open Activation/)
+  let sensitiveCalls = 0
+  transport = async () => { sensitiveCalls++; return json({}) }
+  assert.match(await approvedAnswer(['Unauthorized transaction on my statement'], articles), /agent/)
+  assert.equal(sensitiveCalls, 0)
   transport = async () => json({ candidates: [{ content: { parts: [{ text: 'fabricated balance' }] } }] })
   assert.match(await approvedAnswer(['balance'],articles), /agent/)
   transport = async () => json({}, 503)
@@ -535,8 +539,21 @@ test('automation health is restricted to administrators and reports checks witho
     if (url.hostname==='gmail.googleapis.com') {providers++;return json({emailAddress:'evermontcreditunion@gmail.com'})}
     if (url.pathname.endsWith('/auth/v1/user')) return json({id:member})
     if (url.pathname.endsWith('/admin_roles')) return json([{role}])
+    if (url.pathname === '/auth/v1/health') return json({name:'GoTrue'})
+    if (url.pathname.endsWith('/support_worker_health')) {
+      if (!queueOk) return json({message:'denied'},403)
+      if (url.searchParams.get('healthy') === 'eq.true') return json([])
+      return json([{id:'run',finished_at:'2026-01-01T00:00:00Z',failed_checks:['gmail']}])
+    }
     if (url.pathname.endsWith('/support_gmail_sync_state')) return json([{last_synced_at:'2026-01-01T00:00:00Z'}])
     if (url.pathname.endsWith('/support_notification_outbox') && !queueOk) return json({message:'denied'},403)
+    if (url.pathname.endsWith('/support_notification_outbox') && opt.method !== 'HEAD') {
+      assert.equal(url.searchParams.get('select'), 'status,attempt_count,updated_at')
+      assert.equal(url.searchParams.get('status'), 'in.(sent,failed)')
+      assert.equal(url.searchParams.get('order'), 'updated_at.desc,id.desc')
+      assert.equal(url.searchParams.get('limit'), '10')
+      return json([{status:'failed',attempt_count:2,updated_at:'2026-01-01T00:00:00Z'}])
+    }
     if (opt.method==='HEAD') return new Response(null,{status:200,headers:{'content-range':'0-0/3'}})
     throw Error('Unexpected health request')
   }
@@ -549,19 +566,30 @@ test('automation health is restricted to administrators and reports checks witho
   assert.equal((await run()).code,403)
   assert.equal(providers,0)
   role='ADMIN'
+  const {probePlatform} = await load('/api/_lib/platformHealth.ts')
+  assert.deepEqual(await probePlatform(client),[])
   const result=await run()
   assert.equal(result.code,200)
   assert.equal(result.body.gemini.state,'available')
   assert.equal(result.body.gmail.state,'available')
   assert.equal(result.body.supportOpen,3)
+  assert.deepEqual(result.body.workerHealth.latest.failed_checks,['gmail'])
+  assert.equal(result.body.workerHealth.lastSuccess,null)
+  assert.equal(result.body.workerHealth.recentFailures.length,1)
   assert.equal(result.body.failedNotifications,3)
+  assert.deepEqual(result.body.recentNotifications, [
+    {status:'failed',attempts:2,updatedAt:'2026-01-01T00:00:00Z'},
+  ])
   assert.match(result.body.gmail.detail,/delivery has not been checked/)
   assert.ok(!JSON.stringify(result.body).includes('fixture-'))
   geminiOk=false;queueOk=false
+  assert.deepEqual(await probePlatform(client),['gemini','database'])
   const failed=await run()
   assert.equal(failed.code,200)
   assert.equal(failed.body.gemini.state,'unavailable')
   assert.equal(failed.body.failedNotifications,null)
+  assert.equal(failed.body.recentNotifications,null)
+  assert.equal(failed.body.workerHealth,null)
   assert.ok(!JSON.stringify(failed.body).includes('secret'))
 })
 
@@ -685,6 +713,64 @@ test('dashboard unread total requires an authorized inbox viewer and excludes in
   assert.equal((await get()).code,403); assert.equal(reads,0)
   authorized=true
   assert.deepEqual((await get()).body,{unread:7}); assert.equal(reads,1)
+})
+
+test('staff alerts retry temporary Gmail failures and reconcile an accepted send without duplicating it', async () => {
+  const { deliverSupportNotification } = await load('/api/_lib/notifications.ts')
+  const { supportMailbox } = await load('/api/_lib/gmail.ts')
+  for (const key of ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_REFRESH_TOKEN']) env(key, 'fixture')
+  env('GMAIL_FROM_EMAIL', supportMailbox)
+  env('SUPPORT_NOTIFICATION_EMAIL', supportMailbox)
+
+  let accepted = false
+  const bodies = []
+  const writes = []
+  transport = async (url, opt) => {
+    if (url.hostname === 'oauth2.googleapis.com') return json({ access_token: 'fixture' })
+    if (url.pathname.endsWith('/profile')) return json({ emailAddress: supportMailbox })
+    if (url.pathname.endsWith('/users/me/messages')) {
+      assert.match(url.searchParams.get('q'), new RegExp('rfc822msgid:notice\\.' + notice))
+      return json({ messages: accepted ? [{ id: 'accepted', threadId: 'thread' }] : [] })
+    }
+    if (url.pathname.endsWith('/send')) {
+      const mime = Buffer.from(JSON.parse(opt.body).raw, 'base64url').toString()
+      assert.ok(mime.includes('To: ' + supportMailbox))
+      bodies.push(Buffer.from(mime.split('\r\n\r\n')[1], 'base64').toString())
+      if (bodies.length === 1) return json({}, 503)
+      accepted = true
+      return json({ id: 'accepted', threadId: 'thread' })
+    }
+    if (url.pathname.endsWith('/support_conversations')) {
+      assert.equal(url.searchParams.get('id'), 'eq.' + ticket)
+      return json({ subject: 'OTP secret-fixture', priority: 'high', status: 'pending_support' })
+    }
+    assert.ok(url.pathname.endsWith('/support_notification_outbox'))
+    assert.equal(url.searchParams.get('id'), 'eq.' + notice)
+    assert.equal(opt.method, 'PATCH')
+    assert.equal(url.searchParams.get('status'), 'eq.processing')
+    assert.equal(url.searchParams.get('locked_at'), 'eq.2026-01-01T00:00:00Z')
+    writes.push(JSON.parse(opt.body))
+    return json({ id: notice })
+  }
+
+  const job = {
+    id: notice, conversation_id: ticket, message_id: null, created_at: '2026-01-01T00:00:00Z',
+    locked_at: '2026-01-01T00:00:00Z', event_type: 'support_staff_alert', payload: { alert: 'handoff' }, attempt_count: 1,
+  }
+  assert.equal(await deliverSupportNotification(client, job), false)
+  assert.equal(writes[0].status, 'failed')
+  assert.ok(Date.parse(writes[0].available_at) >= Date.parse(writes[0].updated_at) + 59_000)
+  assert.equal(await deliverSupportNotification(client, { ...job, attempt_count: 2 }), true)
+  assert.equal(await deliverSupportNotification(client, { ...job, attempt_count: 3 }), true)
+  assert.equal(bodies.length, 2)
+  for (const body of bodies) {
+    assert.ok(body.includes('Human support requested'))
+    assert.ok(body.includes('/admin/support/' + ticket))
+    assert.ok(body.includes(job.created_at))
+    assert.doesNotMatch(body, /secret-fixture|MEMBER REPLY/)
+  }
+  assert.deepEqual(writes.map((row) => row.status), ['failed', 'sent', 'sent'])
+  assert.ok(writes.every((row) => !('payload' in row)))
 })
 
 test('published article revisions ground contextual follow-ups; sensitive and unknown turns escalate', async()=>{

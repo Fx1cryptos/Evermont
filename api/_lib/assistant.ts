@@ -12,7 +12,7 @@ export async function approvedAnswer(messages: string[], articles: Article[]): P
     /^[a-z][a-z0-9_-]{0,39}$/.test(a.topic) && typeof a.keywords === 'string' && a.keywords.trim() &&
     a.keywords.length <= 500 && typeof a.answer === 'string' && a.answer.trim() && a.answer.length <= 2000)
   const latest = messages[messages.length-1]?.toLowerCase() ?? ''
-  if (/\b(fraud|dispute|stolen|lost|unauthorized|balance|urgent|overcharged|otp|pin|cvv|human|representative|charged|declined|disputed|refund|reversed|unrecognized|missing|unresolved|unsuccessful|failed)\b|\d{4,}/i.test(latest)) return human
+  if (/\b(fraud(?:ulent)?|disput(?:e|ed|ing)|stolen|lost|unauthori[sz]ed|compromised|scam(?:med)?|balance|urgent|overcharged|otp|pin|cvv|human|representative|charged|declined|disputed|refund|reversed|unrecognized|missing|unresolved|unsuccessful|failed)\b|\d{4,}/i.test(latest)) return human
   const signals = messages.map(message => articles.filter(article =>
     article.keywords.split(',').some(word => word.trim() && message.toLowerCase().includes(word.trim().toLowerCase()))
   ).map(article => article.topic))
