@@ -208,6 +208,7 @@ async function conversationForThread(
       user_id: userId,
       subject,
       status: 'pending_support',
+      human_requested: true,
       priority: 'normal',
       gmail_thread_id: threadId,
     })
@@ -270,7 +271,7 @@ export async function importMessage(client: SupabaseClient, ref: GmailMessageRef
     const saved = await client.from('support_messages').insert({conversation_id:notice.conversation_id,sender_id:staff,
       sender_role:'support',source:'gmail',body,is_internal:false,read_by_support:true,read_by_member:false,
       delivery_status:'received',gmail_message_id:ref.id,gmail_thread_id:ref.threadId})
-    if (saved.error?.code === '23505') return 'ignored'
+    if (saved.error?.code === '23505' || saved.error?.code === 'PT409') return 'ignored'
     if (saved.error) throw new Error('Staff reply could not be saved')
     return 'imported'
   }
@@ -293,9 +294,6 @@ export async function importMessage(client: SupabaseClient, ref: GmailMessageRef
   )
   if (!conversation || conversation.user_id !== memberId) return 'ignored'
 
-  const createdAt = gmailMessage.internalDate && Number.isFinite(Number(gmailMessage.internalDate))
-    ? new Date(Number(gmailMessage.internalDate)).toISOString()
-    : new Date().toISOString()
   const rfcMessageId = headerValue(headers, 'Message-ID').replace(/[\u0000-\u001f\u007f]/g, '').slice(0, 998) || null
   const references = `${rawReferences} ${inReplyTo}`.replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 2000) || null
 
@@ -314,13 +312,9 @@ export async function importMessage(client: SupabaseClient, ref: GmailMessageRef
     gmail_references: references,
     delivery_status: 'received',
   })
-  if (insertError?.code === '23505') return 'ignored'
+  if (insertError?.code === '23505' || insertError?.code === 'PT409') return 'ignored'
   if (insertError) throw new Error('Gmail message could not be stored')
 
-  const { error: conversationError } = await client.from('support_conversations')
-    .update({ status: 'pending_support', last_message_at: createdAt, updated_at: createdAt })
-    .eq('id', conversation.id)
-  if (conversationError) throw new Error('Support conversation could not be updated')
   return 'imported'
 }
 

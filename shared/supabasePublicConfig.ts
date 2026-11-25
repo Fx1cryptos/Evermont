@@ -1,5 +1,5 @@
 const INTENDED_SUPABASE_REF = 'gdodqiwjcezdznzroupw'
-const INTENDED_SUPABASE_URL = `https://${INTENDED_SUPABASE_REF}.supabase.co`
+
 
 type KeyKind = 'publishable' | 'anon' | 'rejected'
 
@@ -28,7 +28,7 @@ function decodeJwtPayload(segment: string): { role?: string; ref?: string } | nu
  * anon keys are rejected before any network call. Publishable keys carry no
  * project ref, so the caller must ask the intended project to accept them.
  */
-function classifyClientKey(key: string): { kind: KeyKind; detail: string } {
+function classifyClientKey(key: string, ref: string): { kind: KeyKind; detail: string } {
   if (key.startsWith('sb_secret_')) return { kind: 'rejected', detail: 'secret key' }
   if (key.startsWith('sb_publishable_')) return { kind: 'publishable', detail: 'publishable key' }
   const parts = key.split('.')
@@ -37,7 +37,7 @@ function classifyClientKey(key: string): { kind: KeyKind; detail: string } {
     if (!payload) return { kind: 'rejected', detail: 'unreadable JWT' }
     if (payload.role === 'service_role') return { kind: 'rejected', detail: 'service-role key' }
     if (payload.role !== 'anon') return { kind: 'rejected', detail: 'unexpected JWT role' }
-    if (payload.ref !== INTENDED_SUPABASE_REF) {
+    if (payload.ref !== ref) {
       return { kind: 'rejected', detail: 'other-project anon key' }
     }
     return { kind: 'anon', detail: 'anon key' }
@@ -58,29 +58,42 @@ async function probePublishableKey(url: string, key: string): Promise<'accepted'
   }
 }
 
-export function resolveSupabaseUrl(env: Record<string, string | undefined>): string {
-  const candidates: Array<[string, string | undefined]> = [
-    ['VITE_SUPABASE_URL', env.VITE_SUPABASE_URL],
-    ['NEXT_PUBLIC_SUPABASE_URL', env.NEXT_PUBLIC_SUPABASE_URL],
-    ['SUPABASE_URL', env.SUPABASE_URL],
-  ]
-  for (const [name, value] of candidates) {
-    if (!value?.trim()) continue
-    const ref = projectRefFromUrl(value)
-    if (ref === INTENDED_SUPABASE_REF) return INTENDED_SUPABASE_URL
-    console.warn(
-      `[evermont] Ignoring ${name}: project ref ${ref || 'unrecognized'} is not ${INTENDED_SUPABASE_REF}.`,
-    )
+type TargetEnv = Record<string, string | undefined>
+
+// A private scheduler may not receive Vercel metadata. Honor its staging pin too.
+export function requiresStagingTarget(env: TargetEnv): boolean {
+  return env.VERCEL_ENV === 'preview' ||
+    (env.VERCEL_ENV !== 'production' && env.STAGING_SUPABASE_PROJECT_REF !== undefined)
+}
+
+export function resolveSupabaseUrl(env: Record<string, string | undefined>, requireBrowserUrl = false): string {
+  if (requiresStagingTarget(env)) {
+    const expected = env.STAGING_SUPABASE_PROJECT_REF?.trim()
+    if (!expected || !/^[a-z0-9]+$/.test(expected) || expected === INTENDED_SUPABASE_REF)
+      throw new Error('Preview requires a non-production STAGING_SUPABASE_PROJECT_REF.')
+    if (projectRefFromUrl(env.VITE_SUPABASE_URL) !== expected ||
+        projectRefFromUrl(env.SUPABASE_URL) !== expected ||
+        (env.NEXT_PUBLIC_SUPABASE_URL !== undefined && projectRefFromUrl(env.NEXT_PUBLIC_SUPABASE_URL) !== expected))
+      throw new Error('Preview Supabase URLs must all match the approved staging project.')
+    return `https://${expected}.supabase.co`
   }
-  return INTENDED_SUPABASE_URL
+  if (requireBrowserUrl && !env.VITE_SUPABASE_URL?.trim()) throw new Error('Set VITE_SUPABASE_URL explicitly for this build.')
+  const value = env.VITE_SUPABASE_URL ?? env.NEXT_PUBLIC_SUPABASE_URL ?? env.SUPABASE_URL
+  const ref = projectRefFromUrl(value)
+  if (!ref) throw new Error('Set VITE_SUPABASE_URL to a valid HTTPS Supabase project URL.')
+  if (env.VERCEL_ENV === 'production' && ref !== INTENDED_SUPABASE_REF)
+    throw new Error('Production Supabase target does not match the approved project.')
+  for (const alternate of [env.SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_URL]) {
+    if (alternate && projectRefFromUrl(alternate) !== ref)
+      throw new Error('Frontend and server Supabase targets disagree.')
+  }
+  return `https://${ref}.supabase.co`
 }
 
 export async function resolveSupabaseAnonKey(env: Record<string, string | undefined>, supabaseUrl: string): Promise<string> {
-  // Named public vars first. SUPABASE_API / SUPABASE_API_2 are last because
-  // those names are ambiguous, but they are still classified and probed:
-  // only a publishable key the intended project accepts can be embedded.
-  // Service-role, secret, JWT secret, and Postgres variables are never read.
-  const candidates: Array<[string, string | undefined]> = [
+  const ref = projectRefFromUrl(supabaseUrl)
+  if (!ref) throw new Error('Invalid Supabase project URL.')
+  const candidates = [
     ['VITE_SUPABASE_PUBLISHABLE_KEY', env.VITE_SUPABASE_PUBLISHABLE_KEY],
     ['VITE_SUPABASE_ANON_KEY', env.VITE_SUPABASE_ANON_KEY],
     ['NEXT_PUBLIC_SUPABASE_ANON_KEY', env.NEXT_PUBLIC_SUPABASE_ANON_KEY],
@@ -89,7 +102,7 @@ export async function resolveSupabaseAnonKey(env: Record<string, string | undefi
     ['SUPABASE_ANON_KEY', env.SUPABASE_ANON_KEY],
     ['SUPABASE_API_2', env.SUPABASE_API_2],
     ['SUPABASE_API', env.SUPABASE_API],
-  ]
+  ] as const
   const notes: string[] = []
   const seen = new Set<string>()
   let unreachable = false
@@ -102,18 +115,18 @@ export async function resolveSupabaseAnonKey(env: Record<string, string | undefi
       continue
     }
     seen.add(key)
-    const classified = classifyClientKey(key)
+    const classified = classifyClientKey(key,ref)
     if (classified.kind === 'rejected') {
       notes.push(`${name}: ${classified.detail}`)
       continue
     }
     if (classified.kind === 'anon') {
-      console.warn(`[evermont] Using anon key from ${name} for project ${INTENDED_SUPABASE_REF}.`)
+      console.warn(`[evermont] Using anon key from ${name} for project ${ref}.`)
       return key
     }
     const probe = await probePublishableKey(supabaseUrl, key)
     if (probe === 'accepted') {
-      console.warn(`[evermont] Using publishable key from ${name} for project ${INTENDED_SUPABASE_REF}.`)
+      console.warn(`[evermont] Using publishable key from ${name} for project ${ref}.`)
       return key
     }
     if (probe === 'unreachable') unreachable = true
@@ -122,8 +135,8 @@ export async function resolveSupabaseAnonKey(env: Record<string, string | undefi
 
   const summary = notes.length ? ` Checked: ${notes.join('; ')}.` : ' No public key variables were set.'
   const reason = unreachable
-    ? `Could not verify a public Supabase key for project ${INTENDED_SUPABASE_REF}.${summary}`
-    : `No public anon or publishable key was accepted by project ${INTENDED_SUPABASE_REF}.${summary}`
+    ? `Could not verify a public Supabase key for project ${ref}.${summary}`
+    : `No public anon or publishable key was accepted by project ${ref}.${summary}`
   console.error(`[evermont] ${reason}`)
   throw new Error(`[evermont] ${reason}`)
 }

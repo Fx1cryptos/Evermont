@@ -5,9 +5,6 @@ import { authStorage } from '@/lib/authStorage'
 // Capture the email or recovery redirect before the client removes it from the URL.
 void authLink
 
-/** Intended Supabase project. Public client keys for any other project are ignored. */
-export const INTENDED_SUPABASE_REF = 'gdodqiwjcezdznzroupw'
-
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 
@@ -33,13 +30,13 @@ function decodeJwtPayload(segment: string): { role?: string; ref?: string } | nu
  */
 export function isPublicClientKey(key: string | undefined, projectRef: string | null): boolean {
   if (!key || key === 'placeholder-anon-key') return false
-  if (projectRef !== INTENDED_SUPABASE_REF) return false
+  if (!projectRef) return false
   if (key.startsWith('sb_secret_')) return false
   if (key.startsWith('sb_publishable_')) return true
   const parts = key.split('.')
   if (parts.length !== 3 || !parts[0].startsWith('eyJ')) return false
   const payload = decodeJwtPayload(parts[1])
-  return payload?.role === 'anon' && payload.ref === INTENDED_SUPABASE_REF
+  return payload?.role === 'anon' && payload.ref === projectRef
 }
 
 /**
@@ -50,7 +47,7 @@ export const isSupabaseConfigured = isPublicClientKey(supabaseAnonKey, projectRe
 
 if (!isSupabaseConfigured) {
   console.error(
-    `[evermont] Supabase client is not configured with a public anon or publishable key for project ${INTENDED_SUPABASE_REF}. Member sign-in is unavailable.`,
+    `[evermont] Supabase client is not configured with a public anon or publishable key for the configured project. Member sign-in is unavailable.`,
   )
 }
 

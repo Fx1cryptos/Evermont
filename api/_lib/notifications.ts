@@ -1,11 +1,14 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { assistMember } from './assistant.js'
 import { sendSupportEmail, sendSupportReply } from './gmail.js'
 
 type OutboxRow = {
   id: string
   conversation_id: string | null
   message_id: string | null
+  payload?: { handoff?: boolean }
   event_type: string
+  locked_at: string
   attempt_count: number
 }
 
@@ -25,16 +28,16 @@ type SupportConversation = {
   gmail_thread_id: string | null
 }
 
-async function completeJob(client: SupabaseClient, id: string, binding?: {threadId?: string; id?: string}): Promise<void> {
-  const {error} = await client.from('support_notification_outbox').update({
-    ...(binding ? { payload: { notification_thread:binding.threadId, notification_message:binding.id } } : {}),
+async function completeJob(client: SupabaseClient, job: OutboxRow, binding?: {threadId?: string; id?: string}): Promise<void> {
+  const {data,error} = await client.from('support_notification_outbox').update({
+    ...(binding ? { payload: { ...job.payload, notification_thread:binding.threadId, notification_message:binding.id } } : {}),
     status: 'sent',
     sent_at: new Date().toISOString(),
     locked_at: null,
     last_error: null,
     updated_at: new Date().toISOString(),
-  }).eq('id', id)
-  if (error) throw new Error('Could not record notification delivery')
+  }).eq('id', job.id).eq('status','processing').eq('locked_at',job.locked_at).select('id').maybeSingle()
+  if (!data || error) throw new Error('Could not record notification delivery')
   console.info({event:'support.notification.completed'})
 }
 
@@ -42,18 +45,20 @@ async function failJob(client: SupabaseClient, job: OutboxRow, error: unknown): 
   const attempts = Math.min(6, Math.max(1, job.attempt_count))
   const delayMs = Math.min(60 * 60 * 1000, 60 * 1000 * (2 ** (attempts - 1)))
   const safeError = error instanceof Error ? error.message : 'Notification delivery failed'
-  await client.from('support_notification_outbox').update({
+  const failed = await client.from('support_notification_outbox').update({
     status: 'failed',
     available_at: new Date(Date.now() + delayMs).toISOString(),
     locked_at: null,
     last_error: safeError.slice(0, 300),
     updated_at: new Date().toISOString(),
-  }).eq('id', job.id)
+  }).eq('id', job.id).eq('status','processing').eq('locked_at',job.locked_at).select('id').maybeSingle()
+  if (failed.error) throw new Error('Could not record notification failure')
+  if (!failed.data) return
   if (job.event_type === 'support_reply' && job.message_id) {
     await client.from('support_messages').update({
       delivery_status: 'failed',
       delivery_error: safeError.slice(0, 300),
-    }).eq('id', job.message_id)
+    }).eq('id', job.message_id).neq('delivery_status','sent')
   }
 }
 
@@ -77,7 +82,7 @@ export async function deliverSupportNotification(client: SupabaseClient, job: Ou
     const typedConversation = conversation as SupportConversation
     const typedMessage = message as SupportMessage
     if (typedMessage.is_internal) {
-      await completeJob(client, job.id)
+      await completeJob(client, job)
       return true
     }
 
@@ -120,15 +125,17 @@ export async function deliverSupportNotification(client: SupabaseClient, job: Ou
 
       const { error: savedConversationError } = await client.from('support_conversations').update({
         gmail_thread_id: sent.threadId,
-        status: 'pending_member',
-        updated_at: new Date().toISOString(),
+
       }).eq('id', job.conversation_id)
       if (savedConversationError) throw new Error('Gmail delivery succeeded but the support thread could not be updated')
-      await completeJob(client, job.id)
+      await completeJob(client, job)
       return true
     }
 
     if (job.event_type === 'support_message' && typedMessage.sender_role.toLowerCase() === 'member') {
+      // A saved outbox job survives navigation away from the member page.
+      // The DB claim deduplicates this recovery with the immediate chat request.
+      await assistMember(client, job.conversation_id, typedConversation.user_id).catch(()=>false)
       const { data: userData, error: userError } = await client.auth.admin.getUserById(typedConversation.user_id)
       if (userError) throw new Error('Member contact information could not be loaded')
       const metadata = userData.user?.user_metadata ?? {}
@@ -139,13 +146,13 @@ export async function deliverSupportNotification(client: SupabaseClient, job: Ou
 
       const sent = await sendSupportEmail({
         ticketId: job.conversation_id,
-        subject: typedConversation.subject,
+        subject: job.payload?.handoff ? 'Human assistance requested: '+typedConversation.subject : typedConversation.subject,
         question: typedMessage.body, received: typedMessage.created_at, status:typedConversation.status,
         memberEmail: userData.user?.email_confirmed_at ? userData.user.email : undefined,
         memberName: typeof memberName === 'string' ? memberName.slice(0, 120) : undefined,
         notificationId: job.id,
       },job.attempt_count > 1)
-      await completeJob(client, job.id, sent)
+      await completeJob(client, job, sent)
       return true
     }
 
@@ -172,16 +179,13 @@ export async function processSupportNotificationBatch(
   client: SupabaseClient,
   batchSize = 10,
 ): Promise<{ processed: number; sent: number; failed: number }> {
-  const { data, error } = await client.rpc('claim_support_notifications', {
-    p_batch_size: Math.max(1, Math.min(20, batchSize)),
-  })
-  if (error) throw new Error('Unable to claim support notifications')
-  const jobs = (data as OutboxRow[] | null) ?? []
-  let sent = 0
-  let failed = 0
-  for (const job of jobs) {
-    if (await deliverSupportNotification(client, job)) sent += 1
-    else failed += 1
+  let sent=0, failed=0
+  for(let i=0;i<Math.max(1,Math.min(20,batchSize));i++) {
+    const {data,error}=await client.rpc('claim_support_notifications',{p_batch_size:1})
+    if(error) throw new Error('Unable to claim support notifications')
+    const job=(data as OutboxRow[] | null)?.[0]
+    if(!job) break
+    if(await deliverSupportNotification(client,job)) sent++; else failed++
   }
-  return { processed: jobs.length, sent, failed }
+  return {processed:sent+failed,sent,failed}
 }

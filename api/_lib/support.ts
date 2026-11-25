@@ -1,5 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
+import { requiresStagingTarget, resolveSupabaseUrl } from '../../shared/supabasePublicConfig.js'
+
 export type SupportRole = 'SUPER_ADMIN' | 'ADMIN' | 'OPERATIONS' | 'SUPPORT' | 'COMPLIANCE' | 'READ_ONLY'
 export type RequestLike = {
   method?: string
@@ -24,9 +26,15 @@ const viewRoles = new Set<SupportRole>(['SUPER_ADMIN', 'ADMIN', 'OPERATIONS', 'S
 const manageRoles = new Set<SupportRole>(['SUPER_ADMIN', 'ADMIN', 'SUPPORT'])
 
 export function getSupabaseAdmin(): SupabaseClient {
-  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
+  const url = requiresStagingTarget(process.env)
+    ? resolveSupabaseUrl(process.env)
+    : process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!url || !serviceRoleKey) throw new Error('Support server configuration is incomplete')
+  if (process.env.VITE_SUPABASE_URL &&
+      process.env.VITE_SUPABASE_URL.trim().replace(/\/$/,'') !== url.trim().replace(/\/$/,'')) {
+    throw new Error('Support API and browser Supabase targets disagree')
+  }
   return createClient(url, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   })

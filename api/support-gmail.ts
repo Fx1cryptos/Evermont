@@ -1,5 +1,5 @@
 import type { RequestLike, ResponseLike } from './_lib/support.js'
-import { getBearerToken, authenticateSupportUser, canManageSupport, canViewSupport, getSupabaseAdmin, setJsonHeaders } from './_lib/support.js'
+import { getBearerToken, authenticateSupportUser, canManageSupport, getSupabaseAdmin, setJsonHeaders } from './_lib/support.js'
 import { getGmailConnectionStatus } from './_lib/gmail.js'
 import { syncSupportMailbox } from './_lib/gmailSync.js'
 
@@ -30,7 +30,7 @@ export default async function handler(request: RequestLike, response: ResponseLi
     }
 
     if (request.method === 'GET') {
-      if (!canViewSupport(user)) {
+      if (!canManageSupport(user)) {
         response.status(403).json({ error: 'You do not have permission to view Gmail status.' })
         return
       }

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import useSWR from 'swr'
 import {
@@ -16,6 +16,10 @@ import {
   Send,
   ShieldCheck,
 } from 'lucide-react'
+import { subscribeToInbox } from '@/lib/supportRealtime'
+import { supabase } from '@/lib/supabase'
+import { KnowledgeEditor } from './KnowledgeEditor'
+import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import { supportRequest } from '@/services/adminSupportRequest'
@@ -89,6 +93,11 @@ function getPriorityStyle(priority: Priority): string {
 }
 
 export const AdminSupportPage: React.FC = () => {
+  const {id} = useParams<{id:string}>()
+  return <InboxWorkspace key={id ?? 'inbox'} />
+}
+const InboxWorkspace: React.FC = () => {
+  const {role, canManageSupport} = useAdminAuth()
   const { user } = useAuth()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -107,7 +116,7 @@ export const AdminSupportPage: React.FC = () => {
   const [actionError, setActionError] = useState('')
 
   const { data: gmailStatus, mutate: refreshGmailStatus } = useSWR<GmailStatus>(
-    ['support-gmail-status',user?.id],
+    canManageSupport && user ? ['support-gmail-status',user.id] : null,
     () => supportRequest<GmailStatus>('/api/support-gmail'),
     { refreshInterval: 60000, revalidateOnFocus: true },
   )
@@ -123,7 +132,15 @@ export const AdminSupportPage: React.FC = () => {
     { revalidateOnFocus: true, refreshInterval: 15000 },
   )
 
-  const updateTicket = async (updates: { status?: Status; priority?: Priority; assignSelf?: boolean }) => {
+  useEffect(() => {
+    if (!user) return
+    return subscribeToInbox(supabase, user.id, () => {
+      void refreshInbox().catch(()=>undefined)
+      if(id) void refreshDetail().catch(()=>undefined)
+    })
+  }, [user,id,refreshInbox,refreshDetail])
+
+  const updateTicket = async (updates: { status?: Status; priority?: Priority; assignSelf?: boolean; handling?: string }) => {
     if (!id) return
     setWorking(true)
     setActionError('')
@@ -230,11 +247,11 @@ export const AdminSupportPage: React.FC = () => {
               <ShieldCheck size={14} className="text-emerald-700" aria-hidden="true" />
               Staff-only workspace
             </div>
-            <button type="button" onClick={() => void syncMailbox()} disabled={syncing || gmailStatus?.sync.isRunning || !gmailStatus?.connection.senderMatches} className="inline-flex h-9 items-center gap-2 rounded-xl border border-[#0504AA]/20 bg-white px-3 text-xs font-semibold text-[#0504AA] hover:bg-blue-50 disabled:opacity-50">
+            <button type="button" onClick={() => void syncMailbox()} disabled={!canManageSupport || syncing || gmailStatus?.sync.isRunning || !gmailStatus?.connection.senderMatches} className="inline-flex h-9 items-center gap-2 rounded-xl border border-[#0504AA]/20 bg-white px-3 text-xs font-semibold text-[#0504AA] hover:bg-blue-50 disabled:opacity-50">
               <RotateCw size={14} className={syncing || gmailStatus?.sync.isRunning ? 'animate-spin' : ''} aria-hidden="true" />
               {syncing || gmailStatus?.sync.isRunning ? 'Syncing inbox' : 'Sync inbox'}
             </button>
-            <button type="button" onClick={() => void sendTestEmail()} disabled={testSending} className="inline-flex h-9 items-center gap-2 rounded-xl border border-[#0504AA]/20 bg-white px-3 text-xs font-semibold text-[#0504AA] hover:bg-blue-50 disabled:opacity-50">
+            <button type="button" onClick={() => void sendTestEmail()} disabled={!canManageSupport || testSending} className="inline-flex h-9 items-center gap-2 rounded-xl border border-[#0504AA]/20 bg-white px-3 text-xs font-semibold text-[#0504AA] hover:bg-blue-50 disabled:opacity-50">
               {testSending ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
               Send test email
             </button>
@@ -246,6 +263,7 @@ export const AdminSupportPage: React.FC = () => {
         </div>
         {(syncMessage || gmailStatus?.sync.lastError || testMessage) && <p role="status" className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">{syncMessage || gmailStatus?.sync.lastError || testMessage}</p>}
 
+        {(role === 'ADMIN' || role === 'SUPER_ADMIN') && <KnowledgeEditor />}
         <div className="grid min-h-[620px] flex-1 grid-cols-1 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:grid-cols-[360px_minmax(0,1fr)]">
           <section className={`${isTicketVisibleOnMobile ? 'hidden lg:flex' : 'flex'} min-h-0 flex-col border-r border-slate-200`} aria-label="Support conversation inbox">
             <div className="border-b border-slate-100 p-4">
@@ -303,11 +321,11 @@ export const AdminSupportPage: React.FC = () => {
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
                 <div className="flex min-w-0 items-center gap-3"><button type="button" onClick={() => navigate('/admin/support')} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 lg:hidden" aria-label="Back to conversations"><ArrowLeft size={18} /></button><div className="min-w-0"><p className="truncate text-xs text-slate-500">Ticket {id.slice(0, 8).toUpperCase()} · {detail?.member.name || 'Member'}</p><h2 className="truncate text-base font-semibold text-slate-950">{ticket?.subject || 'Support conversation'}</h2></div></div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs">{ticket?.human_requested ? "Human requested · " : ""}Email: {detail?.notification || "No delivery status"}</span><button className="text-xs font-bold text-[#0504AA]" disabled={working || !ticket} onClick={() => void updateTicket({assignSelf:true})}>{ticket?.assigned_to === user?.id ? "Assigned to you" : "Assign to me"}</button><label className="relative"><span className="sr-only">Ticket status</span><select disabled={working || !ticket} value={ticket?.status || 'open'} onChange={event => void updateTicket({ status: event.target.value as Status })} className="h-9 appearance-none rounded-lg border border-slate-200 bg-white pl-3 pr-8 text-xs font-medium text-slate-700 outline-none disabled:opacity-60"><option value="open">Open</option><option value="pending_support">Pending · support</option><option value="pending_member">Pending · member</option><option value="resolved">Resolved</option><option value="closed">Closed</option></select><ChevronDown size={13} className="pointer-events-none absolute right-2.5 top-3 text-slate-400" aria-hidden="true" /></label>
-                  <label className="relative"><span className="sr-only">Ticket priority</span><select disabled={working || !ticket} value={ticket?.priority || 'normal'} onChange={event => void updateTicket({ priority: event.target.value as Priority })} className="h-9 appearance-none rounded-lg border border-slate-200 bg-white pl-3 pr-8 text-xs font-medium text-slate-700 outline-none disabled:opacity-60"><option value="low">Low</option><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select><ChevronDown size={13} className="pointer-events-none absolute right-2.5 top-3 text-slate-400" aria-hidden="true" /></label>
+                  <span className="text-xs">{ticket?.human_requested ? "Human requested · " : ""}Email: {detail?.notification || "No delivery status"}</span><button className="text-xs font-bold text-[#0504AA]" disabled={working || !ticket || !canManageSupport} onClick={() => void updateTicket({assignSelf:true})}>{ticket?.assigned_to === user?.id ? "Assigned to you" : "Assign to me"}</button><button disabled={working || !ticket || !canManageSupport} onClick={()=>void updateTicket({handling:ticket?.human_requested || ticket?.assigned_to ? 'ai':'human'})}>{ticket?.human_requested || ticket?.assigned_to ? 'Return to AI':'Take over'}</button><label className="relative"><span className="sr-only">Ticket status</span><select disabled={working || !ticket || !canManageSupport} value={ticket?.status || 'open'} onChange={event => void updateTicket({ status: event.target.value as Status })} className="h-9 appearance-none rounded-lg border border-slate-200 bg-white pl-3 pr-8 text-xs font-medium text-slate-700 outline-none disabled:opacity-60"><option value="open">Open</option><option value="pending_support">Pending · support</option><option value="pending_member">Pending · member</option><option value="resolved">Resolved</option><option value="closed">Closed</option></select><ChevronDown size={13} className="pointer-events-none absolute right-2.5 top-3 text-slate-400" aria-hidden="true" /></label>
+                  <label className="relative"><span className="sr-only">Ticket priority</span><select disabled={working || !ticket || !canManageSupport} value={ticket?.priority || 'normal'} onChange={event => void updateTicket({ priority: event.target.value as Priority })} className="h-9 appearance-none rounded-lg border border-slate-200 bg-white pl-3 pr-8 text-xs font-medium text-slate-700 outline-none disabled:opacity-60"><option value="low">Low</option><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select><ChevronDown size={13} className="pointer-events-none absolute right-2.5 top-3 text-slate-400" aria-hidden="true" /></label>
                 </div>
               </div>
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 bg-white px-4 py-3 text-xs text-slate-500 sm:px-6"><div className="flex min-w-0 items-center gap-2"><Mail size={14} className="shrink-0" aria-hidden="true" /><span className="truncate">{[detail?.member.email, ...(detail?.member.accountRefs || [])].filter(Boolean).join(" · ") || "Member details unavailable"}</span></div><button type="button" onClick={() => void retryNotifications()} disabled={working} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium text-[#0504AA] hover:bg-blue-50 disabled:opacity-50"><RotateCw size={13} aria-hidden="true" /> Retry email</button></div>
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 bg-white px-4 py-3 text-xs text-slate-500 sm:px-6"><div className="flex min-w-0 items-center gap-2"><Mail size={14} className="shrink-0" aria-hidden="true" /><span className="truncate">{[detail?.member.email, ...(detail?.member.accountRefs || [])].filter(Boolean).join(" · ") || "Member details unavailable"}</span></div><button type="button" onClick={() => void retryNotifications()} disabled={working || !canManageSupport} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 font-medium text-[#0504AA] hover:bg-blue-50 disabled:opacity-50"><RotateCw size={13} aria-hidden="true" /> Retry email</button></div>
               <label className="grid gap-1 border-b bg-white px-5 py-3 text-xs font-semibold text-slate-600">Find in this conversation<input type="search" className="rounded-lg border px-3 py-2" value={messageSearch} onChange={e=>setMessageSearch(e.target.value)} placeholder="Search messages and staff notes" /></label>
               <div className="min-h-[220px] flex-1 space-y-4 overflow-y-auto p-4 sm:p-6">
                 {detail && messageSearch.trim() && !detail.messages.some(m=>m.body.toLowerCase().includes(messageSearch.trim().toLowerCase())) && <p>No matching messages.</p>}
@@ -321,16 +339,16 @@ export const AdminSupportPage: React.FC = () => {
               </div>
               <div className="border-t border-slate-200 bg-white p-4 sm:px-6">
                 {actionError && <div role="alert" className="mb-3 flex items-start gap-2 rounded-lg bg-rose-50 p-2.5 text-xs text-rose-800"><AlertCircle size={14} className="mt-0.5 shrink-0" />{actionError}</div>}
-                <form onSubmit={sendReply}>
+                {canManageSupport && <form onSubmit={sendReply}>
                   <label htmlFor="support-reply" className="mb-2 block text-xs font-semibold text-slate-700">{note ? 'Internal note · staff only' : 'Reply to member'}</label><label className="my-2 flex gap-2 text-sm"><input type="checkbox" checked={note} onChange={e => setNote(e.target.checked)} /> Internal note</label>
                   <textarea disabled={working} id="support-reply" value={reply} onChange={event => setReply(event.target.value)} maxLength={4000} rows={3} placeholder="Write a clear, helpful response…" className="w-full resize-y rounded-xl border border-slate-200 bg-white p-3 text-sm leading-6 outline-none placeholder:text-slate-400 focus:border-[#0504AA] focus:ring-2 focus:ring-blue-100" />
                   <div className="mt-2 flex items-center justify-between gap-3"><p className="text-[11px] text-slate-400">Never request a password, PIN, CVV, or one-time code.</p><button type="submit" disabled={working || !reply.trim()} className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl bg-[#0504AA] px-4 text-sm font-semibold text-white transition hover:bg-blue-900 disabled:cursor-not-allowed disabled:opacity-50">{working ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />} {note ? 'Save note' : 'Send reply'}</button></div>
-                </form>
+                </form>}
               </div>
             </>}
           </section>
         </div>
-        <div className="flex items-center gap-2 text-[11px] text-slate-500"><CheckCheck size={13} className="text-emerald-700" aria-hidden="true" /><span>Conversation records are stored securely in the member support system.</span><span className="ml-auto hidden items-center gap-1 sm:inline-flex"><Clock3 size={12} /> Inbox refreshes every 30 seconds</span></div>
+        <div className="flex items-center gap-2 text-[11px] text-slate-500"><CheckCheck size={13} className="text-emerald-700" aria-hidden="true" /><span>Conversation records are stored securely in the member support system.</span><span className="ml-auto hidden items-center gap-1 sm:inline-flex"><Clock3 size={12} /> Inbox refreshes automatically</span></div>
       </div>
     </AdminLayout>
   )

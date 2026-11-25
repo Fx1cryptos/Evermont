@@ -1,3 +1,4 @@
+import { isHumanComplaint } from '../../shared/supportCategories'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { ArrowLeft, Send, Headphones } from 'lucide-react'
@@ -99,6 +100,7 @@ function Thread({ owner, id }: { owner: string; id: string }) {
             <p className="text-xs font-bold uppercase tracking-widest text-[#C9A227]">Member services</p>
             <h2 className="mt-1 text-xl font-semibold">Secure conversation</h2>{data && <p className="mt-2 break-all text-sm text-blue-100">Ticket ID: {data.conversation.id} · {closed ? "Resolved" : data.conversation.status === "pending_support" ? "Awaiting Human Support" : data.messages[data.messages.length-1]?.sender_role === "system" ? "AI Responded" : data.messages.some(m=>m.sender_role === "support") ? "In Progress" : "Open"}</p>}
           </div>
+          {data && <p className="text-sm">{closed ? 'Conversation closed' : data.conversation.human_requested || data.conversation.assigned_to || (isHumanComplaint(data.conversation.subject) && !data.conversation.assistant_resumed) ? 'Human support' : 'EVERMONT AI Support'}</p>}
           {data && !closed && (
             <button
               className="flex items-center gap-2 rounded-xl border border-white/40 px-3 py-2 text-sm"

@@ -14,7 +14,9 @@
     "demo:css": "tailwindcss -c banking_demo/tailwind.config.cjs -i banking_demo/banking/static/banking/source.css -o banking_demo/banking/static/banking/demo.css --minify",
     "test:portal": "node --test --test-concurrency=1 tests/*.mjs",
     "support:worker:build": "tsc -p tsconfig.support-worker.json",
-    "support:worker": "node .support-worker/scripts/support-worker.js"
+    "support:worker": "node .support-worker/scripts/support-worker.js",
+    "test:support": "node --test --test-concurrency=1 tests/support*.mjs",
+    "test:db": "node --test supabase/tests/support.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.38.0",
@@ -27,6 +29,7 @@
     "swr": "^2.5.1"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.17",
     "@types/node": "^20.8.0",
     "@types/react": "^18.2.37",
     "@types/react-dom": "^18.2.15",

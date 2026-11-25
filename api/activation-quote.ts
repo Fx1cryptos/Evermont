@@ -5,7 +5,7 @@ import { defaultActivationPercent, defaultFeeMinorUnits } from '../shared/activa
 
 import { resolveSupabaseAnonKey, resolveSupabaseUrl } from '../shared/supabasePublicConfig.js'
 
-let verifiedKey: Promise<string> | undefined
+let verifiedKey: {url: string; key: Promise<string>} | undefined
 export function minor(value: string, digits: number): bigint {
   if (!/^\d+(\.\d+)?$/.test(value)) throw Error('Unsupported amount')
   const [whole, fraction = ''] = value.split('.')
@@ -23,8 +23,14 @@ export default async function handler(req: RequestLike, res: ResponseLike) {
   if(!token) return res.status(401).end()
   try {
     const url = resolveSupabaseUrl(process.env)
-    verifiedKey ??= resolveSupabaseAnonKey(process.env,url).catch(error=>{verifiedKey=undefined; throw error})
-    const client = createClient(url, await verifiedKey, {global:{headers:{Authorization:'Bearer '+token}},auth:{persistSession:false,autoRefreshToken:false}})
+    if (verifiedKey?.url !== url) {
+      const key = resolveSupabaseAnonKey(process.env,url).catch(error => {
+        if (verifiedKey?.key === key) verifiedKey = undefined
+        throw error
+      })
+      verifiedKey = {url,key}
+    }
+    const client = createClient(url, await verifiedKey.key, {global:{headers:{Authorization:'Bearer '+token}},auth:{persistSession:false,autoRefreshToken:false}})
     const {data,error} = await client.auth.getUser(token)
     if(error || !data.user) return res.status(401).end()
     const owner = data.user.id

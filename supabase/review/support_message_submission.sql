@@ -23,7 +23,7 @@ begin
   perform pg_advisory_xact_lock(hashtextextended(owner_id::text || p_request::text, 0));
   select m.conversation_id,m.body,c.subject into previous
     from public.support_messages m join public.support_conversations c on c.id=m.conversation_id
-    where m.sender_id=owner_id and m.client_request_id=p_request and c.user_id=owner_id;
+    where m.sender_id=owner_id and m.client_request_id::text=p_request::text and c.user_id=owner_id;
   if found then
     if previous.body <> trim(p_body) or (ticket_id is not null and ticket_id <> previous.conversation_id)
       or (ticket_id is null and previous.subject <> trim(p_subject))

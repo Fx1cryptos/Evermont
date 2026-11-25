@@ -7,6 +7,9 @@ export type SupportConversation = {
   status: SupportStatus
   created_at: string
   updated_at: string
+  assistant_resumed?: boolean
+  human_requested?: boolean
+  assigned_to?: string | null
   unread?: { id: string }[]
   support_messages?: Pick<SupportMessage, 'body' | 'sender_role' | 'read_by_member'>[]
 }
@@ -61,7 +64,7 @@ export const supportService = {
   async getConversation(userId: string, id: string) {
     const { data, error } = await supabase
       .from('support_conversations')
-      .select('id,subject,status,created_at,updated_at')
+      .select('id,subject,status,human_requested,assistant_resumed,assigned_to ,created_at,updated_at')
       .eq('id', id)
       .eq('user_id', userId)
       .maybeSingle()

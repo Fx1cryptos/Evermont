@@ -59,15 +59,20 @@ export default async function handler(request: RequestLike, response: ResponseLi
         const { data: memberData } = await client.auth.admin.getUserById(conversation.user_id)
         const messages = []
         for (let offset = 0; ; offset += 200) {
-          const { data: page, error: loadError } = await client.from('support_messages')
+          let query = client.from('support_messages')
             .select('id,conversation_id,sender_id,sender_role,body,is_internal,read_by_member,read_by_support,created_at')
             .eq('conversation_id', id).order('created_at').order('id').range(offset, offset + 199)
+          if (!canManageSupport(user)) query = query.eq('is_internal',false)
+          const {data:page,error:loadError} = await query
           if (loadError) throw new Error('Unable to load ticket messages')
           messages.push(...(page || []))
           // Mark only messages included in this response.
           const unread = (page || []).filter(m => m.sender_role === 'member' && !m.read_by_support).map(m => m.id)
-          if (unread.length) await client.from('support_messages').update({ read_by_support: true })
-            .eq('conversation_id', id).in('id', unread)
+          if (unread.length && canManageSupport(user)) {
+            const receipt = await client.from('support_messages').update({ read_by_support: true })
+              .eq('conversation_id', id).eq('is_internal',false).in('id', unread)
+            if (!receipt.error) for(const m of page ?? []) if(unread.includes(m.id)) m.read_by_support=true
+          }
           if (!page || page.length < 200) break
         }
         const accounts = await client.from('accounts').select('account_number').eq('user_id', conversation.user_id)
@@ -150,13 +155,14 @@ export default async function handler(request: RequestLike, response: ResponseLi
         }
         if (action === 'handoff') {
           const {data, error} = await client.from('support_conversations').update({human_requested:true,status:'pending_support'}).eq('id',conversationId).eq('user_id',user.id).not('status','in','(resolved,closed)').select('id').maybeSingle()
-          response.status(error || !data ? 409 : 200).json(error || !data ? {error:'Handoff unavailable. Send a normal message to support.'} : {requested:true})
+          if (error) throw error
+          response.status(!data ? 409 : 200).json(!data ? {error:'Handoff unavailable. Send a normal message to support.'} : {requested:true})
           return
         }
         if (action === 'read') {
           const ids = body?.ids
           if (!Array.isArray(ids) || !ids.length || ids.length > 100 || ids.some(id => typeof id !== 'string' || !UUID_PATTERN.test(id))) { response.status(400).json({error:'Invalid receipts.'}); return }
-          const {error} = await client.from('support_messages').update({read_by_member:true}).eq('conversation_id',conversationId).eq('is_internal',false).in('id',ids)
+          const {error} = await client.from('support_messages').update({read_by_member:true}).eq('conversation_id',conversationId).eq('is_internal',false).in('sender_role',['support','system']).in('id',ids)
           if (error) throw error
           response.status(200).json({read:true}); return
         }
@@ -217,7 +223,9 @@ export default async function handler(request: RequestLike, response: ResponseLi
           locked_at: null,
           last_error: null,
           updated_at: new Date().toISOString(),
-        }).eq('conversation_id', conversationId).eq('status', 'failed')
+        }).eq('conversation_id', conversationId).or(
+          `status.eq.failed,and(status.eq.processing,attempt_count.gte.6,locked_at.lt.${new Date(Date.now()-5*60_000).toISOString()})`
+        )
         if (error) throw new Error('Unable to schedule notification retry')
         const result = await processConversationNotification(client, conversationId)
         response.status(200).json({ result })
@@ -239,6 +247,15 @@ export default async function handler(request: RequestLike, response: ResponseLi
         return
       }
       const updates: Record<string, string | null> = {}
+      if (body?.handling === 'ai' || body?.handling === 'human') {
+        const human = body.handling === 'human'
+        const {data,error} = await client.from('support_conversations')
+          .update({human_requested:human,assistant_resumed:!human,assigned_to:human ? user.id : null,status:human ? 'pending_support':'open'})
+          .eq('id',id).not('status','in','(resolved,closed)').select('id').maybeSingle()
+        if (error) throw error
+        response.status(data ? 200 : 409).json(data ? {conversation:data} : {error:'Reopen the ticket first.'})
+        return
+      }
       if (body?.assignSelf === true) updates.assigned_to = user.id
       if (body?.status !== undefined) {
         const status = getString(body.status, 32)

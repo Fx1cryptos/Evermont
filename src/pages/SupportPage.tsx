@@ -22,6 +22,7 @@ export const SupportPage: React.FC<{ embedded?: boolean }> = ({ embedded = false
   const sending = useRef(false)
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState<ComplaintCategory>('General Enquiry')
+  const [human, setHuman] = useState(false)
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
   const [creating, setCreating] = useState(false)
@@ -43,7 +44,7 @@ export const SupportPage: React.FC<{ embedded?: boolean }> = ({ embedded = false
     event.preventDefault()
     if (sending.current || creating || !user || !subject.trim() || !body.trim()) return
     sending.current = true
-    const title = complaintSubject(category, subject)
+    const title = human ? complaintSubject(category, subject) : 'Question: ' + subject.trim()
     const draft = JSON.stringify([user.id, title, body])
     if (attempt.current?.draft !== draft) attempt.current = { draft, key: crypto.randomUUID() }
     const key = attempt.current.key
@@ -81,13 +82,13 @@ export const SupportPage: React.FC<{ embedded?: boolean }> = ({ embedded = false
           onSubmit={create}
           className="mt-6 rounded-2xl border border-[#C9A227]/50 bg-white p-6 shadow-sm"
         >
-          <h2 className="text-lg font-semibold text-[#0504AA]">Contact human support</h2>
+          <h2 className="text-lg font-semibold text-[#0504AA]">Ask EVERMONT Support</h2><label><input type="checkbox" checked={human} disabled={creating} onChange={e=>setHuman(e.target.checked)} /> Send directly to a human agent</label>
           <div className="mt-4 grid gap-4">
-            <label>Complaint category
+            {human && <label>Complaint category
               <select value={category} disabled={creating} onChange={e => setCategory(e.target.value as ComplaintCategory)} className="block w-full rounded-xl border p-3">
                 {complaintCategories.map(item => <option key={item}>{item}</option>)}
               </select>
-            </label>
+            </label>}
             <input
               disabled={creating}
               value={subject}

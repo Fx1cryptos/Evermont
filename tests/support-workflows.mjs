@@ -126,6 +126,7 @@ test('member post uses restricted inserts; hidden or foreign messages are never 
   assert.equal(saved.length, 2)
 })
 test('Gemini only receives topic labels and returns approved content; provider failure leaves ordinary support intact', async () => {
+  const articles=[{topic:'activation',keywords:'activate,activation',answer:'Open Activation for your current requirements.'}]
   const { approvedAnswer } = await load('/api/_lib/assistant.ts')
   env('GEMINI_MODEL', 'gemini-fixture')
   env('GEMINI_API_KEY', 'fixture')
@@ -134,11 +135,11 @@ test('Gemini only receives topic labels and returns approved content; provider f
     assert.ok(!opt.body.includes('private-personal-details'))
     return json({ candidates: [{ content: { parts: [{ text: 'activation' }] } }] })
   }
-  assert.match(await approvedAnswer(['activation private-personal-details']), /^Open Activation/)
+  assert.match(await approvedAnswer(['activation private-personal-details'],articles), /^Open Activation/)
   transport = async () => json({ candidates: [{ content: { parts: [{ text: 'fabricated balance' }] } }] })
-  assert.match(await approvedAnswer(['balance']), /agent/)
+  assert.match(await approvedAnswer(['balance'],articles), /agent/)
   transport = async () => json({}, 503)
-  assert.equal(await approvedAnswer(['activation']), null)
+  assert.equal(await approvedAnswer(['activation'],articles), null)
 })
 test('handoff requires a verified owner; closed tickets cannot be reopened by the request', async () => {
   const { default: handler } = await load('/api/support.ts')
@@ -298,6 +299,10 @@ test('assistant only commits to the owned source turn, stops after a handoff, an
       assert.equal(url.searchParams.get('is_internal'), 'eq.false')
       return json([{ id: notice, sender_role: 'member', body: 'Security question' }])
     }
+    if(url.pathname.endsWith('/support_knowledge_articles')){
+      assert.equal(url.searchParams.get('published'),'eq.true')
+      return json([{topic:'security',keywords:'security',answer:'Open Profile & Security.'}])
+    }
     const args = JSON.parse(opt.body)
     assert.equal(args.p_member, member)
     assert.equal(args.p_ticket, ticket)
@@ -308,7 +313,7 @@ test('assistant only commits to the owned source turn, stops after a handoff, an
       return json(true)
     }
     assert.ok(url.pathname.endsWith('/complete_support_assistant'))
-    replies.push(args.p_body)
+    if(args.p_body!==null) replies.push(args.p_body)
     return json(true)
   }
   assert.equal(await assistMember(client, ticket, member), true)
@@ -490,7 +495,7 @@ test('staff retry reconciles an accepted Gmail notification before attempting an
     if (url.pathname.endsWith('/support_messages')) return json({id:notice,sender_role:'member',is_internal:false})
     if (url.pathname.endsWith('/claim_support_notification_for_conversation')) {
       assert.ok(attempts<6)
-      return json([{ id: notice, conversation_id:ticket, message_id:notice, event_type:'support_message', attempt_count:++attempts }])
+      return json([{ id: notice, conversation_id:ticket, message_id:notice, event_type:'support_message', attempt_count:++attempts,locked_at:'2026-11-20T04:00:00Z' }])
     }
     assert.ok(url.pathname.endsWith('/support_notification_outbox'))
     const patch = JSON.parse(opt.body)
@@ -498,7 +503,10 @@ test('staff retry reconciles an accepted Gmail notification before attempting an
     else {
       assert.equal(patch.status,'sent')
       assert.equal(patch.payload.notification_message,'already-sent')
+      assert.equal(url.searchParams.get('locked_at'),'eq.2026-11-20T04:00:00Z')
+      assert.equal(url.searchParams.get('status'),'eq.processing')
       recorded = true
+      return json([{id:notice}])
     }
     return json(null)
   }
@@ -563,13 +571,12 @@ test('missing Gemini configuration requests human support for the owned active t
   env('GEMINI_MODEL','')
   let handoffs=0
   transport=async(url,opt)=>{
-    if(url.pathname.endsWith('/support_conversations') && opt.method==='PATCH') {
-      assert.equal(url.searchParams.get('id'),'eq.'+ticket)
-      assert.equal(url.searchParams.get('user_id'),'eq.'+member)
-      assert.equal(url.searchParams.get('status'),'not.in.(resolved,closed)')
-      assert.deepEqual(JSON.parse(opt.body),{human_requested:true,status:'pending_support'})
-      handoffs++
-      return json(null)
+    if(url.pathname.endsWith('/claim_support_assistant')) return json(true)
+    if(url.pathname.endsWith('/complete_support_assistant')) {
+      const args=JSON.parse(opt.body)
+      assert.equal(args.p_member,member);assert.equal(args.p_ticket,ticket)
+      assert.equal(args.p_message,notice);assert.ok(args.p_lease);assert.equal(args.p_body,null)
+      handoffs++;return json(true)
     }
     if(url.pathname.endsWith('/support_conversations')) return json([{id:ticket,human_requested:false,status:'open',assigned_to:null}])
     if(url.pathname.endsWith('/support_messages')) return json([{id:notice,sender_role:'member',body:'Help'}])
@@ -678,4 +685,144 @@ test('dashboard unread total requires an authorized inbox viewer and excludes in
   assert.equal((await get()).code,403); assert.equal(reads,0)
   authorized=true
   assert.deepEqual((await get()).body,{unread:7}); assert.equal(reads,1)
+})
+
+test('published article revisions ground contextual follow-ups; sensitive and unknown turns escalate', async()=>{
+ const { approvedAnswer } = await load('/api/_lib/assistant.ts')
+ env('GEMINI_API_KEY','fixture');env('GEMINI_MODEL','gemini-fixture')
+ let calls=0
+ const articles=[{topic:'statements',keywords:'statement,document',answer:'Approved updated article.'}]
+ transport=async(url,opt)=>{
+   calls++
+   assert.equal(url.hostname,'generativelanguage.googleapis.com')
+   assert.match(opt.body,/Approved updated article/)
+   return json({candidates:[{content:{parts:[{text:'statements'}]}}]})
+ }
+ assert.equal(await approvedAnswer(['My documents','where is that?'],articles),'Approved updated article.')
+ assert.match(await approvedAnswer(['My statement has an unauthorized transfer'],articles),/agent/)
+ assert.match(await approvedAnswer(['Something else'],articles),/agent/)
+ assert.equal(calls,1)
+})
+
+test('staff HTTP actions reject unauthorized roles before reading or writing a ticket',async()=>{
+ const support=(await load('/api/support.ts')).default
+ const gmail=(await load('/api/support-gmail.ts')).default
+ const email=(await load('/api/support-test-email.ts')).default
+ env('SUPABASE_URL',origin); env('SUPABASE_SERVICE_ROLE_KEY','fixture')
+ for(const role of ['OPERATIONS','COMPLIANCE','READ_ONLY',null]){
+  let unexpected=0
+  transport=async(url)=>{
+   if(url.pathname.endsWith('/auth/v1/user'))return json({id:member})
+   if(url.pathname.endsWith('/admin_roles'))return json(role?[{role}]:[])
+   unexpected++;throw Error('Unexpected access')
+  }
+  const cases=[[support,'POST',{action:'reply'}],[support,'POST',{action:'note'}],[support,'POST',{action:'retry'}],
+    [support,'PATCH',{assignSelf:true}],[support,'PATCH',{handling:'ai'}],[support,'PATCH',{handling:'human'}],
+    [support,'PATCH',{status:'open'}],[gmail,'POST',{}],[gmail,'GET',{}],[email,'POST',{}]]
+  if(role!=='OPERATIONS')cases.push([support,'GET',{}])
+  for(const [route,method,body] of cases){
+   const res={status(n){this.code=n;return this},json(){},setHeader(){}}
+   await route({method,headers:{authorization:'Bearer fixture'},query:{id:ticket},body:{conversationId:ticket,...body}},res)
+   assert.equal(res.code,403)
+  }
+  assert.equal(unexpected,0)
+ }
+})
+
+test('explicit staging project fails closed on malformed, missing, conflicting or production targets',async()=>{
+ const {resolveSupabaseUrl,resolveSupabaseAnonKey}=await load('/shared/supabasePublicConfig.ts')
+ const url='https://isolatedstage.supabase.co'
+ assert.equal(resolveSupabaseUrl({VITE_SUPABASE_URL:url}),url)
+ assert.throws(()=>resolveSupabaseUrl({SUPABASE_URL:url},true),/explicitly/)
+ const {getSupabaseAdmin}=await load('/api/_lib/support.ts')
+ env('VITE_SUPABASE_URL',url);env('SUPABASE_URL',origin)
+ assert.throws(()=>getSupabaseAdmin(),/targets disagree/)
+ env('VITE_SUPABASE_URL','')
+ for(const env of [{},{VITE_SUPABASE_URL:'http://localhost'},{VITE_SUPABASE_URL:url,SUPABASE_URL:'https://different.supabase.co'},{VITE_SUPABASE_URL:url,VERCEL_ENV:'production'}]) assert.throws(()=>resolveSupabaseUrl(env))
+ const anon=ref=>'eyJ0.'+Buffer.from(JSON.stringify({role:'anon',ref})).toString('base64url')+'.fixture'
+ assert.equal(await resolveSupabaseAnonKey({VITE_SUPABASE_ANON_KEY:anon('isolatedstage')},url),anon('isolatedstage'))
+ for(const value of [anon('different'),'sb_secret_localfixture']) await assert.rejects(resolveSupabaseAnonKey({VITE_SUPABASE_ANON_KEY:value},url))
+})
+
+test('malformed or absent knowledge escalates without invoking Gemini',async()=>{
+ const {approvedAnswer}=await load('/api/_lib/assistant.ts')
+ env('GEMINI_MODEL','gemini-fixture');env('GEMINI_API_KEY','fixture')
+ let calls=0;transport=async()=>{calls++;return json({})}
+ const bad=[null,{topic:'human',keywords:'support',answer:'wrong'},{topic:'topic',keywords:null,answer:'wrong'},{topic:'topic',keywords:'support',answer:' '}]
+ assert.match(await approvedAnswer(['support'],bad),/agent/)
+ assert.equal(calls,0)
+})
+
+test('authenticated staff list and detail use the role-checked API; OPERATIONS detail excludes notes',async()=>{
+ const handler=(await load('/api/support.ts')).default
+ env('SUPABASE_URL',origin);env('SUPABASE_SERVICE_ROLE_KEY','fixture')
+ for(const role of ['SUPER_ADMIN','ADMIN','SUPPORT','OPERATIONS']){
+  const row={id:ticket,user_id:member,status:'open',subject:'Test'}
+  transport=async(url,opt)=>{
+   if(url.pathname.endsWith('/auth/v1/user'))return json({id:member})
+   if(url.pathname.endsWith('/admin_roles'))return json([{role}])
+   if(url.pathname.includes('/auth/v1/admin/users/'))return json({id:member})
+   if(url.pathname.endsWith('/support_conversations'))return json([row])
+   if(url.pathname.endsWith('/support_messages')){
+    assert.equal(opt.method,'GET')
+    assert.equal(url.searchParams.get('is_internal'),role==='OPERATIONS'?'eq.false':null)
+    return json(role==='OPERATIONS'?[{body:'Public'}]:[{body:'Public'},{body:'Private',is_internal:true}])
+   }
+   return json([])
+  }
+  for(const query of [{},{id:ticket}]){
+   const res={status(n){this.code=n;return this},json(b){this.body=b},setHeader(){}}
+   await handler({method:'GET',headers:{authorization:'Bearer fixture'},query},res)
+   assert.equal(res.code,200)
+   if(query.id){assert.equal(res.body.conversation.id,ticket);assert.equal(res.body.messages.length,role==='OPERATIONS'?1:2)}
+   else assert.equal(res.body.conversations[0].id,ticket)
+  }
+ }
+})
+
+test('Preview browser build and privileged API/worker clients require the same independent staging pin', async()=>{
+ const {resolveSupabaseUrl,resolveSupabaseAnonKey}=await load('/shared/supabasePublicConfig.ts')
+ const {getSupabaseAdmin}=await load('/api/_lib/support.ts')
+ const quote=(await load('/api/activation-quote.ts')).default
+ const stage='evermontisolatedtest', prod='gdodqiwjcezdznzroupw'
+ const url=ref=>'https://'+ref+'.supabase.co'
+ const anon=ref=>'eyJ0.'+Buffer.from(JSON.stringify({role:'anon',ref})).toString('base64url')+'.synthetic'
+ const good={VERCEL_ENV:'preview',STAGING_SUPABASE_PROJECT_REF:stage,VITE_SUPABASE_URL:url(stage),
+   SUPABASE_URL:url(stage),NEXT_PUBLIC_SUPABASE_URL:url(stage),VITE_SUPABASE_ANON_KEY:anon(stage),
+   VITE_SUPABASE_PUBLISHABLE_KEY:'',SUPABASE_SERVICE_ROLE_KEY:'fixture'}
+ const bind=cfg=>{for(const k of Object.keys(good)){env(k,cfg[k]??'');if(cfg[k]===undefined)delete process.env[k]}}
+ const requestQuote=async()=>{
+   const res={status(n){this.code=n;return this},json(){},end(){},setHeader(){}}
+   await quote({method:'GET',headers:{authorization:'Bearer fixture'}},res)
+   return res.code
+ }
+ let calls=0
+ transport=async()=>{calls++;throw Error('Unexpected network request')}
+ for(const change of [
+   {VITE_SUPABASE_URL:url(prod),SUPABASE_URL:url(prod),NEXT_PUBLIC_SUPABASE_URL:url(prod)},
+   {STAGING_SUPABASE_PROJECT_REF:prod,VITE_SUPABASE_URL:url(prod),SUPABASE_URL:url(prod),NEXT_PUBLIC_SUPABASE_URL:url(prod)},
+   {STAGING_SUPABASE_PROJECT_REF:undefined},{STAGING_SUPABASE_PROJECT_REF:''},{STAGING_SUPABASE_PROJECT_REF:'anotherproject'},
+   {VITE_SUPABASE_URL:undefined},{SUPABASE_URL:undefined},{VITE_SUPABASE_URL:url(prod)},
+   {SUPABASE_URL:url('anotherproject')},{NEXT_PUBLIC_SUPABASE_URL:url(prod)},
+   {VERCEL_ENV:undefined,SUPABASE_URL:url(prod)} // private scheduler with no Vercel metadata
+ ]){
+   const cfg={...good,...change};bind(cfg)
+   assert.throws(()=>resolveSupabaseUrl(cfg,true),/Preview/)
+   assert.throws(()=>getSupabaseAdmin(),/Preview/) // same initializer used by scripts/support-worker.ts
+   assert.equal(await requestQuote(),503)
+ }
+ assert.equal(calls,0)
+ bind(good)
+ assert.equal(resolveSupabaseUrl(good,true),url(stage))
+ await assert.rejects(resolveSupabaseAnonKey({},url(stage)))
+ await assert.rejects(resolveSupabaseAnonKey({VITE_SUPABASE_ANON_KEY:anon(prod)},url(stage)))
+ assert.equal(await resolveSupabaseAnonKey(good,url(stage)),anon(stage))
+ transport=async u=>{assert.equal(u.origin,url(stage));calls++;return json({})}
+ await getSupabaseAdmin().from('support_conversations').select('id').limit(1)
+ assert.equal(calls,1)
+ transport=async u=>{assert.equal(u.origin,url(stage));return json({message:'No session'},401)}
+ assert.equal(await requestQuote(),401) // reached fixture Auth on staging
+ const production={VERCEL_ENV:'production',VITE_SUPABASE_URL:url(prod),SUPABASE_URL:url(prod)}
+ assert.equal(resolveSupabaseUrl(production,true),url(prod))
+ assert.throws(()=>resolveSupabaseUrl({...production,VITE_SUPABASE_URL:url(stage)},true))
 })
