@@ -64,8 +64,8 @@ export async function assistMember(client: SupabaseClient, ticket: string, membe
     .eq('id', ticket)
     .eq('user_id', member)
     .maybeSingle()
+  if (error) throw new Error('Could not read support conversation')
   if (
-    error ||
     !conversation ||
     (isHumanComplaint(conversation.subject) && !conversation.assistant_resumed) ||
     conversation.human_requested ||
@@ -81,7 +81,8 @@ export async function assistMember(client: SupabaseClient, ticket: string, membe
     .order('created_at', { ascending: false })
     .order('id', { ascending: false })
     .limit(5)
-  if (readError || turns?.[0]?.sender_role !== 'member') return false
+  if (readError) throw new Error('Could not read support messages')
+  if (turns?.[0]?.sender_role !== 'member') return false
   if (expectedMessage && turns[0].id !== expectedMessage) return false
   const turn = {p_ticket:ticket,p_member:member,p_message:turns[0].id,p_lease:crypto.randomUUID()}
   const claim = await client.rpc('claim_support_assistant', turn)
@@ -107,4 +108,20 @@ export async function assistMember(client: SupabaseClient, ticket: string, membe
       .map((turn) => String(turn.body)), refs,
   )
   return finish(!answer || answer === human ? null : answer)
+}
+
+// A skipped turn (for example, a staff takeover) is a successful recovery scan.
+export async function recoverExpiredSupportTurns(client: SupabaseClient): Promise<boolean> {
+  const { data, error } = await client.rpc('expired_support_turns')
+  if (error) return false
+
+  let healthy = true
+  for (const turn of data ?? []) {
+    try {
+      await assistMember(client, turn.ticket, turn.member, turn.message)
+    } catch {
+      healthy = false
+    }
+  }
+  return healthy
 }

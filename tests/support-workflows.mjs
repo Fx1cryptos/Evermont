@@ -912,3 +912,20 @@ test('Preview browser build and privileged API/worker clients require the same i
  assert.equal(resolveSupabaseUrl(production,true),url(prod))
  assert.throws(()=>resolveSupabaseUrl({...production,VITE_SUPABASE_URL:url(stage)},true))
 })
+
+test('worker recovery distinguishes failed database reads from skipped support turns', async () => {
+  const { recoverExpiredSupportTurns } = await load('/api/_lib/assistant.ts')
+  transport = async () => json({ message: 'unavailable' }, 503)
+  assert.equal(await recoverExpiredSupportTurns(client), false)
+
+  for (const status of [403, 200]) {
+    transport = async (url) => {
+      if (url.pathname.endsWith('/rpc/expired_support_turns')) {
+        return json([{ ticket, member, message: notice }])
+      }
+      assert.ok(url.pathname.endsWith('/support_conversations'))
+      return status === 200 ? json({ human_requested: true }) : json({ message: 'denied' }, status)
+    }
+    assert.equal(await recoverExpiredSupportTurns(client), status === 200)
+  }
+})
